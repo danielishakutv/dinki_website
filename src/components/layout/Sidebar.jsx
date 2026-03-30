@@ -1,0 +1,88 @@
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import Logo from './Logo';
+
+const mainNav = [
+  { to: '/', icon: Home, label: 'Dashboard' },
+  { to: '/jobs', icon: Scissors, label: 'Jobs & Orders' },
+  { to: '/customers', icon: Users, label: 'Customers' },
+  { to: '/marketplace', icon: ShoppingBag, label: 'Marketplace' },
+];
+
+const bottomNav = [
+  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/help', icon: HelpCircle, label: 'Help & Support' },
+];
+
+function SideLink({ to, icon: Icon, label, end }) {
+  return (
+    <NavLink to={to} end={end}>
+      {({ isActive }) => (
+        <motion.div
+          whileHover={{ x: 4 }}
+          whileTap={{ scale: 0.97 }}
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+            isActive
+              ? 'bg-gold-500/10 text-gold-600 shadow-sm'
+              : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+          }`}
+        >
+          <Icon size={20} strokeWidth={isActive ? 2.2 : 1.6} />
+          <span>{label}</span>
+          {isActive && (
+            <motion.div
+              layoutId="sidebarIndicator"
+              className="ml-auto w-1.5 h-6 rounded-full bg-gold-500"
+              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+            />
+          )}
+        </motion.div>
+      )}
+    </NavLink>
+  );
+}
+
+export default function Sidebar() {
+  return (
+    <aside className="hidden md:flex md:flex-col md:w-64 lg:w-72 h-screen bg-white border-r border-gray-200/60 fixed left-0 top-0 z-40">
+      {/* Logo */}
+      <div className="flex items-center h-16 px-6 border-b border-gray-100">
+        <Logo size="md" />
+      </div>
+
+      {/* Main Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <p className="px-4 mb-2 text-[10px] font-semibold tracking-wider uppercase text-gray-400">
+          Menu
+        </p>
+        {mainNav.map((item) => (
+          <SideLink key={item.to} {...item} end={item.to === '/'} />
+        ))}
+
+        <div className="my-6 border-t border-gray-100" />
+
+        <p className="px-4 mb-2 text-[10px] font-semibold tracking-wider uppercase text-gray-400">
+          Other
+        </p>
+        {bottomNav.map((item) => (
+          <SideLink key={item.to} {...item} />
+        ))}
+      </nav>
+
+      {/* User Profile Mini */}
+      <div className="p-4 border-t border-gray-100">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-gold-50 to-amber-50">
+          <div className="w-10 h-10 rounded-full avatar-gradient flex items-center justify-center text-white font-heading font-bold text-sm">
+            DA
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-800 truncate">Dinki Atelier</p>
+            <p className="text-xs text-gray-400 truncate">Master Tailor</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
