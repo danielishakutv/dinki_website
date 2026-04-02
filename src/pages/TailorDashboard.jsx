@@ -168,16 +168,16 @@ export default function TailorDashboard() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
-          className="flex gap-2 mb-6 sm:mb-8 overflow-x-auto pb-2 scrollbar-hide"
+          className="flex gap-2 mb-6 sm:mb-8 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory scroll-smooth touch-pan-x"
         >
           {['jobs', 'earnings', 'customers', 'portfolio', 'profile'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+              className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 snap-start min-h-[40px] sm:min-h-[44px] flex items-center justify-center ${
                 activeTab === tab
-                  ? 'bg-gold-500 text-white shadow-sm shadow-gold-500/20'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:border-gold-200'
+                  ? 'bg-gold-500 text-white shadow-md shadow-gold-500/25 scale-105'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:border-gold-200 active:bg-gray-50'
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}

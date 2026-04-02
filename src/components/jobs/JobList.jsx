@@ -59,16 +59,16 @@ export default function JobList({ jobs, onAddJob }) {
       </div>
 
       {/* Status Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory scroll-smooth touch-pan-x">
         {statusFilters.map((filter) => (
           <motion.button
             key={filter}
             whileTap={{ scale: 0.95 }}
             onClick={() => setActiveFilter(filter)}
-            className={`btn-touch px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+            className={`btn-touch px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 snap-start min-h-[40px] sm:min-h-[44px] flex items-center justify-center ${
               activeFilter === filter
-                ? 'bg-gold-500 text-white shadow-sm'
-                : 'bg-white text-gray-500 border border-gray-200 hover:border-gold-200'
+                ? 'bg-gold-500 text-white shadow-md shadow-gold-500/30'
+                : 'bg-white text-gray-500 border border-gray-200 hover:border-gold-200 active:bg-gray-50'
             }`}
           >
             {filter === 'all'
