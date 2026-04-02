@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, MapPin, Star, Heart, MessageCircle, Edit, Settings, LogOut, Sparkles, Clock, Search, MoreVertical, Bell, Home, Zap } from 'lucide-react';
+import { ShoppingBag, MapPin, Star, Heart, MessageCircle, Edit, Settings, LogOut, Sparkles, Clock, Search, MoreVertical, Bell } from 'lucide-react';
 
 export default function CustomerDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState('orders');
   const [savedTailors, setSavedTailors] = useState([]);
   const [showMore, setShowMore] = useState(false);
 
@@ -164,7 +164,7 @@ export default function CustomerDashboard() {
                     onClick={() => setShowMore(false)}
                   >
                     <button
-                      onClick={() => setActiveTab('profile')}
+                      onClick={() => navigate('/profile')}
                       className="w-full flex items-center gap-3 px-5 py-3.5 text-gray-700 hover:bg-gold-50 hover:text-gold-600 transition-colors border-b border-gray-100 text-sm font-medium active:bg-gold-100 min-h-[44px]"
                     >
                       <Edit size={18} className="flex-shrink-0" />
@@ -207,7 +207,6 @@ export default function CustomerDashboard() {
           className="flex gap-2 mb-6 sm:mb-8 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory scroll-smooth touch-pan-x"
         >
           {[
-            { id: 'home', label: 'Home', icon: Home },
             { id: 'orders', label: 'Orders', icon: ShoppingBag },
             { id: 'near-me', label: 'Near Me', icon: MapPin },
             { id: 'marketplace', label: 'Marketplace', icon: Sparkles },
@@ -226,102 +225,6 @@ export default function CustomerDashboard() {
             </button>
           ))}
         </motion.div>
-
-        {/* Home Tab */}
-        {activeTab === 'home' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-6 sm:space-y-8"
-          >
-            {/* Quick Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="grid grid-cols-2 gap-3 sm:gap-4"
-            >
-              <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-gray-600 text-xs sm:text-sm font-medium">Active Orders</p>
-                  <ShoppingBag size={16} className="text-gold-500 sm:w-5 sm:h-5" />
-                </div>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{customerData.orders}</p>
-              </div>
-              <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-gray-600 text-xs sm:text-sm font-medium">Saved Tailors</p>
-                  <Heart size={16} className="text-red-500 sm:w-5 sm:h-5" />
-                </div>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{customerData.savedTailors}</p>
-              </div>
-              <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-gray-600 text-xs sm:text-sm font-medium">Location</p>
-                  <MapPin size={16} className="text-teal-500 sm:w-5 sm:h-5" />
-                </div>
-                <p className="text-xs sm:text-sm font-bold text-gray-900 truncate">Lagos Island</p>
-              </div>
-              <div className="bg-gradient-to-br from-gold-50 to-amber-50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gold-200">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-gold-700 text-xs sm:text-sm font-medium">Member Status</p>
-                  <Sparkles size={16} className="text-gold-500 sm:w-5 sm:h-5" />
-                </div>
-                <p className="text-xs sm:text-sm font-bold text-gold-800">Premium ✨</p>
-              </div>
-            </motion.div>
-
-            {/* Recent Activity */}
-            <div>
-              <h2 className="text-lg sm:text-xl font-heading font-bold text-gray-900 mb-4">Recent Activity</h2>
-              <div className="space-y-3">
-                {orders.slice(0, 2).map((order, i) => (
-                  <motion.div
-                    key={order.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="bg-white rounded-lg sm:rounded-xl p-4 border border-gray-100 shadow-sm"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{order.type}</h3>
-                        <p className="text-xs sm:text-sm text-gray-600">by {order.tailor}</p>
-                      </div>
-                      <span className={`px-3 py-1 rounded-lg text-xs font-medium flex-shrink-0 whitespace-nowrap ${
-                        order.status === 'Completed'
-                          ? 'bg-green-100 text-green-700'
-                          : order.status === 'In Progress'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Action */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                className="py-4 bg-gradient-to-r from-gold-500 to-amber-500 text-white rounded-lg sm:rounded-xl font-semibold shadow-md hover:shadow-lg transition flex items-center justify-center gap-2"
-              >
-                <Zap size={18} />
-                Find Tailor Now
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                className="py-4 bg-white border-2 border-gold-500 text-gold-600 rounded-lg sm:rounded-xl font-semibold hover:bg-gold-50 transition"
-              >
-                Browse Styles
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
 
         {/* Orders Tab */}
         {activeTab === 'orders' && (
@@ -469,75 +372,6 @@ export default function CustomerDashboard() {
                   </div>
                 </motion.div>
               ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Profile Tab */}
-        {activeTab === 'profile' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              {/* Profile Info */}
-              <div>
-                <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 border border-gray-100">
-                  <h3 className="text-base sm:text-lg font-heading font-bold text-gray-900 mb-4">Profile Information</h3>
-                  <div className="space-y-3 sm:space-y-4">
-                    <div>
-                      <label className="block text-xs sm:text-sm text-gray-600 mb-1.5 font-medium">Full Name</label>
-                      <input type="text" defaultValue={customerData.name} className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-xs sm:text-sm text-gray-600 mb-1.5 font-medium">Email Address</label>
-                      <input type="email" defaultValue={customerData.email} className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-xs sm:text-sm text-gray-600 mb-1.5 font-medium">Phone Number</label>
-                      <input type="tel" defaultValue={customerData.phone} className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-xs sm:text-sm text-gray-600 mb-1.5 font-medium">Location</label>
-                      <input type="text" defaultValue={customerData.location} className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all" />
-                    </div>
-                    <motion.button
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full py-2.5 bg-gold-500 text-white rounded-lg text-sm font-medium hover:bg-gold-600 transition active:bg-gold-700 min-h-[44px]"
-                    >
-                      Save Changes
-                    </motion.button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Settings */}
-              <div>
-                <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 border border-gray-100">
-                  <h3 className="text-base sm:text-lg font-heading font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Settings size={18} /> Settings
-                  </h3>
-                  <div className="space-y-3 sm:space-y-4">
-                    <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
-                      <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-gray-300 cursor-pointer" />
-                      <span className="text-xs sm:text-sm text-gray-700">Email Notifications</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
-                      <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-gray-300 cursor-pointer" />
-                      <span className="text-xs sm:text-sm text-gray-700">SMS Updates</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
-                      <input type="checkbox" className="w-4 h-4 rounded border-gray-300 cursor-pointer" />
-                      <span className="text-xs sm:text-sm text-gray-700">Marketing</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
-                      <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-gray-300 cursor-pointer" />
-                      <span className="text-xs sm:text-sm text-gray-700">Order Updates</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
             </div>
           </motion.div>
         )}
