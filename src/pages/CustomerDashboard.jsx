@@ -5,7 +5,7 @@ import { ShoppingBag, MapPin, Star, Heart, MessageCircle, Edit, Settings, LogOut
 
 export default function CustomerDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('orders');
+  const [activeTab, setActiveTab] = useState('home');
   const [savedTailors, setSavedTailors] = useState([]);
   const [showMore, setShowMore] = useState(false);
 
@@ -132,9 +132,9 @@ export default function CustomerDashboard() {
             </h1>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs sm:text-sm font-medium text-gold-600 bg-gold-50 px-3 py-1 rounded-full">
-                {customerData.role}
+                Customer
               </span>
-              <p className="text-gray-500 text-xs sm:text-sm">Find and book your perfect tailor</p>
+              <p className="text-gray-500 text-xs sm:text-sm">Manage your tailoring orders</p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -199,182 +199,201 @@ export default function CustomerDashboard() {
           </div>
         </motion.div>
 
-        {/* Tabs */}
+        {/* Quick Stats - Always Visible */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
-          className="flex gap-2 mb-6 sm:mb-8 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory scroll-smooth touch-pan-x"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8"
         >
-          {[
-            { id: 'orders', label: 'Orders', icon: ShoppingBag },
-            { id: 'near-me', label: 'Near Me', icon: MapPin },
-            { id: 'marketplace', label: 'Marketplace', icon: Sparkles },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 snap-start min-h-[40px] sm:min-h-[44px] flex items-center justify-center gap-2 ${
-                activeTab === tab.id
-                  ? 'bg-gold-500 text-white shadow-md shadow-gold-500/25 scale-105'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:border-gold-200 active:bg-gray-50'
-              }`}
-            >
-              <tab.icon size={16} className="hidden sm:inline flex-shrink-0" />
-              {tab.label}
-            </button>
-          ))}
+          <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <ShoppingBag size={18} className="text-gold-500 flex-shrink-0 sm:w-5 sm:h-5" />
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">Active</span>
+            </div>
+            <p className="text-xs sm:text-sm text-gray-600 mb-1">Active Orders</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{orders.filter(o => o.status === 'In Progress').length}</p>
+          </div>
+          <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <Heart size={18} className="text-red-500 flex-shrink-0 sm:w-5 sm:h-5" fill="currentColor" />
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">Saved</span>
+            </div>
+            <p className="text-xs sm:text-sm text-gray-600 mb-1">Saved Tailors</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{savedTailors.length}</p>
+          </div>
+          <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <MapPin size={18} className="text-teal-500 flex-shrink-0 sm:w-5 sm:h-5" />
+              <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-medium">Near</span>
+            </div>
+            <p className="text-xs sm:text-sm text-gray-600 mb-1">Location</p>
+            <p className="text-sm sm:text-base font-bold text-gray-900 truncate">{customerData.location.split(',')[0]}</p>
+          </div>
+          <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <Sparkles size={18} className="text-purple-500 flex-shrink-0 sm:w-5 sm:h-5" fill="currentColor" />
+              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded font-medium">Member</span>
+            </div>
+            <p className="text-xs sm:text-sm text-gray-600 mb-1">Status</p>
+            <p className="text-sm sm:text-base font-bold text-gray-900">Premium</p>
+          </div>
         </motion.div>
 
-        {/* Orders Tab */}
-        {activeTab === 'orders' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
+        {/* Tab Navigation */}
+        <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8 overflow-x-auto scrollbar-hide -mx-3 sm:-mx-4 md:mx-0 px-3 sm:px-4 md:px-0 snap-x snap-mandatory">
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`whitespace-nowrap px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base transition flex-shrink-0 min-h-[44px] flex items-center justify-center ${
+              activeTab === 'orders'
+                ? 'bg-gold-500 text-white shadow-md'
+                : 'bg-white text-gray-700 border border-gray-200 hover:border-gold-300 active:bg-gray-50'
+            }`}
           >
-            <h2 className="text-lg sm:text-xl font-heading font-bold text-gray-900 mb-4">Your Orders</h2>
-            <div className="space-y-3 sm:space-y-4">
-              {orders.map((order) => (
-                <motion.div
-                  key={order.id}
-                  whileHover={{ y: -2 }}
-                  className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm hover:shadow-md transition"
-                >
-                  <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-2 sm:gap-0 mb-4">
-                    <div className="min-w-0">
-                      <h3 className="font-heading font-bold text-gray-900 text-sm sm:text-base">{order.type}</h3>
-                      <p className="text-xs sm:text-sm text-gray-600">by {order.tailor}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-lg text-xs font-medium flex-shrink-0 whitespace-nowrap ${
-                      order.status === 'Completed'
-                        ? 'bg-green-100 text-green-700'
-                        : order.status === 'In Progress'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {order.status}
-                    </span>
-                  </div>
-                  <div className="mb-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs sm:text-sm text-gray-600">Progress</span>
-                      <span className="text-xs sm:text-sm font-medium text-gray-900">{order.progress}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <motion.div
-                        className="bg-gradient-to-r from-gold-400 to-gold-600 h-2 rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${order.progress}%` }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-                    <div className="text-xs sm:text-sm text-gray-600">
-                      Due: <span className="font-medium text-gray-900">{order.dueDate}</span>
-                    </div>
-                    <p className="text-lg sm:text-lg font-bold text-gray-900">{order.amount}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
+            <ShoppingBag size={16} className="mr-2 flex-shrink-0" />
+            Orders
+          </button>
+          <button
+            onClick={() => setActiveTab('near-me')}
+            className={`whitespace-nowrap px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base transition flex-shrink-0 min-h-[44px] flex items-center justify-center ${
+              activeTab === 'near-me'
+                ? 'bg-gold-500 text-white shadow-md'
+                : 'bg-white text-gray-700 border border-gray-200 hover:border-gold-300 active:bg-gray-50'
+            }`}
+          >
+            <MapPin size={16} className="mr-2 flex-shrink-0" />
+            Near Me
+          </button>
+        </div>
 
-        {/* Near Me Tab */}
-        {activeTab === 'near-me' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <MapPin size={18} className="text-teal-500 flex-shrink-0 sm:w-5 sm:h-5" />
-              <h2 className="text-lg sm:text-xl font-heading font-bold text-gray-900">Tailors Near You</h2>
-            </div>
-            <div className="space-y-3 sm:space-y-4">
-              {nearbyTailors.map((tailor) => (
-                <motion.div
-                  key={tailor.id}
-                  whileHover={{ y: -2 }}
-                  className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm hover:shadow-md transition"
-                >
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                    <img src={tailor.image} alt={tailor.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl object-cover flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="min-w-0">
-                          <h3 className="font-heading font-bold text-gray-900 text-sm sm:text-base truncate">{tailor.name}</h3>
-                          <p className="text-xs sm:text-sm text-gray-600 truncate">{tailor.specialty}</p>
+        {/* Tab Content */}
+        <div className="rounded-xl">
+          {/* Orders Tab */}
+          {activeTab === 'orders' && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-3 sm:space-y-4"
+            >
+              <h2 className="text-lg sm:text-xl font-heading font-bold text-gray-900 mb-4">Your Orders</h2>
+              {orders.length === 0 ? (
+                <div className="bg-white rounded-lg sm:rounded-xl p-8 sm:p-12 text-center border border-gray-100">
+                  <ShoppingBag size={40} className="mx-auto text-gray-300 mb-4" />
+                  <h3 className="text-gray-700 font-medium mb-2">No orders yet</h3>
+                  <p className="text-gray-500 text-sm">Start your tailoring journey by finding a tailor near you</p>
+                </div>
+              ) : (
+                orders.map((order) => (
+                  <motion.div
+                    key={order.id}
+                    whileHover={{ y: -2 }}
+                    className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm hover:shadow-md transition"
+                  >
+                    <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-2 sm:gap-0 mb-4">
+                      <div className="min-w-0">
+                        <h3 className="font-heading font-bold text-gray-900 text-sm sm:text-base">{order.type}</h3>
+                        <p className="text-xs sm:text-sm text-gray-600">by {order.tailor}</p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-lg text-xs font-medium flex-shrink-0 whitespace-nowrap ${
+                        order.status === 'Completed'
+                          ? 'bg-green-100 text-green-700'
+                          : order.status === 'In Progress'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </div>
+                    <div className="mb-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs sm:text-sm text-gray-600">Progress</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-900">{order.progress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <motion.div
+                          className="bg-gradient-to-r from-gold-400 to-gold-600 h-2 rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${order.progress}%` }}
+                          transition={{ duration: 0.8, delay: 0.2 }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+                      <div className="text-xs sm:text-sm text-gray-600">
+                        Due: <span className="font-medium text-gray-900">{order.dueDate}</span>
+                      </div>
+                      <p className="text-lg sm:text-lg font-bold text-gray-900">{order.amount}</p>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </motion.div>
+          )}
+
+          {/* Near Me Tab */}
+          {activeTab === 'near-me' && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <MapPin size={18} className="text-teal-500 flex-shrink-0 sm:w-5 sm:h-5" />
+                <h2 className="text-lg sm:text-xl font-heading font-bold text-gray-900">Tailors Near You</h2>
+              </div>
+              <div className="space-y-3 sm:space-y-4">
+                {nearbyTailors.map((tailor) => (
+                  <motion.div
+                    key={tailor.id}
+                    whileHover={{ y: -2 }}
+                    className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm hover:shadow-md transition"
+                  >
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                      <img src={tailor.image} alt={tailor.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl object-cover flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="min-w-0">
+                            <h3 className="font-heading font-bold text-gray-900 text-sm sm:text-base truncate">{tailor.name}</h3>
+                            <p className="text-xs sm:text-sm text-gray-600 truncate">{tailor.specialty}</p>
+                          </div>
+                          <span className="text-xs bg-teal-100 text-teal-700 px-2 sm:px-3 py-1 rounded-lg font-medium flex items-center gap-1 flex-shrink-0 whitespace-nowrap">
+                            <MapPin size={12} /> {tailor.distance}
+                          </span>
                         </div>
-                        <span className="text-xs bg-teal-100 text-teal-700 px-2 sm:px-3 py-1 rounded-lg font-medium flex items-center gap-1 flex-shrink-0 whitespace-nowrap">
-                          <MapPin size={12} /> {tailor.distance}
-                        </span>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm mb-3 flex-wrap">
-                        <span className="flex items-center gap-1 text-gray-700">
-                          <Star size={12} className="text-yellow-400 flex-shrink-0" fill="currentColor" />
-                          {tailor.rating} ({tailor.reviews})
-                        </span>
-                        <span className="text-gray-600">{tailor.price}</span>
-                        <span className="flex items-center gap-1 text-gray-600">
-                          <Clock size={12} className="flex-shrink-0" /> {tailor.responseTime}
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="flex-1 py-2 bg-gold-500 text-white rounded-lg text-xs font-medium hover:bg-gold-600 transition flex items-center justify-center gap-1 active:bg-gold-700 min-h-[40px]">
-                          <MessageCircle size={13} /> Chat
-                        </button>
-                        <button
-                          onClick={() => toggleSaveTailor(tailor.id)}
-                          className={`px-3 py-2 rounded-lg text-xs font-medium transition border flex-shrink-0 min-h-[40px] flex items-center justify-center ${
-                            savedTailors.includes(tailor.id)
-                              ? 'bg-red-50 border-red-200 text-red-600'
-                              : 'bg-white border-gray-200 text-gray-600 hover:border-red-200 active:bg-gray-100'
-                          }`}
-                        >
-                          <Heart size={13} fill={savedTailors.includes(tailor.id) ? 'currentColor' : 'none'} />
-                        </button>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm mb-3 flex-wrap">
+                          <span className="flex items-center gap-1 text-gray-700">
+                            <Star size={12} className="text-yellow-400 flex-shrink-0" fill="currentColor" />
+                            {tailor.rating} ({tailor.reviews})
+                          </span>
+                          <span className="text-gray-600">{tailor.price}</span>
+                          <span className="flex items-center gap-1 text-gray-600">
+                            <Clock size={12} className="flex-shrink-0" /> {tailor.responseTime}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button className="flex-1 py-2 bg-gold-500 text-white rounded-lg text-xs font-medium hover:bg-gold-600 transition flex items-center justify-center gap-1 active:bg-gold-700 min-h-[40px]">
+                            <MessageCircle size={13} /> Chat
+                          </button>
+                          <button
+                            onClick={() => toggleSaveTailor(tailor.id)}
+                            className={`px-3 py-2 rounded-lg text-xs font-medium transition border flex-shrink-0 min-h-[40px] flex items-center justify-center ${
+                              savedTailors.includes(tailor.id)
+                                ? 'bg-red-50 border-red-200 text-red-600'
+                                : 'bg-white border-gray-200 text-gray-600 hover:border-red-200 active:bg-gray-100'
+                            }`}
+                          >
+                            <Heart size={13} fill={savedTailors.includes(tailor.id) ? 'currentColor' : 'none'} />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Marketplace Tab */}
-        {activeTab === 'marketplace' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <h2 className="text-lg sm:text-xl font-heading font-bold text-gray-900 mb-4">Browse Styles</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {featuredStyles.map((style) => (
-                <motion.div
-                  key={style.id}
-                  whileHover={{ y: -5 }}
-                  className="bg-white rounded-lg sm:rounded-xl overflow-hidden shadow-sm hover:shadow-md transition border border-gray-100 cursor-pointer"
-                >
-                  <div className="relative overflow-hidden bg-gray-100 h-40 sm:h-48">
-                    <img src={style.image} alt={style.name} className="w-full h-full object-cover hover:scale-105 transition duration-300" />
-                  </div>
-                  <div className="p-3 sm:p-4">
-                    <h3 className="font-heading font-bold text-gray-900 mb-1 text-sm sm:text-base truncate">{style.name}</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 mb-3">From {style.price}</p>
-                    <button className="w-full py-2 bg-gold-500 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-gold-600 transition active:bg-gold-700 min-h-[40px]">
-                      View
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </div>
       </div>
     </div>
   );
