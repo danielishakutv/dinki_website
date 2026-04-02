@@ -1,11 +1,11 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Logo from './Logo';
 
 const mainNav = [
-  { to: '/', icon: Home, label: 'Dashboard' },
+  { to: '/dashboard', icon: Home, label: 'Dashboard' },
   { to: '/jobs', icon: Scissors, label: 'Jobs & Orders' },
   { to: '/customers', icon: Users, label: 'Customers' },
   { to: '/marketplace', icon: ShoppingBag, label: 'Marketplace' },
@@ -45,6 +45,12 @@ function SideLink({ to, icon: Icon, label, end }) {
 }
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    navigate('/');
+  };
+
   return (
     <aside className="hidden md:flex md:flex-col md:w-64 lg:w-72 h-screen bg-white border-r border-gray-200/60 fixed left-0 top-0 z-40">
       {/* Logo */}
@@ -58,7 +64,7 @@ export default function Sidebar() {
           Menu
         </p>
         {mainNav.map((item) => (
-          <SideLink key={item.to} {...item} end={item.to === '/'} />
+          <SideLink key={item.to} {...item} end={item.to === '/dashboard'} />
         ))}
 
         <div className="my-6 border-t border-gray-100" />
@@ -71,8 +77,8 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* User Profile Mini */}
-      <div className="p-4 border-t border-gray-100">
+      {/* User Profile Mini & Logout */}
+      <div className="p-4 border-t border-gray-100 space-y-3">
         <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-gold-50 to-amber-50">
           <div className="w-10 h-10 rounded-full avatar-gradient flex items-center justify-center text-white font-heading font-bold text-sm">
             DA
@@ -82,6 +88,17 @@ export default function Sidebar() {
             <p className="text-xs text-gray-400 truncate">Master Tailor</p>
           </div>
         </div>
+
+        {/* Logout Button */}
+        <motion.button
+          whileHover={{ x: 4 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
+        >
+          <LogOut size={20} strokeWidth={1.6} />
+          <span>Logout</span>
+        </motion.button>
       </div>
     </aside>
   );

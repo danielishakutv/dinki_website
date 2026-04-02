@@ -4,11 +4,14 @@ import { useLocalStorage } from './hooks/useLocalStorage';
 import { initialCustomers, initialJobs } from './data/mockData';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
+import TailorDashboard from './pages/TailorDashboard';
+import CustomerDashboard from './pages/CustomerDashboard';
 import Customers from './pages/Customers';
 import CustomerDetail from './pages/CustomerDetail';
 import Jobs from './pages/Jobs';
 import JobDetailPage from './pages/JobDetailPage';
 import Marketplace from './pages/Marketplace';
+import Landing from './pages/Landing';
 
 // Placeholder pages for settings & help
 function PlaceholderPage({ title, emoji }) {
@@ -27,64 +30,80 @@ export default function App() {
   const [showAddJob, setShowAddJob] = useState(false);
 
   return (
-    <Layout>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <Dashboard
-              jobs={jobs}
-              customers={customers}
-              setShowAddJob={setShowAddJob}
-            />
-          }
-        />
-        <Route
-          path="/customers"
-          element={<Customers customers={customers} setCustomers={setCustomers} />}
-        />
-        <Route
-          path="/customers/:id"
-          element={
-            <CustomerDetail
-              customers={customers}
-              setCustomers={setCustomers}
-              jobs={jobs}
-            />
-          }
-        />
-        <Route
-          path="/jobs"
-          element={
-            <Jobs
-              jobs={jobs}
-              setJobs={setJobs}
-              customers={customers}
-              showAddJob={showAddJob}
-              setShowAddJob={setShowAddJob}
-            />
-          }
-        />
-        <Route
-          path="/jobs/:id"
-          element={
-            <JobDetailPage
-              jobs={jobs}
-              setJobs={setJobs}
-              customers={customers}
-            />
-          }
-        />
-        <Route path="/marketplace" element={<Marketplace />} />
-        <Route
-          path="/settings"
-          element={<PlaceholderPage title="Settings" emoji="⚙️" />}
-        />
-        <Route
-          path="/help"
-          element={<PlaceholderPage title="Help & Support" emoji="💬" />}
-        />
-      </Routes>
-    </Layout>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route
+        path="/*"
+        element={
+          <Layout>
+            <Routes>
+              <Route
+                path="dashboard"
+                element={
+                  <Dashboard
+                    jobs={jobs}
+                    customers={customers}
+                    setShowAddJob={setShowAddJob}
+                  />
+                }
+              />
+              <Route
+                path="tailor-dashboard"
+                element={<TailorDashboard />}
+              />
+              <Route
+                path="customer-dashboard"
+                element={<CustomerDashboard />}
+              />
+              <Route
+                path="/customers"
+                element={<Customers customers={customers} setCustomers={setCustomers} />}
+              />
+              <Route
+                path="/customers/:id"
+                element={
+                  <CustomerDetail
+                    customers={customers}
+                    setCustomers={setCustomers}
+                    jobs={jobs}
+                  />
+                }
+              />
+              <Route
+                path="/jobs"
+                element={
+                  <Jobs
+                    jobs={jobs}
+                    setJobs={setJobs}
+                    customers={customers}
+                    showAddJob={showAddJob}
+                    setShowAddJob={setShowAddJob}
+                  />
+                }
+              />
+              <Route
+                path="/jobs/:id"
+                element={
+                  <JobDetailPage
+                    jobs={jobs}
+                    setJobs={setJobs}
+                    customers={customers}
+                  />
+                }
+              />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route
+                path="/settings"
+                element={<PlaceholderPage title="Settings" emoji="⚙️" />}
+              />
+              <Route
+                path="/help"
+                element={<PlaceholderPage title="Help & Support" emoji="💬" />}
+              />
+            </Routes>
+          </Layout>
+        }
+      />
+    </Routes>
   );
 }

@@ -36,25 +36,25 @@ export default function JobList({ jobs, onAddJob }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Search & Add */}
-      <div className="flex gap-3">
+      <div className="flex gap-2 sm:gap-3">
         <div className="flex-1 relative">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={16} className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 flex-shrink-0 sm:w-[18px] sm:h-[18px]" />
           <input
             type="text"
             placeholder="Search jobs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 rounded-xl bg-white border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
+            className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-white border border-gray-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
           />
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={onAddJob}
-          className="btn-touch px-4 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-sm transition-colors"
+          className="btn-touch px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-sm transition-colors flex-shrink-0"
         >
-          <Plus size={20} />
+          <Plus size={18} className="sm:w-5 sm:h-5" />
         </motion.button>
       </div>
 
@@ -65,7 +65,7 @@ export default function JobList({ jobs, onAddJob }) {
             key={filter}
             whileTap={{ scale: 0.95 }}
             onClick={() => setActiveFilter(filter)}
-            className={`btn-touch px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+            className={`btn-touch px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
               activeFilter === filter
                 ? 'bg-gold-500 text-white shadow-sm'
                 : 'bg-white text-gray-500 border border-gray-200 hover:border-gold-200'
@@ -79,7 +79,7 @@ export default function JobList({ jobs, onAddJob }) {
       </div>
 
       {/* Job Cards */}
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         <AnimatePresence>
           {filtered.map((job, i) => {
             const status = statusConfig[job.status];
@@ -97,11 +97,11 @@ export default function JobList({ jobs, onAddJob }) {
               >
                 <Link
                   to={`/jobs/${job.id}`}
-                  className="block bg-white rounded-2xl border border-gray-100 shadow-sm card-hover overflow-hidden"
+                  className="block bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm card-hover overflow-hidden"
                 >
-                  <div className="flex gap-4 p-4">
+                  <div className="flex gap-3 sm:gap-4 p-3 sm:p-4">
                     {/* Style Image Placeholder */}
-                    <div className="w-16 h-20 md:w-20 md:h-24 rounded-xl bg-gradient-to-br from-gold-100 to-amber-50 flex items-center justify-center text-2xl flex-shrink-0 border border-gold-100">
+                    <div className="w-14 h-16 sm:w-16 sm:h-20 md:w-20 md:h-24 rounded-lg sm:rounded-xl bg-gradient-to-br from-gold-100 to-amber-50 flex items-center justify-center text-lg sm:text-2xl flex-shrink-0 border border-gold-100">
                       {status.emoji}
                     </div>
 
@@ -109,16 +109,16 @@ export default function JobList({ jobs, onAddJob }) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="font-semibold text-gray-800 text-sm truncate">{job.title}</p>
+                          <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{job.title}</p>
                           <p className="text-xs text-gray-400 mt-0.5">{job.customerName}</p>
                         </div>
-                        <ChevronRight size={18} className="text-gray-300 flex-shrink-0 mt-1" />
+                        <ChevronRight size={16} className="text-gray-300 flex-shrink-0 mt-1 sm:w-[18px] sm:h-[18px]" />
                       </div>
 
                       <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{job.description}</p>
 
-                      <div className="flex items-center gap-3 mt-3">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${status.class}`}>
+                      <div className="flex flex-wrap items-center gap-2 mt-2.5 sm:mt-3">
+                        <span className={`px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${status.class}`}>
                           {status.label}
                         </span>
                         <span className={`flex items-center gap-1 text-[10px] ${
@@ -141,9 +141,9 @@ export default function JobList({ jobs, onAddJob }) {
                   </div>
 
                   {/* Price bar */}
-                  <div className="px-4 py-2.5 bg-gray-50/50 border-t border-gray-50 flex items-center justify-between">
+                  <div className="px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50/50 border-t border-gray-50 flex items-center justify-between">
                     <span className="text-xs text-gray-400">Price</span>
-                    <span className="text-sm font-heading font-bold text-gray-800">
+                    <span className="text-xs sm:text-sm font-heading font-bold text-gray-800">
                       ₦{job.price.toLocaleString()}
                     </span>
                   </div>
