@@ -6,6 +6,7 @@ import {
   Users, TrendingUp, ArrowRight, X, Scissors, User, Menu
 } from 'lucide-react';
 import Logo from '../components/layout/Logo';
+import { useAuth } from '../context/AuthContext';
 
 /* ─────────────────────────────────────────────
    AUTH OVERLAY — full-screen, split-panel design
@@ -33,7 +34,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
 
   const handleSubmit = () => {
     if (!canSubmit) { setError('Please fill in all fields.'); return; }
-    onSuccess(formData.accountType || 'customer');
+    onSuccess(formData.accountType || 'customer', formData.email);
   };
 
   const switchMode = (m) => {
@@ -292,6 +293,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
    ───────────────────────────────────────────── */
 export default function Landing() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showAuth, setShowAuth]         = useState(false);
   const [authMode, setAuthMode]         = useState('signup');
@@ -302,7 +304,6 @@ export default function Landing() {
     return () => clearInterval(interval);
   }, []);
 
-  // Close mobile menu on resize to desktop
   useEffect(() => {
     const handleResize = () => { if (window.innerWidth >= 768) setMobileMenuOpen(false); };
     window.addEventListener('resize', handleResize);
@@ -315,9 +316,13 @@ export default function Landing() {
     setMobileMenuOpen(false);
   };
   const closeAuth = () => setShowAuth(false);
-  const handleAuthSuccess = (accountType) => {
+
+  const handleAuthSuccess = (accountType, email) => {
+    const firstName = email ? email.split('@')[0] : 'User';
+    const name = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+    login({ name, email, accountType });
     setShowAuth(false);
-    navigate(accountType === 'tailor' ? '/tailor-dashboard' : '/customer-dashboard');
+    navigate('/dashboard');
   };
 
   const sliderImages = [
@@ -370,7 +375,6 @@ export default function Landing() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
-            {/* backdrop */}
             <motion.div
               key="mobile-backdrop"
               className="fixed inset-0 z-30 md:hidden"
@@ -381,22 +385,15 @@ export default function Landing() {
               transition={{ duration: 0.2 }}
               onClick={() => setMobileMenuOpen(false)}
             />
-
-            {/* drawer */}
             <motion.div
               key="mobile-menu"
               className="fixed top-0 right-0 bottom-0 z-40 md:hidden flex flex-col"
-              style={{
-                width: 'min(300px, 85vw)',
-                background: '#faf8f4',
-                boxShadow: '-8px 0 32px rgba(0,0,0,0.18)',
-              }}
+              style={{ width: 'min(300px, 85vw)', background: '#faf8f4', boxShadow: '-8px 0 32px rgba(0,0,0,0.18)' }}
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
-              {/* drawer header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200/70">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: '#e8a020' }}>
@@ -404,16 +401,10 @@ export default function Landing() {
                   </div>
                   <span style={{ fontFamily: "'Georgia', serif", fontWeight: 700, color: '#1a0a00', fontSize: 15 }}>Dinki Africa</span>
                 </div>
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ background: '#f0ede9' }}
-                >
+                <button onClick={() => setMobileMenuOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#f0ede9' }}>
                   <X size={15} style={{ color: '#5a4a3a' }} />
                 </button>
               </div>
-
-              {/* nav links */}
               <div className="flex flex-col px-5 py-6 gap-1 flex-1">
                 {[
                   { label: 'Trending',    href: '#trending'  },
@@ -434,37 +425,12 @@ export default function Landing() {
                   </a>
                 ))}
               </div>
-
-              {/* auth buttons at bottom of drawer */}
               <div className="px-5 pb-8 flex flex-col gap-3">
                 <div className="h-px bg-gray-200/70 mb-2" />
-                <button
-                  onClick={() => openAuth('login')}
-                  className="w-full py-3 rounded-xl text-sm font-bold transition"
-                  style={{
-                    border: '2px solid #e8a020',
-                    background: 'transparent',
-                    color: '#e8a020',
-                    fontSize: 14,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
+                <button onClick={() => openAuth('login')} className="w-full py-3 rounded-xl text-sm font-bold transition" style={{ border: '2px solid #e8a020', background: 'transparent', color: '#e8a020', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                   Sign In
                 </button>
-                <button
-                  onClick={() => openAuth('signup')}
-                  className="w-full py-3 rounded-xl text-sm font-bold transition"
-                  style={{
-                    background: 'linear-gradient(135deg, #e8a020 0%, #c87d10 100%)',
-                    border: 'none',
-                    color: '#fff',
-                    fontSize: 14,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 16px rgba(232,160,32,0.35)',
-                  }}
-                >
+                <button onClick={() => openAuth('signup')} className="w-full py-3 rounded-xl text-sm font-bold transition" style={{ background: 'linear-gradient(135deg, #e8a020 0%, #c87d10 100%)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(232,160,32,0.35)' }}>
                   Create Account
                 </button>
               </div>
@@ -476,25 +442,16 @@ export default function Landing() {
       {/* ── NAVBAR ── */}
       <nav className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-b border-gray-200/60 h-14 flex items-center justify-between px-4 md:px-8">
         <Logo size="sm" />
-
-        {/* desktop nav links */}
         <div className="hidden md:flex gap-8 items-center">
           <a href="#trending"  className="text-gray-700 hover:text-gold-500 transition font-body text-sm">Trending</a>
           <a href="#tailors"   className="text-gray-700 hover:text-gold-500 transition font-body text-sm">Top Tailors</a>
           <a href="#materials" className="text-gray-700 hover:text-gold-500 transition font-body text-sm">Shop</a>
         </div>
-
-        {/* desktop auth buttons */}
         <div className="hidden md:flex items-center gap-2">
           <button
             onClick={() => openAuth('login')}
             className="px-4 py-2 rounded-lg transition text-sm font-semibold"
-            style={{
-              border: '1.5px solid #e0d0c0',
-              background: 'transparent',
-              color: '#5a4a3a',
-              cursor: 'pointer',
-            }}
+            style={{ border: '1.5px solid #e0d0c0', background: 'transparent', color: '#5a4a3a', cursor: 'pointer' }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = '#e8a020'; e.currentTarget.style.color = '#e8a020'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = '#e0d0c0'; e.currentTarget.style.color = '#5a4a3a'; }}
           >
@@ -503,20 +460,13 @@ export default function Landing() {
           <button
             onClick={() => openAuth('signup')}
             className="px-4 py-2 rounded-lg transition text-sm font-semibold text-white"
-            style={{
-              background: 'linear-gradient(135deg, #e8a020 0%, #c87d10 100%)',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 2px 10px rgba(232,160,32,0.3)',
-            }}
+            style={{ background: 'linear-gradient(135deg, #e8a020 0%, #c87d10 100%)', border: 'none', cursor: 'pointer', boxShadow: '0 2px 10px rgba(232,160,32,0.3)' }}
             onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(232,160,32,0.45)'}
             onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 10px rgba(232,160,32,0.3)'}
           >
             Sign Up
           </button>
         </div>
-
-        {/* mobile hamburger */}
         <button
           className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg transition"
           style={{ background: mobileMenuOpen ? '#f0ede9' : 'transparent', border: 'none', cursor: 'pointer' }}
@@ -538,27 +488,17 @@ export default function Landing() {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30" />
         </div>
-
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 w-full">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-              <motion.h1
-                className="font-heading text-4xl md:text-5xl font-bold text-white mb-4 leading-tight pt-6 md:pt-0"
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.6 }}
-              >
+              <motion.h1 className="font-heading text-4xl md:text-5xl font-bold text-white mb-4 leading-tight pt-6 md:pt-0" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.6 }}>
                 Authentic African Tailoring, Your Way
               </motion.h1>
-              <motion.p
-                className="text-gray-100 text-lg mb-8 font-body leading-relaxed"
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.6 }}
-              >
+              <motion.p className="text-gray-100 text-lg mb-8 font-body leading-relaxed" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.6 }}>
                 Connect with skilled tailors across Africa. Design custom pieces that celebrate your culture and style.
               </motion.p>
               <motion.div className="flex flex-col sm:flex-row gap-4 mb-8" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.6 }}>
-                <button
-                  onClick={() => openAuth('signup')}
-                  className="px-8 py-3 bg-gold-500 text-white rounded-lg hover:bg-gold-600 transition font-heading font-semibold flex items-center justify-center gap-2 group"
-                >
+                <button onClick={() => openAuth('signup')} className="px-8 py-3 bg-gold-500 text-white rounded-lg hover:bg-gold-600 transition font-heading font-semibold flex items-center justify-center gap-2 group">
                   Find a Tailor <ArrowRight size={18} className="group-hover:translate-x-1 transition" />
                 </button>
                 <button className="px-8 py-3 border-2 border-white text-white rounded-lg hover:bg-white/10 transition font-heading font-semibold">
@@ -579,14 +519,9 @@ export default function Landing() {
             <div className="hidden md:block" />
           </div>
         </div>
-
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
           {sliderImages.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentSlide(index)}
-              className={`h-2 rounded-full transition-all ${currentSlide === index ? 'bg-gold-500 w-6' : 'bg-white/50 w-2'}`}
-            />
+            <button key={index} onClick={() => setCurrentSlide(index)} className={`h-2 rounded-full transition-all ${currentSlide === index ? 'bg-gold-500 w-6' : 'bg-white/50 w-2'}`} />
           ))}
         </div>
       </section>
@@ -708,10 +643,7 @@ export default function Landing() {
                 <p className="font-body text-indigo-100 mb-4">Get ₦5,000 off your first custom tailoring order</p>
                 <p className="text-4xl font-heading font-bold">DINKI20</p>
               </div>
-              <button
-                onClick={() => openAuth('signup')}
-                className="mt-6 px-6 py-3 bg-gold-500 text-white rounded-lg hover:bg-gold-600 transition font-heading font-semibold"
-              >
+              <button onClick={() => openAuth('signup')} className="mt-6 px-6 py-3 bg-gold-500 text-white rounded-lg hover:bg-gold-600 transition font-heading font-semibold">
                 Claim Now
               </button>
             </motion.div>
