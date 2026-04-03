@@ -54,8 +54,8 @@ export default function RecentActivity({ jobs, customers }) {
                 className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50/50 transition-colors"
               >
                 {/* Style image placeholder */}
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold-100 to-amber-100 flex items-center justify-center text-lg flex-shrink-0">
-                  {status.emoji}
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold-100 to-amber-100 flex items-center justify-center flex-shrink-0">
+                  <status.icon size={20} className="text-gold-600" />
                 </div>
 
                 <div className="flex-1 min-w-0">

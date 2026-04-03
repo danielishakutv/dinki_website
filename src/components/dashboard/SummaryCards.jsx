@@ -85,11 +85,11 @@ export default function SummaryCards({ jobs, customers }) {
             </div>
             <ArrowUpRight size={16} className="text-gray-300" />
           </div>
-          <p className="text-2xl md:text-3xl font-heading font-bold text-gray-900 mb-0.5">
+          <p className="text-xl md:text-3xl font-heading font-bold text-gray-900 mb-0.5 truncate">
             {card.value}
           </p>
-          <p className="text-xs text-gray-400 font-medium">{card.label}</p>
-          <p className={`text-[10px] mt-2 ${card.text} font-medium`}>{card.trend}</p>
+          <p className="text-[10px] md:text-xs text-gray-400 font-medium truncate">{card.label}</p>
+          <p className={`text-[10px] mt-2 ${card.text} font-medium truncate`}>{card.trend}</p>
         </motion.div>
       ))}
     </motion.div>

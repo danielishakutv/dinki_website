@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronRight, Star, Zap, ShoppingBag, Eye, EyeOff,
-  Users, TrendingUp, ArrowRight, X, Scissors, User, Menu
+  Users, TrendingUp, ArrowRight, X, Scissors, User, Menu, Check
 } from 'lucide-react';
 import Logo from '../components/layout/Logo';
 
@@ -95,7 +95,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
                 </p>
               </div>
               <div className="relative z-10 flex gap-7">
-                {[['2K+', 'Tailors'], ['14K+', 'Customers'], ['4.9★', 'Rating']].map(([v, l]) => (
+                {[['2K+', 'Tailors'], ['14K+', 'Customers'], ['4.9', 'Rating']].map(([v, l]) => (
                   <div key={l}>
                     <p style={{ fontFamily: "'Georgia', serif", color: '#e8a020', fontSize: 20, fontWeight: 700, lineHeight: 1 }}>{v}</p>
                     <p className="text-white/40 text-xs mt-1">{l}</p>
@@ -290,7 +290,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
 /* ─────────────────────────────────────────────
    MAIN LANDING PAGE
    ───────────────────────────────────────────── */
-export default function Landing() {
+export default function Landing({ setUserRole }) {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showAuth, setShowAuth]         = useState(false);
@@ -317,7 +317,8 @@ export default function Landing() {
   const closeAuth = () => setShowAuth(false);
   const handleAuthSuccess = (accountType) => {
     setShowAuth(false);
-    navigate(accountType === 'tailor' ? '/tailor-dashboard' : '/customer-dashboard');
+    if (setUserRole) setUserRole(accountType);
+    navigate(accountType === 'tailor' ? '/dashboard' : '/home');
   };
 
   const sliderImages = [
@@ -744,7 +745,7 @@ export default function Landing() {
                 ].map(([title, sub]) => (
                   <div key={title} className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-gold-500 flex items-center justify-center flex-shrink-0 mt-1">
-                      <span className="text-white text-sm font-bold">✓</span>
+                      <Check size={14} className="text-white" strokeWidth={3} />
                     </div>
                     <div>
                       <p className="font-heading font-semibold text-gray-900">{title}</p>

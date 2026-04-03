@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Scissors, ChevronDown } from 'lucide-react';
 
 const statusOptions = [
-  { value: 'cutting', label: '✂️ Cutting' },
-  { value: 'stitching', label: '🧵 Stitching' },
-  { value: 'ready', label: '✅ Ready' },
-  { value: 'delivered', label: '📦 Delivered' },
+  { value: 'cutting', label: 'Cutting' },
+  { value: 'stitching', label: 'Stitching' },
+  { value: 'ready', label: 'Ready' },
+  { value: 'delivered', label: 'Delivered' },
 ];
 
 export default function AddJobModal({ isOpen, onClose, onSave, customers }) {
@@ -50,7 +50,7 @@ export default function AddJobModal({ isOpen, onClose, onSave, customers }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm px-4 pt-4 pb-24 md:pb-4"
           onClick={onClose}
         >
           <motion.div

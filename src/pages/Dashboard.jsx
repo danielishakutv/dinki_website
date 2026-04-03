@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Lightbulb } from 'lucide-react';
 import SummaryCards from '../components/dashboard/SummaryCards';
-import QuickAction from '../components/dashboard/QuickAction';
 import RecentActivity from '../components/dashboard/RecentActivity';
 
 export default function Dashboard({ jobs, customers, setShowAddJob }) {
@@ -26,7 +25,7 @@ export default function Dashboard({ jobs, customers, setShowAddJob }) {
       >
         <div>
           <h1 className="text-2xl md:text-3xl font-heading font-bold text-gray-900">
-            {getGreeting()} 👋
+            {getGreeting()}
           </h1>
           <p className="text-sm text-gray-400 mt-1">
             Here's what's happening with your tailoring business today.
@@ -87,7 +86,7 @@ export default function Dashboard({ jobs, customers, setShowAddJob }) {
             transition={{ delay: 0.4 }}
             className="bg-gradient-to-br from-[#1B1F3B] to-[#2D325A] rounded-2xl p-5 text-white"
           >
-            <p className="text-xs font-medium text-gold-400 mb-1">💡 Pro Tip</p>
+            <p className="text-xs font-medium text-gold-400 mb-1 flex items-center gap-1"><Lightbulb size={12} /> Pro Tip</p>
             <p className="text-sm leading-relaxed text-gray-300">
               Record measurements right after a fitting session while they're fresh. Use the Quick Action button to save time!
             </p>
@@ -95,11 +94,6 @@ export default function Dashboard({ jobs, customers, setShowAddJob }) {
         </div>
       </div>
 
-      {/* Quick Action FAB */}
-      <QuickAction
-        onAddJob={() => setShowAddJob(true)}
-        onRecordMeasurement={() => navigate('/customers')}
-      />
     </div>
   );
 }

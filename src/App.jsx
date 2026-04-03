@@ -12,30 +12,28 @@ import Jobs from './pages/Jobs';
 import JobDetailPage from './pages/JobDetailPage';
 import Marketplace from './pages/Marketplace';
 import Landing from './pages/Landing';
-
-// Placeholder pages for settings & help
-function PlaceholderPage({ title, emoji }) {
-  return (
-    <div className="p-4 md:p-8 flex flex-col items-center justify-center min-h-[60vh]">
-      <p className="text-5xl mb-4">{emoji}</p>
-      <h1 className="text-xl font-heading font-bold text-gray-800 mb-2">{title}</h1>
-      <p className="text-sm text-gray-400">This section is under development.</p>
-    </div>
-  );
-}
+import Profile from './pages/Profile';
+import Messages from './pages/Messages';
+import ChatDetail from './pages/ChatDetail';
+import Favourites from './pages/Favourites';
+import Notifications from './pages/Notifications';
+import NotificationDetail from './pages/NotificationDetail';
+import SettingsPage from './pages/SettingsPage';
+import HelpSupport from './pages/HelpSupport';
 
 export default function App() {
   const [customers, setCustomers] = useLocalStorage('dinki-customers', initialCustomers);
   const [jobs, setJobs] = useLocalStorage('dinki-jobs', initialJobs);
+  const [userRole, setUserRole] = useLocalStorage('dinki-user-role', null);
   const [showAddJob, setShowAddJob] = useState(false);
 
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<Landing setUserRole={setUserRole} />} />
       <Route
         path="/*"
         element={
-          <Layout>
+          <Layout userRole={userRole} onAddJob={() => setShowAddJob(true)}>
             <Routes>
               <Route
                 path="dashboard"
@@ -51,10 +49,11 @@ export default function App() {
                 path="tailor-dashboard"
                 element={<TailorDashboard />}
               />
-              <Route
-                path="customer-dashboard"
-                element={<CustomerDashboard />}
-              />
+              {/* Customer routes */}
+              <Route path="home" element={<CustomerDashboard tab="home" />} />
+              <Route path="orders" element={<CustomerDashboard tab="orders" />} />
+              <Route path="near-me" element={<CustomerDashboard tab="near-me" />} />
+              <Route path="customer-dashboard" element={<CustomerDashboard tab="home" />} />
               <Route
                 path="/customers"
                 element={<Customers customers={customers} setCustomers={setCustomers} />}
@@ -92,14 +91,14 @@ export default function App() {
                 }
               />
               <Route path="/marketplace" element={<Marketplace />} />
-              <Route
-                path="/settings"
-                element={<PlaceholderPage title="Settings" emoji="⚙️" />}
-              />
-              <Route
-                path="/help"
-                element={<PlaceholderPage title="Help & Support" emoji="💬" />}
-              />
+              <Route path="/profile" element={<Profile userRole={userRole} />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/messages/:id" element={<ChatDetail />} />
+              <Route path="/favourites" element={<Favourites />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/notifications/:id" element={<NotificationDetail />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/help" element={<HelpSupport />} />
             </Routes>
           </Layout>
         }

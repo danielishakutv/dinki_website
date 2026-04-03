@@ -95,7 +95,7 @@ export default function TailorDashboard() {
         >
           <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-gray-900">
-              Welcome back, {tailorData.name.split(' ')[0]} ✂️
+              Welcome back, {tailorData.name.split(' ')[0]}
             </h1>
             <p className="text-gray-500 text-xs sm:text-sm mt-1 truncate">{tailorData.specialty} • {tailorData.location}</p>
           </div>
@@ -159,7 +159,7 @@ export default function TailorDashboard() {
               <p className="text-gold-700 text-xs sm:text-sm font-medium">Status</p>
               <Sparkles size={16} className="text-gold-500 sm:w-5 sm:h-5" />
             </div>
-            <p className="text-xs sm:text-sm font-bold text-gold-800">Available ✓</p>
+            <p className="text-xs sm:text-sm font-bold text-gold-800">Available</p>
           </div>
         </motion.div>
 
@@ -168,15 +168,15 @@ export default function TailorDashboard() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
-          className="flex gap-2 mb-6 sm:mb-8 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory scroll-smooth touch-pan-x"
+          className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-6 sm:mb-8"
         >
           {['jobs', 'earnings', 'customers', 'portfolio', 'profile'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 snap-start min-h-[40px] sm:min-h-[44px] flex items-center justify-center ${
+              className={`px-3 sm:px-5 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-all min-h-[40px] sm:min-h-[44px] flex items-center justify-center truncate ${
                 activeTab === tab
-                  ? 'bg-gold-500 text-white shadow-md shadow-gold-500/25 scale-105'
+                  ? 'bg-gold-500 text-white shadow-md shadow-gold-500/25'
                   : 'bg-white text-gray-600 border border-gray-200 hover:border-gold-200 active:bg-gray-50'
               }`}
             >
@@ -437,7 +437,7 @@ export default function TailorDashboard() {
                     <p className="text-xs text-gray-600 font-medium">ACCOUNT STATUS</p>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-xs sm:text-sm font-medium text-gray-700">Active & Verified ✓</span>
+                      <span className="text-xs sm:text-sm font-medium text-gray-700">Active & Verified</span>
                     </div>
                   </div>
                 </div>

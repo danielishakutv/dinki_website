@@ -17,7 +17,6 @@ export default function JobDetailPage({ jobs, setJobs, customers }) {
   if (!job) {
     return (
       <div className="p-4 md:p-8 text-center py-20">
-        <p className="text-4xl mb-3">😕</p>
         <p className="text-gray-400">Job not found.</p>
         <Link to="/jobs" className="text-gold-500 text-sm mt-2 inline-block">← Back to jobs</Link>
       </div>
@@ -64,14 +63,14 @@ export default function JobDetailPage({ jobs, setJobs, customers }) {
 
         <div className="p-5 md:p-6">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <h1 className="text-xl md:text-2xl font-heading font-bold text-gray-900">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl md:text-2xl font-heading font-bold text-gray-900 break-words">
                 {job.title}
               </h1>
-              <p className="text-sm text-gray-400 mt-1">{job.description}</p>
+              <p className="text-sm text-gray-400 mt-1 break-words">{job.description}</p>
             </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${status.class} flex-shrink-0`}>
-              {status.emoji} {status.label}
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${status.class} flex-shrink-0 inline-flex items-center gap-1`}>
+              <status.icon size={12} /> {status.label}
             </span>
           </div>
 
@@ -102,7 +101,9 @@ export default function JobDetailPage({ jobs, setJobs, customers }) {
         className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6"
       >
         <h3 className="font-heading font-semibold text-gray-800 mb-4">Progress</h3>
-        <div className="flex items-center gap-2 md:gap-4">
+
+        {/* Desktop: horizontal stepper */}
+        <div className="hidden md:flex items-center gap-4">
           {statusFlow.map((s, i) => {
             const sc = statusConfig[s];
             const isCompleted = i <= currentStatusIndex;
@@ -113,7 +114,7 @@ export default function JobDetailPage({ jobs, setJobs, customers }) {
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => updateStatus(s)}
-                  className={`flex flex-col items-center gap-1.5 p-2 md:p-3 rounded-xl flex-1 transition-all ${
+                  className={`flex flex-col items-center gap-1 p-3 rounded-xl flex-1 min-w-0 transition-all ${
                     isCurrent
                       ? 'bg-gold-50 border-2 border-gold-300'
                       : isCompleted
@@ -121,10 +122,8 @@ export default function JobDetailPage({ jobs, setJobs, customers }) {
                       : 'bg-gray-50 border border-gray-100'
                   }`}
                 >
-                  <span className="text-lg">{sc.emoji}</span>
-                  <span className={`text-[10px] md:text-xs font-medium ${
-                    isCurrent ? 'text-gold-600' : isCompleted ? 'text-emerald-600' : 'text-gray-400'
-                  }`}>
+                  <sc.icon size={20} className={isCompleted ? (isCurrent ? 'text-gold-600' : 'text-emerald-600') : 'text-gray-400'} />
+                  <span className={`text-xs font-medium ${isCurrent ? 'text-gold-600' : isCompleted ? 'text-emerald-600' : 'text-gray-400'}`}>
                     {sc.label}
                   </span>
                   {isCompleted ? (
@@ -137,6 +136,66 @@ export default function JobDetailPage({ jobs, setJobs, customers }) {
                   <div className={`h-0.5 flex-1 rounded ${i < currentStatusIndex ? 'bg-emerald-300' : 'bg-gray-200'}`} />
                 )}
               </React.Fragment>
+            );
+          })}
+        </div>
+
+        {/* Mobile: vertical timeline */}
+        <div className="md:hidden space-y-0">
+          {statusFlow.map((s, i) => {
+            const sc = statusConfig[s];
+            const isCompleted = i <= currentStatusIndex;
+            const isCurrent = i === currentStatusIndex;
+            const isLast = i === statusFlow.length - 1;
+
+            return (
+              <div key={s} className="flex gap-3">
+                {/* Left rail: icon + connector */}
+                <div className="flex flex-col items-center">
+                  <motion.div
+                    whileTap={{ scale: 0.9 }}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      isCurrent
+                        ? 'bg-gold-100 ring-2 ring-gold-400 ring-offset-2'
+                        : isCompleted
+                        ? 'bg-emerald-100'
+                        : 'bg-gray-100'
+                    }`}
+                  >
+                    <sc.icon size={18} className={isCurrent ? 'text-gold-600' : isCompleted ? 'text-emerald-600' : 'text-gray-400'} />
+                  </motion.div>
+                  {!isLast && (
+                    <div className={`w-0.5 flex-1 min-h-[20px] my-1 rounded-full ${i < currentStatusIndex ? 'bg-emerald-300' : 'bg-gray-200'}`} />
+                  )}
+                </div>
+
+                {/* Right content: tappable row */}
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => updateStatus(s)}
+                  className={`flex items-center gap-3 flex-1 rounded-xl px-4 py-3 mb-2 text-left transition-all ${
+                    isCurrent
+                      ? 'bg-gold-50 border-2 border-gold-300 shadow-sm'
+                      : isCompleted
+                      ? 'bg-emerald-50/60 border border-emerald-200'
+                      : 'bg-gray-50 border border-gray-100'
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-semibold ${isCurrent ? 'text-gold-700' : isCompleted ? 'text-emerald-700' : 'text-gray-500'}`}>
+                      {sc.label}
+                    </p>
+                    <p className={`text-[11px] mt-0.5 ${isCurrent ? 'text-gold-500' : isCompleted ? 'text-emerald-500' : 'text-gray-400'}`}>
+                      {isCurrent ? 'Current stage' : isCompleted ? 'Completed' : 'Pending'}
+                    </p>
+                  </div>
+                  {isCompleted ? (
+                    <CheckCircle size={20} className="text-emerald-500 flex-shrink-0" />
+                  ) : (
+                    <Circle size={20} className="text-gray-300 flex-shrink-0" />
+                  )}
+                </motion.button>
+              </div>
             );
           })}
         </div>

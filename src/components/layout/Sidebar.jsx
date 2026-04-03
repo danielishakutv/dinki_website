@@ -1,17 +1,28 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle, LogOut } from 'lucide-react';
+import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle, LogOut, MapPin, ClipboardList, User, MessageSquare, Heart, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Logo from './Logo';
 
-const mainNav = [
+const tailorNav = [
   { to: '/dashboard', icon: Home, label: 'Dashboard' },
   { to: '/jobs', icon: Scissors, label: 'Jobs & Orders' },
   { to: '/customers', icon: Users, label: 'Customers' },
   { to: '/marketplace', icon: ShoppingBag, label: 'Marketplace' },
 ];
 
+const customerNav = [
+  { to: '/home', icon: Home, label: 'Home' },
+  { to: '/orders', icon: ClipboardList, label: 'Orders' },
+  { to: '/near-me', icon: MapPin, label: 'Near Me' },
+  { to: '/marketplace', icon: ShoppingBag, label: 'Marketplace' },
+];
+
 const bottomNav = [
+  { to: '/profile', icon: User, label: 'Profile' },
+  { to: '/messages', icon: MessageSquare, label: 'Messages' },
+  { to: '/favourites', icon: Heart, label: 'Favourites' },
+  { to: '/notifications', icon: Bell, label: 'Notifications' },
   { to: '/settings', icon: Settings, label: 'Settings' },
   { to: '/help', icon: HelpCircle, label: 'Help & Support' },
 ];
@@ -44,10 +55,13 @@ function SideLink({ to, icon: Icon, label, end }) {
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ userRole }) {
   const navigate = useNavigate();
+  const mainNav = userRole === 'customer' ? customerNav : tailorNav;
+  const homeRoute = userRole === 'customer' ? '/home' : '/dashboard';
 
   const handleLogout = () => {
+    localStorage.removeItem('dinki-user-role');
     navigate('/');
   };
 
@@ -64,7 +78,7 @@ export default function Sidebar() {
           Menu
         </p>
         {mainNav.map((item) => (
-          <SideLink key={item.to} {...item} end={item.to === '/dashboard'} />
+          <SideLink key={item.to} {...item} end={item.to === homeRoute} />
         ))}
 
         <div className="my-6 border-t border-gray-100" />
@@ -81,11 +95,15 @@ export default function Sidebar() {
       <div className="p-4 border-t border-gray-100 space-y-3">
         <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-gold-50 to-amber-50">
           <div className="w-10 h-10 rounded-full avatar-gradient flex items-center justify-center text-white font-heading font-bold text-sm">
-            DA
+            {userRole === 'customer' ? 'AO' : 'DA'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-800 truncate">Dinki Atelier</p>
-            <p className="text-xs text-gray-400 truncate">Master Tailor</p>
+            <p className="text-sm font-semibold text-gray-800 truncate">
+              {userRole === 'customer' ? 'Adeola Okafor' : 'Dinki Atelier'}
+            </p>
+            <p className="text-xs text-gray-400 truncate">
+              {userRole === 'customer' ? 'Customer' : 'Master Tailor'}
+            </p>
           </div>
         </div>
 

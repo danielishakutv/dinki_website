@@ -73,8 +73,8 @@ export default function FabricStore({ fabrics }) {
 
           {/* Info */}
           <div className="p-3.5">
-            <p className="text-sm font-semibold text-gray-800">{fabric.name}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{fabric.origin}</p>
+            <p className="text-sm font-semibold text-gray-800 truncate">{fabric.name}</p>
+            <p className="text-xs text-gray-400 mt-0.5 truncate">{fabric.origin}</p>
             <div className="flex items-center justify-between mt-2.5">
               <div>
                 <p className="text-sm font-heading font-bold text-gray-800">

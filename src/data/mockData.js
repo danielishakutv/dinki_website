@@ -1,3 +1,5 @@
+import { Scissors, Layers, CheckCircle2, Package, Ruler, Move3d, Shirt } from 'lucide-react';
+
 // ─── Mock Data for Dinki.africa ───
 
 export const initialCustomers = [
@@ -281,20 +283,20 @@ export const fabricStore = [
 ];
 
 export const measurementFields = [
-  { key: 'neck', label: 'Neck', unit: 'cm', icon: '📏' },
-  { key: 'chest', label: 'Chest', unit: 'cm', icon: '📐' },
-  { key: 'waist', label: 'Waist', unit: 'cm', icon: '📏' },
-  { key: 'hip', label: 'Hip', unit: 'cm', icon: '📐' },
-  { key: 'shoulder', label: 'Shoulder', unit: 'cm', icon: '📏' },
-  { key: 'sleeve', label: 'Sleeve Length', unit: 'cm', icon: '📐' },
-  { key: 'length', label: 'Full Length', unit: 'cm', icon: '📏' },
-  { key: 'agbadaSpan', label: 'Agbada Span', unit: 'cm', icon: '👘' },
-  { key: 'inseam', label: 'Inseam', unit: 'cm', icon: '📐' },
+  { key: 'neck', label: 'Neck', unit: 'in', icon: Ruler },
+  { key: 'chest', label: 'Chest', unit: 'in', icon: Move3d },
+  { key: 'waist', label: 'Waist', unit: 'in', icon: Ruler },
+  { key: 'hip', label: 'Hip', unit: 'in', icon: Move3d },
+  { key: 'shoulder', label: 'Shoulder', unit: 'in', icon: Ruler },
+  { key: 'sleeve', label: 'Sleeve Length', unit: 'in', icon: Move3d },
+  { key: 'length', label: 'Full Length', unit: 'in', icon: Ruler },
+  { key: 'agbadaSpan', label: 'Agbada Span', unit: 'in', icon: Shirt },
+  { key: 'inseam', label: 'Inseam', unit: 'in', icon: Move3d },
 ];
 
 export const statusConfig = {
-  cutting: { label: 'Cutting', class: 'status-cutting', emoji: '✂️' },
-  stitching: { label: 'Stitching', class: 'status-stitching', emoji: '🧵' },
-  ready: { label: 'Ready', class: 'status-ready', emoji: '✅' },
-  delivered: { label: 'Delivered', class: 'status-delivered', emoji: '📦' },
+  cutting: { label: 'Cutting', class: 'status-cutting', icon: Scissors },
+  stitching: { label: 'Stitching', class: 'status-stitching', icon: Layers },
+  ready: { label: 'Ready', class: 'status-ready', icon: CheckCircle2 },
+  delivered: { label: 'Delivered', class: 'status-delivered', icon: Package },
 };

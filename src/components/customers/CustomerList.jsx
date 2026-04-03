@@ -65,9 +65,9 @@ export default function CustomerList({ customers, onAddCustomer }) {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-800 text-sm">{customer.name}</p>
+                  <p className="font-semibold text-gray-800 text-sm truncate">{customer.name}</p>
                   <div className="flex items-center gap-1 mt-0.5">
-                    <MapPin size={12} className="text-gray-300" />
+                    <MapPin size={12} className="text-gray-300 flex-shrink-0" />
                     <p className="text-xs text-gray-400 truncate">{customer.location}</p>
                   </div>
                   <p className="text-xs text-gray-300 mt-0.5">{customer.phone}</p>
@@ -83,7 +83,9 @@ export default function CustomerList({ customers, onAddCustomer }) {
 
       {filtered.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-4xl mb-3">🔍</p>
+          <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
+            <Search size={24} className="text-gray-400" />
+          </div>
           <p className="text-sm text-gray-400">No customers found.</p>
         </div>
       )}

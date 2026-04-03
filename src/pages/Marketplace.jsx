@@ -25,7 +25,7 @@ export default function Marketplace() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-3 mb-6 scrollbar-hide">
+      <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -33,13 +33,13 @@ export default function Marketplace() {
               key={tab.id}
               whileTap={{ scale: 0.95 }}
               onClick={() => setActiveTab(tab.id)}
-              className={`btn-touch flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] whitespace-nowrap flex-shrink-0 ${
                 isActive
                   ? 'bg-gold-500 text-white shadow-sm shadow-gold-500/20'
                   : 'bg-white text-gray-500 border border-gray-200 hover:border-gold-200'
               }`}
             >
-              <tab.icon size={16} />
+              <tab.icon size={16} className="flex-shrink-0" />
               {tab.label}
             </motion.button>
           );

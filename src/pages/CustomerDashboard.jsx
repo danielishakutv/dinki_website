@@ -1,23 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, MapPin, Star, Heart, MessageCircle, Settings, LogOut, Sparkles, Clock, MoreVertical, Bell, Home, Store, HelpCircle, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ShoppingBag, MapPin, Star, Heart, MessageCircle, Sparkles, Clock, Store, ChevronRight } from 'lucide-react';
 
-export default function CustomerDashboard() {
+export default function CustomerDashboard({ tab = 'home' }) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('home');
   const [savedTailors, setSavedTailors] = useState([]);
-  const [showMore, setShowMore] = useState(false);
 
   const customerData = {
     name: 'Adeola Okafor',
-    role: 'Customer',
-    email: 'adeola@example.com',
-    phone: '+234 (0)901 234 5678',
     location: 'Lagos Island, Lagos',
   };
-
-  const initials = customerData.name.split(' ').map(n => n[0]).join('');
 
   const nearbyTailors = [
     { id: 1, name: 'Aunty Zainab', specialty: 'Traditional Ankara', rating: 4.9, reviews: 324, distance: '0.8 km', image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?w=200&h=200&fit=crop', price: '₦5,000+', responseTime: '2 hours' },
@@ -39,113 +32,22 @@ export default function CustomerDashboard() {
     { id: 4, name: 'Aso Ebi Luxury', image: 'https://images.pexels.com/photos/3622710/pexels-photo-3622710.jpeg?w=400&h=400&fit=crop', price: '₦20,000+' },
   ];
 
-  const handleSignOut = () => navigate('/');
   const toggleSaveTailor = (id) => setSavedTailors(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-8">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
 
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-6 sm:mb-8"
-        >
-          {/* Profile Section: initials + name + role */}
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gold-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-              <span className="text-white font-bold text-base sm:text-lg leading-none">{initials}</span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-base sm:text-lg font-heading font-bold text-gray-900 leading-tight truncate">
-                {customerData.name}
-              </p>
-              <span className="text-xs font-medium text-gold-600 bg-gold-50 px-2.5 py-0.5 rounded-full">
-                Customer
-              </span>
-            </div>
-          </div>
-
-          {/* Right actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button className="p-2 sm:p-2.5 hover:bg-white rounded-lg sm:rounded-xl transition border border-gray-200 relative">
-              <Bell size={18} className="text-gray-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-            </button>
-
-            <div className="relative">
-              <button
-                onClick={() => setShowMore(!showMore)}
-                className="p-2 sm:p-2.5 hover:bg-white rounded-lg sm:rounded-xl transition border border-gray-200"
-              >
-                <MoreVertical size={18} className="text-gray-600" />
-              </button>
-
-              <AnimatePresence>
-                {showMore && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
-                    onClick={() => setShowMore(false)}
-                  >
-                    <button className="w-full flex items-center gap-3 px-5 py-3.5 text-gray-700 hover:bg-gold-50 hover:text-gold-600 transition-colors border-b border-gray-100 text-sm font-medium min-h-[44px]">
-                      <Settings size={16} className="flex-shrink-0" />
-                      <span>Settings</span>
-                    </button>
-                    <button className="w-full flex items-center gap-3 px-5 py-3.5 text-gray-700 hover:bg-gold-50 hover:text-gold-600 transition-colors border-b border-gray-100 text-sm font-medium min-h-[44px]">
-                      <HelpCircle size={16} className="flex-shrink-0" />
-                      <span>Help</span>
-                    </button>
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full flex items-center gap-3 px-5 py-3.5 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium min-h-[44px]"
-                    >
-                      <LogOut size={16} className="flex-shrink-0" />
-                      <span>Logout</span>
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {showMore && (
-                <div className="fixed inset-0 z-40" onClick={() => setShowMore(false)} />
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Tab Navigation: Home | Orders | Near Me | Marketplace */}
-        <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8 overflow-x-auto scrollbar-hide -mx-3 sm:-mx-4 md:mx-0 px-3 sm:px-4 md:px-0">
-          {[
-            { key: 'home', label: 'Home', icon: Home },
-            { key: 'orders', label: 'Orders', icon: ShoppingBag },
-            { key: 'near-me', label: 'Near Me', icon: MapPin },
-            { key: 'marketplace', label: 'Marketplace', icon: Store },
-          ].map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`whitespace-nowrap px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base transition flex-shrink-0 min-h-[44px] flex items-center justify-center gap-2 ${
-                activeTab === key
-                  ? 'bg-gold-500 text-white shadow-md'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-gold-300 active:bg-gray-50'
-              }`}
-            >
-              <Icon size={15} />
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
-        <div>
-
-          {/* HOME TAB — Dashboard */}
-          {activeTab === 'home' && (
+          {/* HOME TAB */}
+          {tab === 'home' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-6">
+
+              {/* Greeting */}
+              <div>
+                <h1 className="text-2xl md:text-3xl font-heading font-bold text-gray-900">
+                  Hello, {customerData.name.split(' ')[0]}
+                </h1>
+                <p className="text-sm text-gray-400 mt-1">Find tailors, track orders, and explore styles.</p>
+              </div>
 
               {/* Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
@@ -187,7 +89,7 @@ export default function CustomerDashboard() {
               <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-heading font-bold text-gray-900">Recent Orders</h3>
-                  <button onClick={() => setActiveTab('orders')} className="text-xs text-gold-600 font-medium flex items-center gap-1 hover:underline">
+                  <button onClick={() => navigate('/orders')} className="text-xs text-gold-600 font-medium flex items-center gap-1 hover:underline">
                     View all <ChevronRight size={13} />
                   </button>
                 </div>
@@ -214,7 +116,7 @@ export default function CustomerDashboard() {
               <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-heading font-bold text-gray-900">Tailors Near You</h3>
-                  <button onClick={() => setActiveTab('near-me')} className="text-xs text-gold-600 font-medium flex items-center gap-1 hover:underline">
+                  <button onClick={() => navigate('/near-me')} className="text-xs text-gold-600 font-medium flex items-center gap-1 hover:underline">
                     See all <ChevronRight size={13} />
                   </button>
                 </div>
@@ -239,7 +141,7 @@ export default function CustomerDashboard() {
           )}
 
           {/* ORDERS TAB */}
-          {activeTab === 'orders' && (
+          {tab === 'orders' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-heading font-bold text-gray-900 mb-4">Your Orders</h2>
               {orders.map((order) => (
@@ -278,7 +180,7 @@ export default function CustomerDashboard() {
           )}
 
           {/* NEAR ME TAB */}
-          {activeTab === 'near-me' && (
+          {tab === 'near-me' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
               <div className="flex items-center gap-2 mb-4">
                 <MapPin size={18} className="text-teal-500" />
@@ -332,31 +234,6 @@ export default function CustomerDashboard() {
             </motion.div>
           )}
 
-          {/* MARKETPLACE TAB */}
-          {activeTab === 'marketplace' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-              <div className="flex items-center gap-2 mb-4">
-                <Store size={18} className="text-gold-500" />
-                <h2 className="text-lg sm:text-xl font-heading font-bold text-gray-900">Marketplace</h2>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                {featuredStyles.map((style) => (
-                  <motion.div key={style.id} whileHover={{ y: -3 }} className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer">
-                    <div className="aspect-square overflow-hidden">
-                      <img src={style.image} alt={style.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-medium text-gray-900 text-sm truncate">{style.name}</h3>
-                      <p className="text-gold-600 font-bold text-sm mt-0.5">{style.price}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-        </div>
-      </div>
     </div>
   );
 }

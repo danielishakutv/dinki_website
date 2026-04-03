@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, CalendarDays, ChevronRight, Filter } from 'lucide-react';
+import { Search, Plus, CalendarDays, ChevronRight, Filter, DollarSign, Scissors } from 'lucide-react';
 import { statusConfig } from '../../data/mockData';
 
 const statusFilters = ['all', 'cutting', 'stitching', 'ready', 'delivered'];
@@ -73,7 +73,10 @@ export default function JobList({ jobs, onAddJob }) {
           >
             {filter === 'all'
               ? `All (${jobs.length})`
-              : `${statusConfig[filter]?.emoji || ''} ${statusConfig[filter]?.label || filter} (${jobs.filter((j) => j.status === filter).length})`}
+              : (() => {
+                  const StatusIcon = statusConfig[filter]?.icon;
+                  return <>{StatusIcon && <StatusIcon size={13} className="mr-1" />}{statusConfig[filter]?.label || filter} ({jobs.filter((j) => j.status === filter).length})</>;
+                })()}
           </motion.button>
         ))}
       </div>
@@ -101,8 +104,8 @@ export default function JobList({ jobs, onAddJob }) {
                 >
                   <div className="flex gap-3 sm:gap-4 p-3 sm:p-4">
                     {/* Style Image Placeholder */}
-                    <div className="w-14 h-16 sm:w-16 sm:h-20 md:w-20 md:h-24 rounded-lg sm:rounded-xl bg-gradient-to-br from-gold-100 to-amber-50 flex items-center justify-center text-lg sm:text-2xl flex-shrink-0 border border-gold-100">
-                      {status.emoji}
+                    <div className="w-14 h-16 sm:w-16 sm:h-20 md:w-20 md:h-24 rounded-lg sm:rounded-xl bg-gradient-to-br from-gold-100 to-amber-50 flex items-center justify-center flex-shrink-0 border border-gold-100">
+                      <status.icon size={22} className="text-gold-600" />
                     </div>
 
                     {/* Info */}
@@ -132,8 +135,8 @@ export default function JobList({ jobs, onAddJob }) {
                           {isOverdue ? 'Overdue' : `Due ${formatDate(job.dueDate)}`}
                         </span>
                         {job.invoiced && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-600">
-                            💰 Invoiced
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-600 inline-flex items-center gap-0.5">
+                            <DollarSign size={10} /> Invoiced
                           </span>
                         )}
                       </div>
@@ -156,7 +159,7 @@ export default function JobList({ jobs, onAddJob }) {
 
       {filtered.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-4xl mb-3">🪡</p>
+          <div className="flex justify-center mb-3"><Scissors size={40} className="text-gray-300" /></div>
           <p className="text-sm text-gray-400">No jobs match your filter.</p>
         </div>
       )}

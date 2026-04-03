@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Phone, Mail, MapPin, CalendarDays, Scissors } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, MapPin, CalendarDays, Scissors, AlertCircle } from 'lucide-react';
 import MeasurementVault from '../components/customers/MeasurementVault';
 
 export default function CustomerDetail({ customers, setCustomers, jobs }) {
@@ -12,7 +12,9 @@ export default function CustomerDetail({ customers, setCustomers, jobs }) {
   if (!customer) {
     return (
       <div className="p-4 md:p-8 text-center py-20">
-        <p className="text-4xl mb-3">😕</p>
+        <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
+          <AlertCircle size={28} className="text-gray-400" />
+        </div>
         <p className="text-gray-400">Customer not found.</p>
         <Link to="/customers" className="text-gold-500 text-sm mt-2 inline-block">
           ← Back to customers
@@ -60,7 +62,7 @@ export default function CustomerDetail({ customers, setCustomers, jobs }) {
           </div>
         </div>
 
-        <div className="px-5 pb-5 -mt-10">
+        <div className="px-5 pb-5 -mt-10 relative z-10">
           {/* Avatar */}
           <div
             className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${customer.color} flex items-center justify-center text-white font-heading font-bold text-2xl border-4 border-white shadow-lg`}
@@ -68,22 +70,22 @@ export default function CustomerDetail({ customers, setCustomers, jobs }) {
             {customer.initials}
           </div>
 
-          <div className="mt-3">
-            <h2 className="text-xl font-heading font-bold text-gray-900">{customer.name}</h2>
-            <div className="flex flex-wrap gap-3 mt-2">
+          <div className="mt-3 min-w-0">
+            <h2 className="text-xl font-heading font-bold text-gray-900 break-words">{customer.name}</h2>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2">
               <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                <Phone size={12} /> {customer.phone}
+                <Phone size={12} className="flex-shrink-0" /> <span className="truncate">{customer.phone}</span>
               </span>
               {customer.email && (
-                <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                  <Mail size={12} /> {customer.email}
+                <span className="flex items-center gap-1.5 text-xs text-gray-400 min-w-0">
+                  <Mail size={12} className="flex-shrink-0" /> <span className="truncate">{customer.email}</span>
                 </span>
               )}
               <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                <MapPin size={12} /> {customer.location}
+                <MapPin size={12} className="flex-shrink-0" /> <span className="truncate">{customer.location}</span>
               </span>
-              <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                <CalendarDays size={12} /> Since {new Date(customer.createdAt).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}
+              <span className="flex items-center gap-1.5 text-xs text-gray-400 whitespace-nowrap">
+                <CalendarDays size={12} className="flex-shrink-0" /> Since {new Date(customer.createdAt).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}
               </span>
             </div>
           </div>
@@ -112,8 +114,8 @@ export default function CustomerDetail({ customers, setCustomers, jobs }) {
                 to={`/jobs/${job.id}`}
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
               >
-                <div className="w-10 h-10 rounded-lg bg-gold-50 flex items-center justify-center text-sm">
-                  ✂️
+                <div className="w-10 h-10 rounded-lg bg-gold-50 flex items-center justify-center">
+                  <Scissors size={16} className="text-gold-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-700 truncate">{job.title}</p>
