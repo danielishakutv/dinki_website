@@ -1,0 +1,28 @@
+root@mail:/var/www/dinki# curl -s -X POST https://be.dinki.africa/v1/auth/verify-email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@dinki.africa","otp":"749955"}'
+{"success":true,"data":{"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwYmUxYjgxNC0yNjkyLTQ0ZjUtOTdlZi04ZGRlOWE2OGNlYmUiLCJyb2xlIjoidGFpbG9yIiwiZW1haWwiOiJ0ZXN0QGRpbmtpLmFmcmljYSIsImlhdCI6MTc3NjA5NjcyMywiZXhwIjoxNzc2MDk3NjIzfQ.zADMhbROMCx2L9Yt8kRViPavrzaES9QZTf2CKxhzBwM","user":{"id":"0be1b814-2692-44f5-97ef-8dde9a68cebe","name":"Test Tailor","email":"test@dinki.africa","role":"tailocurl -s -X POST https://be.dinki.africa/v1/auth/login \be.dinki.africa/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@dinki.africa","password":"Test1234"}'
+{"success":true,"data":{"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwYmUxYjgxNC0yNjkyLTQ0ZjUtOTdlZi04ZGRlOWE2OGNlYmUiLCJyb2xlIjoidGFpbG9yIiwiZW1haWwiOiJ0ZXN0QGRpbmtpLmFmcmljYSIsImlhdCI6MTc3NjA5Njc4OSwiZXhwIjoxNzc2MDk3Njg5fQ.SAImQ_jwcOfKlSfpF83dZjiYqaxn-JPTXTzqGTLUYEI","user":{"id":"0be1b814-2692-44f5-97ef-8dde9a68cebe","name":"Test Tailor","email":"test@dinki.africa","role":"tailor","avatar_url":null,"initials":"TT","avatar_color":null,"onboarding_completed":false,"storefront_slug":"test-tailor-RVBd"}}}root@mail:/var/www/dinki# 
+
+
+
+
+
+Phase 3: Core Customer Features is next. It has 4 steps:
+
+Step	Module	Endpoints	What It Does
+9	Storefronts	6	Public tailor profiles, portfolio, reviews display
+10	Orders	8	Customer places order, tailor accepts/declines, auto-creates job
+11	Reviews	2	Post-delivery reviews, rating aggregation
+12	Favourites	3	Save styles, fabrics, tailors
+Plus the Marketplace module (styles + fabrics browsing) which Orders and Favourites depend on.
+
+Milestone: Customers can discover tailors, place orders, and leave reviews.
+
+Ready to start Phase 3 Step 9 (Storefronts)?
+
+
+---------------------------------------
+docker exec dinki-dinki-redis-1 redis-cli GET "otp:testuser@dinki.africa"
