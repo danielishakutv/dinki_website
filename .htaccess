@@ -1,0 +1,13 @@
+RewriteEngine On
+
+# Serve existing files from dist/
+RewriteCond %{DOCUMENT_ROOT}/dist/$1 -f
+RewriteRule ^(.+)$ /dist/$1 [L]
+
+# Root request -> dist/index.html
+RewriteRule ^$ /dist/index.html [L]
+
+# SPA fallback: anything else -> dist/index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /dist/index.html [L]
