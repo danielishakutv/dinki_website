@@ -1,25 +1,30 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle, LogOut, MapPin, ClipboardList, User, MessageSquare, Heart, Bell } from 'lucide-react';
+import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle, LogOut, MapPin, ClipboardList, User, MessageSquare, Heart, Bell, Store, Trophy, Newspaper } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Logo from './Logo';
+import { useAuth } from '../../contexts/AuthContext';
 
 const tailorNav = [
   { to: '/dashboard', icon: Home, label: 'Dashboard' },
+  { to: '/tailor/1', icon: Store, label: 'My Storefront' },
   { to: '/jobs', icon: Scissors, label: 'Jobs & Orders' },
   { to: '/customers', icon: Users, label: 'Customers' },
   { to: '/marketplace', icon: ShoppingBag, label: 'Marketplace' },
+  { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
+  { to: '/news', icon: Newspaper, label: 'News & Articles' },
 ];
 
 const customerNav = [
-  { to: '/home', icon: Home, label: 'Home' },
+  { to: '/dashboard', icon: Home, label: 'Home' },
   { to: '/orders', icon: ClipboardList, label: 'Orders' },
   { to: '/near-me', icon: MapPin, label: 'Near Me' },
   { to: '/marketplace', icon: ShoppingBag, label: 'Marketplace' },
+  { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
+  { to: '/news', icon: Newspaper, label: 'News & Articles' },
 ];
 
 const bottomNav = [
-  { to: '/profile', icon: User, label: 'Profile' },
   { to: '/messages', icon: MessageSquare, label: 'Messages' },
   { to: '/favourites', icon: Heart, label: 'Favourites' },
   { to: '/notifications', icon: Bell, label: 'Notifications' },
@@ -57,11 +62,16 @@ function SideLink({ to, icon: Icon, label, end }) {
 
 export default function Sidebar({ userRole }) {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const mainNav = userRole === 'customer' ? customerNav : tailorNav;
-  const homeRoute = userRole === 'customer' ? '/home' : '/dashboard';
+  const homeRoute = '/dashboard';
 
-  const handleLogout = () => {
-    localStorage.removeItem('dinki-user-role');
+  const profileName = user?.name || (userRole === 'tailor' ? 'Tailor' : 'Customer');
+  const profileInitials = profileName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  const profileRole = userRole === 'customer' ? 'Customer' : 'Master Tailor';
+
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
@@ -93,16 +103,19 @@ export default function Sidebar({ userRole }) {
 
       {/* User Profile Mini & Logout */}
       <div className="p-4 border-t border-gray-100 space-y-3">
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-gold-50 to-amber-50">
+        <div
+          onClick={() => navigate('/profile')}
+          className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-gold-50 to-amber-50 cursor-pointer hover:from-gold-100 hover:to-amber-100 transition-all"
+        >
           <div className="w-10 h-10 rounded-full avatar-gradient flex items-center justify-center text-white font-heading font-bold text-sm">
-            {userRole === 'customer' ? 'AO' : 'DA'}
+            {profileInitials}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-800 truncate">
-              {userRole === 'customer' ? 'Adeola Okafor' : 'Dinki Atelier'}
+              {profileName}
             </p>
             <p className="text-xs text-gray-400 truncate">
-              {userRole === 'customer' ? 'Customer' : 'Master Tailor'}
+              {profileRole}
             </p>
           </div>
         </div>

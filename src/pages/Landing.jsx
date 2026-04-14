@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronRight, Star, Zap, ShoppingBag, Eye, EyeOff,
-  Users, TrendingUp, ArrowRight, X, Scissors, User, Menu, Check
+  Users, TrendingUp, ArrowRight, X, Scissors, User, Menu, Check, Loader2
 } from 'lucide-react';
 import Logo from '../components/layout/Logo';
+import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
+import { useAuth } from '../contexts/AuthContext';
 
 /* ─────────────────────────────────────────────
    AUTH OVERLAY — full-screen, split-panel design
@@ -16,31 +18,118 @@ const BG_IMAGES = {
 };
 
 function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
+  const { signup, verifyEmail, login } = useAuth();
   const [mode, setMode]                 = useState(initialMode);
-  const [formData, setFormData]         = useState({ email: '', password: '', accountType: '' });
+  const [formData, setFormData]         = useState({ email: '', password: '', name: '', accountType: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError]               = useState('');
+  const [loading, setLoading]           = useState(false);
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [resetSent, setResetSent]       = useState(false);
+  const [otpStep, setOtpStep]           = useState(false);
+  const [otp, setOtp]                   = useState('');
 
   const isSignup  = mode === 'signup';
+
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const canSubmit = isSignup
-    ? formData.email && formData.password.length >= 6 && formData.accountType
-    : formData.email && formData.password;
+    ? formData.email && isValidEmail(formData.email) && formData.password.length >= 6 && formData.accountType && formData.name.trim().length >= 2
+    : formData.email && isValidEmail(formData.email) && formData.password;
 
   const set = (k, v) => {
     setFormData(p => ({ ...p, [k]: v }));
     setError('');
   };
 
-  const handleSubmit = () => {
-    if (!canSubmit) { setError('Please fill in all fields.'); return; }
-    onSuccess(formData.accountType || 'customer');
+  const handleSubmit = async () => {
+    if (!formData.email || !isValidEmail(formData.email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    if (!formData.password) {
+      setError('Please enter your password.');
+      return;
+    }
+    if (isSignup && formData.name.trim().length < 2) {
+      setError('Please enter your full name.');
+      return;
+    }
+    if (isSignup && formData.password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (isSignup && !formData.accountType) {
+      setError('Please select an account type.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      if (isSignup) {
+        await signup({ email: formData.email, password: formData.password, name: formData.name.trim(), role: formData.accountType });
+        setOtpStep(true);
+      } else {
+        await login({ email: formData.email, password: formData.password });
+        onSuccess();
+      }
+    } catch (err) {
+      if (err.code === 'EMAIL_NOT_VERIFIED') {
+        setOtpStep(true);
+      } else {
+        setError(err.message || 'Something went wrong. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 6) {
+      setError('Please enter the 6-digit code.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await verifyEmail({ email: formData.email, otp });
+      onSuccess();
+    } catch (err) {
+      setError(err.message || 'Invalid or expired code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotSubmit = async () => {
+    if (!formData.email || !isValidEmail(formData.email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const { auth: authApi } = await import('../lib/api');
+      await authApi.forgotPassword(formData.email);
+      setResetSent(true);
+    } catch (err) {
+      setError(err.message || 'Something went wrong.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const switchMode = (m) => {
     setMode(m);
-    setFormData({ email: '', password: '', accountType: '' });
+    setFormData({ email: '', password: '', name: '', accountType: '' });
     setError('');
     setShowPassword(false);
+    setForgotPassword(false);
+    setResetSent(false);
+    setOtpStep(false);
+    setOtp('');
   };
 
   return (
@@ -142,12 +231,121 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
               {/* heading */}
               <div className="mb-5">
                 <h1 style={{ fontFamily: "'Georgia', serif", fontWeight: 700, color: '#1a0a00', fontSize: 'clamp(22px, 4vw, 30px)', lineHeight: 1.15 }} className="mb-1">
-                  {isSignup ? 'Create account' : 'Sign in'}
+                  {forgotPassword ? 'Reset Password' : isSignup ? 'Create account' : 'Sign in'}
                 </h1>
                 <p style={{ color: '#9a8a7a', fontSize: 14 }}>
-                  {isSignup ? 'Start your tailoring journey today.' : 'Welcome back — sign in to continue.'}
+                  {forgotPassword
+                    ? "Enter your email and we'll send you a reset link."
+                    : isSignup ? 'Start your tailoring journey today.' : 'Welcome back — sign in to continue.'}
                 </p>
               </div>
+
+              {/* Forgot Password Flow */}
+              {forgotPassword ? (
+                resetSent ? (
+                  <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                    <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#e8f5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                      <Check size={22} style={{ color: '#2e7d32' }} />
+                    </div>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: '#1a0a00', marginBottom: 8 }}>Check your email</p>
+                    <p style={{ fontSize: 13, color: '#9a8a7a', marginBottom: 20, lineHeight: 1.6 }}>
+                      We've sent a password reset link to <strong style={{ color: '#1a0a00' }}>{formData.email}</strong>
+                    </p>
+                    <button
+                      onClick={() => { setForgotPassword(false); setResetSent(false); setError(''); }}
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: 14, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #e8a020 0%, #c87d10 100%)', color: '#fff', fontSize: 14, fontWeight: 700 }}
+                    >
+                      Back to Sign In
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#5a4a3a', marginBottom: 6, letterSpacing: '0.02em' }}>Email address</label>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={e => set('email', e.target.value)}
+                        placeholder="you@example.com"
+                        onKeyDown={e => e.key === 'Enter' && handleForgotSubmit()}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '0.7rem 1rem', borderRadius: 12, border: '1.5px solid #e0d8d0', background: '#fff', fontSize: 14, color: '#1a0a00', outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }}
+                        onFocus={e => { e.target.style.borderColor = '#e8a020'; e.target.style.boxShadow = '0 0 0 3px rgba(232,160,32,0.12)'; }}
+                        onBlur={e  => { e.target.style.borderColor = '#e0d8d0'; e.target.style.boxShadow = 'none'; }}
+                      />
+                    </div>
+                    {error && <p style={{ fontSize: 12, color: '#c0392b', marginBottom: 10, paddingLeft: 2 }}>{error}</p>}
+                    <motion.button
+                      whileHover={{ scale: 1.015 }}
+                      whileTap={{ scale: 0.975 }}
+                      onClick={handleForgotSubmit}
+                      disabled={loading}
+                      style={{ width: '100%', padding: '0.82rem', borderRadius: 14, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, #e8a020 0%, #c87d10 100%)', color: '#fff', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 20px rgba(232,160,32,0.35)', marginBottom: 16, opacity: loading ? 0.7 : 1 }}
+                    >
+                      {loading ? <Loader2 size={16} className="animate-spin" /> : <>Send Reset Link <ArrowRight size={16} /></>}
+                    </motion.button>
+                    <p style={{ textAlign: 'center', fontSize: 13, color: '#9a8a7a' }}>
+                      Remember your password?{' '}
+                      <button onClick={() => { setForgotPassword(false); setError(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e8a020', fontWeight: 700, fontSize: 13 }}>
+                        Sign in
+                      </button>
+                    </p>
+                  </>
+                )
+              ) : otpStep ? (
+                <div>
+                  <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#fff8ec', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', border: '2px solid #e8a020' }}>
+                      <Scissors size={20} style={{ color: '#e8a020' }} />
+                    </div>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: '#1a0a00', marginBottom: 4 }}>Verify your email</p>
+                    <p style={{ fontSize: 13, color: '#9a8a7a', lineHeight: 1.6 }}>
+                      We sent a 6-digit code to <strong style={{ color: '#1a0a00' }}>{formData.email}</strong>
+                    </p>
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#5a4a3a', marginBottom: 6, letterSpacing: '0.02em' }}>Verification code</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={otp}
+                      onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
+                      placeholder="000000"
+                      onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
+                      autoFocus
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.85rem 1rem', borderRadius: 12, border: '1.5px solid #e0d8d0', background: '#fff', fontSize: 24, color: '#1a0a00', outline: 'none', textAlign: 'center', letterSpacing: '0.5em', fontWeight: 700, transition: 'border-color 0.2s, box-shadow 0.2s' }}
+                      onFocus={e => { e.target.style.borderColor = '#e8a020'; e.target.style.boxShadow = '0 0 0 3px rgba(232,160,32,0.12)'; }}
+                      onBlur={e  => { e.target.style.borderColor = '#e0d8d0'; e.target.style.boxShadow = 'none'; }}
+                    />
+                  </div>
+                  {error && <p style={{ fontSize: 12, color: '#c0392b', marginBottom: 10, paddingLeft: 2 }}>{error}</p>}
+                  <motion.button
+                    whileHover={otp.length === 6 ? { scale: 1.015 } : {}}
+                    whileTap={otp.length === 6  ? { scale: 0.975 } : {}}
+                    onClick={handleVerifyOtp}
+                    disabled={loading || otp.length !== 6}
+                    style={{
+                      width: '100%', padding: '0.82rem', borderRadius: 14, border: 'none',
+                      cursor: (loading || otp.length !== 6) ? 'not-allowed' : 'pointer',
+                      background: otp.length === 6 ? 'linear-gradient(135deg, #e8a020 0%, #c87d10 100%)' : '#e8ddd4',
+                      color: otp.length === 6 ? '#fff' : '#b0a090',
+                      fontSize: 15, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      boxShadow: otp.length === 6 ? '0 4px 20px rgba(232,160,32,0.35)' : 'none',
+                      opacity: loading ? 0.7 : 1,
+                    }}
+                  >
+                    {loading ? <Loader2 size={16} className="animate-spin" /> : <>Verify & Continue <ArrowRight size={16} /></>}
+                  </motion.button>
+                  <p style={{ textAlign: 'center', fontSize: 12, color: '#9a8a7a', marginTop: 16, lineHeight: 1.6 }}>
+                    Didn't receive a code? Check your spam folder or{' '}
+                    <button onClick={() => { setOtpStep(false); setOtp(''); setError(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e8a020', fontWeight: 700, fontSize: 12 }}>
+                      go back
+                    </button>
+                  </p>
+                </div>
+              ) : (
+              <>
 
               {/* account type selector */}
               {isSignup && (
@@ -191,6 +389,21 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
 
               {/* fields */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 16 }}>
+                {isSignup && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#5a4a3a', marginBottom: 6, letterSpacing: '0.02em' }}>Full name</label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={e => set('name', e.target.value)}
+                      placeholder="Your full name"
+                      onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.7rem 1rem', borderRadius: 12, border: '1.5px solid #e0d8d0', background: '#fff', fontSize: 14, color: '#1a0a00', outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }}
+                      onFocus={e => { e.target.style.borderColor = '#e8a020'; e.target.style.boxShadow = '0 0 0 3px rgba(232,160,32,0.12)'; }}
+                      onBlur={e  => { e.target.style.borderColor = '#e0d8d0'; e.target.style.boxShadow = 'none'; }}
+                    />
+                  </div>
+                )}
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#5a4a3a', marginBottom: 6, letterSpacing: '0.02em' }}>Email address</label>
                   <input
@@ -230,27 +443,28 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
 
               {!isSignup && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-                  <button style={{ fontSize: 12, color: '#e8a020', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Forgot password?</button>
+                  <button onClick={() => { setForgotPassword(true); setError(''); }} style={{ fontSize: 12, color: '#e8a020', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Forgot password?</button>
                 </div>
               )}
 
               <motion.button
-                whileHover={canSubmit ? { scale: 1.015 } : {}}
-                whileTap={canSubmit  ? { scale: 0.975 } : {}}
+                whileHover={canSubmit && !loading ? { scale: 1.015 } : {}}
+                whileTap={canSubmit && !loading  ? { scale: 0.975 } : {}}
                 onClick={handleSubmit}
+                disabled={loading || !canSubmit}
                 style={{
                   width: '100%', padding: '0.82rem', borderRadius: 14, border: 'none',
-                  cursor: canSubmit ? 'pointer' : 'not-allowed',
+                  cursor: (canSubmit && !loading) ? 'pointer' : 'not-allowed',
                   background: canSubmit ? 'linear-gradient(135deg, #e8a020 0%, #c87d10 100%)' : '#e8ddd4',
                   color: canSubmit ? '#fff' : '#b0a090',
                   fontSize: 15, fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   boxShadow: canSubmit ? '0 4px 20px rgba(232,160,32,0.35)' : 'none',
                   transition: 'background 0.2s',
+                  opacity: loading ? 0.7 : 1,
                 }}
               >
-                {isSignup ? 'Create Account' : 'Sign In'}
-                {canSubmit && <ArrowRight size={16} />}
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <>{isSignup ? 'Create Account' : 'Sign In'}{canSubmit && <ArrowRight size={16} />}</>}
               </motion.button>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0' }}>
@@ -277,6 +491,8 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
                   <span style={{ color: '#9a8a7a', textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span>.
                 </p>
               )}
+              </>
+              )}
             </div>
 
           </div>
@@ -290,8 +506,9 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
 /* ─────────────────────────────────────────────
    MAIN LANDING PAGE
    ───────────────────────────────────────────── */
-export default function Landing({ setUserRole }) {
+export default function Landing() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showAuth, setShowAuth]         = useState(false);
   const [authMode, setAuthMode]         = useState('signup');
@@ -315,10 +532,9 @@ export default function Landing({ setUserRole }) {
     setMobileMenuOpen(false);
   };
   const closeAuth = () => setShowAuth(false);
-  const handleAuthSuccess = (accountType) => {
+  const handleAuthSuccess = () => {
     setShowAuth(false);
-    if (setUserRole) setUserRole(accountType);
-    navigate(accountType === 'tailor' ? '/dashboard' : '/home');
+    navigate('/dashboard');
   };
 
   const sliderImages = [
@@ -336,9 +552,9 @@ export default function Landing({ setUserRole }) {
   ];
 
   const topTailors = [
-    { id: 1, name: 'Aunty Zainab',  rating: 4.9,  reviews: 324, specialty: 'Traditional Ankara', image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?w=200&h=200&fit=crop' },
-    { id: 2, name: 'Master Chukwu', rating: 4.8,  reviews: 287, specialty: 'Agbada Expert',       image: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?w=200&h=200&fit=crop' },
-    { id: 3, name: 'Mama Amara',    rating: 4.95, reviews: 412, specialty: 'Luxury Aso Ebi',      image: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?w=200&h=200&fit=crop' },
+    { id: 1, name: 'Aunty Zainab',  rating: 4.9,  reviews: 324, specialty: 'Traditional Ankara', image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?w=200&h=200&fit=crop', verified: true,  completedOrders: 580 },
+    { id: 2, name: 'Master Chukwu', rating: 4.8,  reviews: 287, specialty: 'Agbada Expert',       image: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?w=200&h=200&fit=crop', verified: true,  completedOrders: 430 },
+    { id: 3, name: 'Mama Amara',    rating: 4.95, reviews: 412, specialty: 'Luxury Aso Ebi',      image: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?w=200&h=200&fit=crop', verified: true,  completedOrders: 1050 },
   ];
 
   const materials = [
@@ -639,8 +855,14 @@ export default function Landing({ setUserRole }) {
                 <div className="w-16 h-16 rounded-full mb-4 overflow-hidden group-hover:scale-110 transition shadow-md">
                   <img src={tailor.image} alt={tailor.name} className="w-full h-full object-cover" />
                 </div>
-                <h3 className="font-heading font-bold text-lg text-gray-800 mb-1">{tailor.name}</h3>
-                <p className="text-teal-600 text-sm font-body mb-4">{tailor.specialty} Specialist</p>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <h3 className="font-heading font-bold text-lg text-gray-800">{tailor.name}</h3>
+                  {tailor.verified && <VerifiedBadge size={16} />}
+                </div>
+                <div className="flex items-center gap-2 mb-4">
+                  <p className="text-teal-600 text-sm font-body">{tailor.specialty} Specialist</p>
+                  <LevelBadge completedOrders={tailor.completedOrders} compact />
+                </div>
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (

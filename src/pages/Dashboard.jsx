@@ -1,12 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sparkles, Lightbulb } from 'lucide-react';
+import { Sparkles, Lightbulb, Plus, MessageCircle, UserPlus, Share2, Loader2 } from 'lucide-react';
 import SummaryCards from '../components/dashboard/SummaryCards';
 import RecentActivity from '../components/dashboard/RecentActivity';
+import { jobs as jobsApi, customers as customersApi } from '../lib/api';
 
-export default function Dashboard({ jobs, customers, setShowAddJob }) {
+export default function Dashboard({ setShowAddJob }) {
   const navigate = useNavigate();
+  const [jobs, setJobs] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [jobsRes, custRes] = await Promise.all([
+          jobsApi.list({ limit: 50 }),
+          customersApi.list({ limit: 50 }),
+        ]);
+        setJobs(jobsRes.data.jobs || []);
+        setCustomers(custRes.data.customers || []);
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -17,6 +39,12 @@ export default function Dashboard({ jobs, customers, setShowAddJob }) {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 size={28} className="animate-spin text-gold-500" />
+        </div>
+      ) : (
+      <>
       {/* Greeting */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -47,6 +75,58 @@ export default function Dashboard({ jobs, customers, setShowAddJob }) {
       {/* Summary Cards */}
       <SummaryCards jobs={jobs} customers={customers} />
 
+      {/* Quick Actions */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="grid grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3"
+      >
+        <button
+          onClick={() => setShowAddJob(true)}
+          className="hidden md:flex bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm hover:border-gold-200 hover:shadow-md transition-all flex-col items-center gap-2.5 group"
+        >
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gold-50 flex items-center justify-center group-hover:bg-gold-100 transition">
+            <Plus size={20} className="text-gold-600" />
+          </div>
+          <span className="text-[11px] sm:text-xs font-medium text-gray-700 text-center leading-tight">New Job</span>
+        </button>
+        <button
+          onClick={() => navigate('/messages')}
+          className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm hover:border-teal-200 hover:shadow-md transition-all flex flex-col items-center gap-2.5 group"
+        >
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-50 flex items-center justify-center group-hover:bg-teal-100 transition">
+            <MessageCircle size={20} className="text-teal-600" />
+          </div>
+          <span className="text-[11px] sm:text-xs font-medium text-gray-700 text-center leading-tight">Messages</span>
+        </button>
+        <button
+          onClick={() => navigate('/customers')}
+          className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all flex flex-col items-center gap-2.5 group"
+        >
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition">
+            <UserPlus size={20} className="text-indigo-600" />
+          </div>
+          <span className="text-[11px] sm:text-xs font-medium text-gray-700 text-center leading-tight">Add Client</span>
+        </button>
+        <button
+          onClick={() => {
+            const url = `${window.location.origin}/tailor/1`;
+            if (navigator.share) {
+              navigator.share({ title: 'Dinki Africa', text: 'Check out my storefront on Dinki Africa', url }).catch(() => {});
+            } else {
+              navigator.clipboard.writeText(url).catch(() => {});
+            }
+          }}
+          className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm hover:border-green-200 hover:shadow-md transition-all flex flex-col items-center gap-2.5 group"
+        >
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition">
+            <Share2 size={20} className="text-green-600" />
+          </div>
+          <span className="text-[11px] sm:text-xs font-medium text-gray-700 text-center leading-tight">Share Link</span>
+        </button>
+      </motion.div>
+
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
@@ -66,7 +146,7 @@ export default function Dashboard({ jobs, customers, setShowAddJob }) {
             <div className="space-y-3">
               {customers.slice(0, 3).map((c, i) => (
                 <div key={c.id} className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${c.color} flex items-center justify-center text-white text-xs font-bold`}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: c.avatar_color || '#D4A574' }}>
                     {c.initials}
                   </div>
                   <div className="flex-1">
@@ -93,7 +173,8 @@ export default function Dashboard({ jobs, customers, setShowAddJob }) {
           </motion.div>
         </div>
       </div>
-
+      </>
+      )}
     </div>
   );
 }

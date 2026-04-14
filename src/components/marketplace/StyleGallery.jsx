@@ -1,8 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, ShoppingCart } from 'lucide-react';
 
 export default function StyleGallery({ styles }) {
+  const navigate = useNavigate();
+
   return (
     <div className="columns-2 md:columns-3 gap-3 space-y-3">
       {styles.map((style, i) => (
@@ -11,7 +14,8 @@ export default function StyleGallery({ styles }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.08 }}
-          className="break-inside-avoid bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden card-hover group"
+          className="break-inside-avoid bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden card-hover group cursor-pointer"
+          onClick={() => navigate(`/marketplace/style/${style.id}`)}
         >
           {/* Image */}
           <div className="relative aspect-[3/4] bg-gradient-to-br from-gold-100 to-amber-50 overflow-hidden">

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, MapPin, ChevronRight } from 'lucide-react';
+import { Search, Plus, MapPin, ChevronRight, Loader2 } from 'lucide-react';
 
-export default function CustomerList({ customers, onAddCustomer }) {
+export default function CustomerList({ customers, onAddCustomer, loading }) {
   const [search, setSearch] = useState('');
 
   const filtered = customers.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone.includes(search) ||
-      c.location.toLowerCase().includes(search.toLowerCase())
+      (c.phone || '').includes(search) ||
+      (c.location || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -42,6 +42,11 @@ export default function CustomerList({ customers, onAddCustomer }) {
       </p>
 
       {/* Customer Cards */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 size={24} className="animate-spin text-gold-500" />
+        </div>
+      ) : (
       <div className="space-y-2">
         <AnimatePresence>
           {filtered.map((customer, i) => (
@@ -58,7 +63,8 @@ export default function CustomerList({ customers, onAddCustomer }) {
               >
                 {/* Avatar */}
                 <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${customer.color} flex items-center justify-center text-white font-heading font-bold text-sm flex-shrink-0`}
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-heading font-bold text-sm flex-shrink-0"
+                  style={{ backgroundColor: customer.avatar_color || '#D4A574' }}
                 >
                   {customer.initials}
                 </div>
@@ -70,7 +76,7 @@ export default function CustomerList({ customers, onAddCustomer }) {
                     <MapPin size={12} className="text-gray-300 flex-shrink-0" />
                     <p className="text-xs text-gray-400 truncate">{customer.location}</p>
                   </div>
-                  <p className="text-xs text-gray-300 mt-0.5">{customer.phone}</p>
+                  <p className="text-xs text-gray-300 mt-0.5">{customer.phone || ''}</p>
                 </div>
 
                 {/* Arrow */}
@@ -80,8 +86,9 @@ export default function CustomerList({ customers, onAddCustomer }) {
           ))}
         </AnimatePresence>
       </div>
+      )}
 
-      {filtered.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <div className="text-center py-12">
           <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
             <Search size={24} className="text-gray-400" />

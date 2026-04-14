@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, CalendarDays, ChevronRight, Filter, DollarSign, Scissors } from 'lucide-react';
+import { Search, Plus, CalendarDays, ChevronRight, Filter, DollarSign, Scissors, Loader2 } from 'lucide-react';
 import { statusConfig } from '../../data/mockData';
 
 const statusFilters = ['all', 'cutting', 'stitching', 'ready', 'delivered'];
 
-export default function JobList({ jobs, onAddJob }) {
+export default function JobList({ jobs, onAddJob, loading }) {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
 
@@ -17,12 +17,12 @@ export default function JobList({ jobs, onAddJob }) {
         const q = search.toLowerCase();
         return (
           j.title.toLowerCase().includes(q) ||
-          j.customerName.toLowerCase().includes(q)
+          (j.customer_name || j.customerName || '').toLowerCase().includes(q)
         );
       }
       return true;
     })
-    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+    .sort((a, b) => new Date(a.due_date || a.dueDate) - new Date(b.due_date || b.dueDate));
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr);
@@ -86,7 +86,7 @@ export default function JobList({ jobs, onAddJob }) {
         <AnimatePresence>
           {filtered.map((job, i) => {
             const status = statusConfig[job.status];
-            const daysLeft = daysUntilDue(job.dueDate);
+            const daysLeft = daysUntilDue(job.due_date || job.dueDate);
             const isUrgent = daysLeft <= 3 && daysLeft >= 0;
             const isOverdue = daysLeft < 0;
 
@@ -113,7 +113,7 @@ export default function JobList({ jobs, onAddJob }) {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{job.title}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{job.customerName}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{job.customer_name || job.customerName}</p>
                         </div>
                         <ChevronRight size={16} className="text-gray-300 flex-shrink-0 mt-1 sm:w-[18px] sm:h-[18px]" />
                       </div>
@@ -132,7 +132,7 @@ export default function JobList({ jobs, onAddJob }) {
                             : 'text-gray-400'
                         }`}>
                           <CalendarDays size={10} />
-                          {isOverdue ? 'Overdue' : `Due ${formatDate(job.dueDate)}`}
+                          {isOverdue ? 'Overdue' : `Due ${formatDate(job.due_date || job.dueDate)}`}
                         </span>
                         {job.invoiced && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-600 inline-flex items-center gap-0.5">
@@ -147,7 +147,7 @@ export default function JobList({ jobs, onAddJob }) {
                   <div className="px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50/50 border-t border-gray-50 flex items-center justify-between">
                     <span className="text-xs text-gray-400">Price</span>
                     <span className="text-xs sm:text-sm font-heading font-bold text-gray-800">
-                      ₦{job.price.toLocaleString()}
+                      ₦{(job.price || 0).toLocaleString()}
                     </span>
                   </div>
                 </Link>
@@ -157,12 +157,16 @@ export default function JobList({ jobs, onAddJob }) {
         </AnimatePresence>
       </div>
 
-      {filtered.length === 0 && (
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 size={24} className="animate-spin text-gold-500" />
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-12">
           <div className="flex justify-center mb-3"><Scissors size={40} className="text-gray-300" /></div>
           <p className="text-sm text-gray-400">No jobs match your filter.</p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

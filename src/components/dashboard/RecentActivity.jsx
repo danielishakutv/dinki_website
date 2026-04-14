@@ -6,7 +6,7 @@ import { statusConfig } from '../../data/mockData';
 
 export default function RecentActivity({ jobs, customers }) {
   const recentJobs = [...jobs]
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .sort((a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt))
     .slice(0, 3);
 
   const formatDate = (dateStr) => {
@@ -39,7 +39,7 @@ export default function RecentActivity({ jobs, customers }) {
       <div className="divide-y divide-gray-50">
         {recentJobs.map((job, i) => {
           const status = statusConfig[job.status];
-          const daysLeft = daysUntilDue(job.dueDate);
+          const daysLeft = daysUntilDue(job.due_date || job.dueDate);
           const isUrgent = daysLeft <= 3 && daysLeft >= 0;
 
           return (
@@ -60,7 +60,7 @@ export default function RecentActivity({ jobs, customers }) {
 
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-800 truncate">{job.title}</p>
-                  <p className="text-xs text-gray-400">{job.customerName}</p>
+                  <p className="text-xs text-gray-400">{job.customer_name || job.customerName}</p>
                 </div>
 
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
@@ -69,7 +69,7 @@ export default function RecentActivity({ jobs, customers }) {
                   </span>
                   <span className={`flex items-center gap-1 text-[10px] ${isUrgent ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
                     <CalendarDays size={10} />
-                    {formatDate(job.dueDate)}
+                    {formatDate(job.due_date || job.dueDate)}
                     {isUrgent && <Bell size={10} />}
                   </span>
                 </div>

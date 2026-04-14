@@ -4,7 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import Logo from './Logo';
-import { Menu, X, Bell, User, Settings, HelpCircle, LogOut, MessageSquare, Heart } from 'lucide-react';
+import { Menu, X, Bell, User, Users, Settings, HelpCircle, LogOut, MessageSquare, Heart, Store, Trophy, Newspaper } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const pageVariants = {
   initial: { opacity: 0, x: 20 },
@@ -22,6 +23,8 @@ const drawerItems = [
   { to: '/profile', icon: User, label: 'Profile' },
   { to: '/messages', icon: MessageSquare, label: 'Messages' },
   { to: '/favourites', icon: Heart, label: 'Favourites' },
+  { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
+  { to: '/news', icon: Newspaper, label: 'News & Articles' },
   { to: '/notifications', icon: Bell, label: 'Notifications' },
   { to: '/settings', icon: Settings, label: 'Settings' },
   { to: '/help', icon: HelpCircle, label: 'Help & Support' },
@@ -32,16 +35,18 @@ export default function Layout({ children, userRole, onAddJob }) {
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const handleLogout = () => {
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
     setDrawerOpen(false);
-    localStorage.removeItem('dinki-user-role');
+    await logout();
     navigate('/');
   };
 
   const isTailor = userRole === 'tailor';
-  const profileName = isTailor ? 'Dinki Atelier' : 'Adeola Okafor';
+  const profileName = user?.name || (isTailor ? 'Tailor' : 'Customer');
   const profileRole = isTailor ? 'Master Tailor' : 'Customer';
-  const profileInitials = isTailor ? 'DA' : 'AO';
+  const profileInitials = profileName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <div className="min-h-screen bg-cloud">
@@ -111,6 +116,22 @@ export default function Layout({ children, userRole, onAddJob }) {
               {/* Drawer Content — scrollable */}
               <div className="flex-1 overflow-y-auto">
                 <nav className="px-3 py-4 space-y-1">
+                  {isTailor && (
+                    <NavLink
+                      to="/customers"
+                      onClick={() => setDrawerOpen(false)}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                          isActive
+                            ? 'bg-gold-500/10 text-gold-600'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                        }`
+                      }
+                    >
+                      <Users size={20} strokeWidth={1.6} />
+                      <span>Customers</span>
+                    </NavLink>
+                  )}
                   {drawerItems.map(({ to, icon: Icon, label }) => (
                     <NavLink
                       key={to}
@@ -180,7 +201,7 @@ export default function Layout({ children, userRole, onAddJob }) {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <BottomNav userRole={userRole} onAddJob={onAddJob} onRecordMeasurement={() => navigate('/customers')} />
+      <BottomNav userRole={userRole} onAddJob={onAddJob} onRecordMeasurement={() => navigate('/customers')} onNavClick={() => setDrawerOpen(false)} />
     </div>
   );
 }

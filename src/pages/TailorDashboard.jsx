@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, DollarSign, Users, Image, Edit, Settings, LogOut, Sparkles, Briefcase, Star, Clock } from 'lucide-react';
+import { ShoppingBag, DollarSign, Users, Image, Edit, Settings, LogOut, Sparkles, Briefcase, Star, Clock, Store, ExternalLink, Plus, MessageCircle, Share2, UserPlus } from 'lucide-react';
 
 export default function TailorDashboard() {
   const navigate = useNavigate();
@@ -101,6 +101,14 @@ export default function TailorDashboard() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
+              onClick={() => navigate('/tailor/1')}
+              className="flex items-center gap-1.5 px-3 py-2 sm:py-2.5 bg-gold-500 text-white rounded-lg sm:rounded-xl transition hover:bg-gold-600 text-xs sm:text-sm font-medium shadow-sm shadow-gold-500/15"
+              title="View My Storefront"
+            >
+              <Store size={16} />
+              <span className="hidden sm:inline">My Storefront</span>
+            </button>
+            <button
               onClick={() => setActiveTab('profile')}
               className="p-2 sm:p-2.5 hover:bg-white rounded-lg sm:rounded-xl transition border border-gray-200"
               title="Profile"
@@ -161,6 +169,58 @@ export default function TailorDashboard() {
             </div>
             <p className="text-xs sm:text-sm font-bold text-gold-800">Available</p>
           </div>
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="grid grid-cols-4 gap-2.5 sm:gap-3 mb-6 sm:mb-8"
+        >
+          <button
+            onClick={() => navigate('/jobs')}
+            className="bg-white rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm hover:border-gold-200 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+          >
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gold-50 flex items-center justify-center group-hover:bg-gold-100 transition">
+              <Plus size={18} className="text-gold-600 sm:w-5 sm:h-5" />
+            </div>
+            <span className="text-[11px] sm:text-xs font-medium text-gray-700 text-center leading-tight">New Job</span>
+          </button>
+          <button
+            onClick={() => navigate('/messages')}
+            className="bg-white rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm hover:border-teal-200 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+          >
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-teal-50 flex items-center justify-center group-hover:bg-teal-100 transition">
+              <MessageCircle size={18} className="text-teal-600 sm:w-5 sm:h-5" />
+            </div>
+            <span className="text-[11px] sm:text-xs font-medium text-gray-700 text-center leading-tight">Messages</span>
+          </button>
+          <button
+            onClick={() => navigate('/customers')}
+            className="bg-white rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+          >
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition">
+              <UserPlus size={18} className="text-indigo-600 sm:w-5 sm:h-5" />
+            </div>
+            <span className="text-[11px] sm:text-xs font-medium text-gray-700 text-center leading-tight">Add Client</span>
+          </button>
+          <button
+            onClick={() => {
+              const url = `${window.location.origin}/tailor/1`;
+              if (navigator.share) {
+                navigator.share({ title: 'Aunty Zainab — Dinki Africa', text: 'Check out my storefront on Dinki Africa', url }).catch(() => {});
+              } else {
+                navigator.clipboard.writeText(url).catch(() => {});
+              }
+            }}
+            className="bg-white rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm hover:border-green-200 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+          >
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition">
+              <Share2 size={18} className="text-green-600 sm:w-5 sm:h-5" />
+            </div>
+            <span className="text-[11px] sm:text-xs font-medium text-gray-700 text-center leading-tight">Share Link</span>
+          </button>
         </motion.div>
 
         {/* Tabs */}
@@ -317,7 +377,10 @@ export default function TailorDashboard() {
                     <p><span className="font-medium text-gray-900">{customer.orders}</span> orders</p>
                     <p>Total spent: <span className="font-medium text-gray-900">{customer.totalSpent}</span></p>
                   </div>
-                  <button className="w-full py-2 bg-gold-500 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-gold-600 transition">
+                  <button
+                    onClick={() => navigate(`/messages/${customer.id}`)}
+                    className="w-full py-2 bg-gold-500 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-gold-600 transition"
+                  >
                     Contact
                   </button>
                 </motion.div>
@@ -338,7 +401,15 @@ export default function TailorDashboard() {
                 <Image size={18} className="text-indigo-500 flex-shrink-0 sm:w-5 sm:h-5" />
                 <h2 className="text-lg sm:text-xl font-heading font-bold text-gray-900">Portfolio</h2>
               </div>
-              <button className="px-4 py-2 bg-gold-500 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-gold-600 transition flex-shrink-0">
+              <button
+                onClick={() => {
+                  const title = prompt('Enter design name:');
+                  if (title) {
+                    setPortfolio(prev => [{ id: Date.now(), design: title, image: 'https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=400&h=400&fit=crop', rating: 0 }, ...prev]);
+                  }
+                }}
+                className="px-4 py-2 bg-gold-500 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-gold-600 transition flex-shrink-0"
+              >
                 + Add Work
               </button>
             </div>
@@ -360,7 +431,10 @@ export default function TailorDashboard() {
                   </div>
                   <div className="p-3 sm:p-4">
                     <h3 className="font-heading font-bold text-gray-900 mb-2 text-xs sm:text-sm truncate">{work.design}</h3>
-                    <button className="w-full py-2 bg-gold-50 text-gold-700 rounded-lg text-xs font-medium hover:bg-gold-100 transition">
+                    <button
+                      onClick={() => navigate(`/marketplace`)}
+                      className="w-full py-2 bg-gold-50 text-gold-700 rounded-lg text-xs font-medium hover:bg-gold-100 transition"
+                    >
                       View Details
                     </button>
                   </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Scissors, Users, ShoppingBag, MapPin, ClipboardList, Plus, X, Ruler } from 'lucide-react';
+import { Home, Scissors, Users, ShoppingBag, MapPin, ClipboardList, Plus, X, Ruler, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const tailorLeft = [
@@ -9,20 +9,20 @@ const tailorLeft = [
 ];
 
 const tailorRight = [
-  { to: '/customers', icon: Users, label: 'Clients' },
+  { to: '/tailor/1', icon: Store, label: 'Store' },
   { to: '/marketplace', icon: ShoppingBag, label: 'Market' },
 ];
 
 const customerItems = [
-  { to: '/home', icon: Home, label: 'Home' },
+  { to: '/dashboard', icon: Home, label: 'Home' },
   { to: '/orders', icon: ClipboardList, label: 'Orders' },
   { to: '/near-me', icon: MapPin, label: 'Near Me' },
   { to: '/marketplace', icon: ShoppingBag, label: 'Market' },
 ];
 
-function NavItem({ to, icon: Icon, label, end }) {
+function NavItem({ to, icon: Icon, label, end, onNavClick }) {
   return (
-    <NavLink to={to} end={end} className="btn-touch flex-1 -m-1 p-1">
+    <NavLink to={to} end={end} className="btn-touch flex-1 -m-1 p-1" onClick={onNavClick}>
       {({ isActive }) => (
         <motion.div
           className="flex flex-col items-center gap-1 py-1.5"
@@ -71,10 +71,10 @@ const fabActions = [
   },
 ];
 
-export default function BottomNav({ userRole, onAddJob, onRecordMeasurement }) {
+export default function BottomNav({ userRole, onAddJob, onRecordMeasurement, onNavClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const isTailor = userRole === 'tailor';
-  const homeRoute = isTailor ? '/dashboard' : '/home';
+  const homeRoute = '/dashboard';
 
   const handleAction = (key) => {
     setMenuOpen(false);
@@ -125,7 +125,7 @@ export default function BottomNav({ userRole, onAddJob, onRecordMeasurement }) {
           <div className="flex items-end justify-around h-20 px-2 max-w-lg mx-auto relative">
             {/* Left nav items */}
             {tailorLeft.map(({ to, icon, label }) => (
-              <NavItem key={to} to={to} icon={icon} label={label} end={to === homeRoute} />
+              <NavItem key={to} to={to} icon={icon} label={label} end={to === homeRoute} onNavClick={onNavClick} />
             ))}
 
             {/* Center FAB */}
@@ -144,7 +144,7 @@ export default function BottomNav({ userRole, onAddJob, onRecordMeasurement }) {
 
             {/* Right nav items */}
             {tailorRight.map(({ to, icon, label }) => (
-              <NavItem key={to} to={to} icon={icon} label={label} end={to === homeRoute} />
+              <NavItem key={to} to={to} icon={icon} label={label} end={to === homeRoute} onNavClick={onNavClick} />
             ))}
           </div>
         </nav>
@@ -157,7 +157,7 @@ export default function BottomNav({ userRole, onAddJob, onRecordMeasurement }) {
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-gray-200/60 safe-bottom md:hidden">
       <div className="flex items-center justify-around h-20 px-2 max-w-lg mx-auto">
         {customerItems.map(({ to, icon, label }) => (
-          <NavItem key={to} to={to} icon={icon} label={label} end={to === homeRoute} />
+          <NavItem key={to} to={to} icon={icon} label={label} end={to === homeRoute} onNavClick={onNavClick} />
         ))}
       </div>
     </nav>

@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, UserPlus } from 'lucide-react';
-
-const colorOptions = [
-  'from-gold-400 to-amber-500',
-  'from-teal-400 to-emerald-500',
-  'from-purple-400 to-pink-500',
-  'from-blue-400 to-indigo-400',
-  'from-rose-400 to-red-500',
-  'from-orange-400 to-amber-500',
-];
+import { X, UserPlus, Loader2 } from 'lucide-react';
 
 export default function AddCustomerModal({ isOpen, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -18,35 +9,27 @@ export default function AddCustomerModal({ isOpen, onClose, onSave }) {
     email: '',
     location: '',
   });
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim() || !form.phone.trim()) return;
 
-    const names = form.name.trim().split(' ');
-    const initials = names.map((n) => n[0]).join('').toUpperCase().slice(0, 2);
-    const color = colorOptions[Math.floor(Math.random() * colorOptions.length)];
-
-    const newCustomer = {
-      id: `cust-${Date.now()}`,
-      name: form.name.trim(),
-      phone: form.phone.trim(),
-      email: form.email.trim(),
-      avatar: null,
-      initials,
-      color,
-      location: form.location.trim() || 'Nigeria',
-      createdAt: new Date().toISOString().split('T')[0],
-      measurements: {
-        neck: null, chest: null, waist: null, hip: null,
-        shoulder: null, sleeve: null, length: null,
-        agbadaSpan: null, inseam: null, notes: '',
-      },
-    };
-
-    onSave(newCustomer);
-    setForm({ name: '', phone: '', email: '', location: '' });
-    onClose();
+    setSaving(true);
+    try {
+      await onSave({
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim() || undefined,
+        location: form.location.trim() || undefined,
+      });
+      setForm({ name: '', phone: '', email: '', location: '' });
+      onClose();
+    } catch (err) {
+      console.error('Failed to save customer:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -126,9 +109,11 @@ export default function AddCustomerModal({ isOpen, onClose, onSave }) {
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white font-semibold text-sm shadow-sm transition-colors btn-touch"
+                disabled={saving}
+                className="w-full py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white font-semibold text-sm shadow-sm transition-colors btn-touch disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                Add Customer
+                {saving && <Loader2 size={16} className="animate-spin" />}
+                {saving ? 'Adding...' : 'Add Customer'}
               </motion.button>
             </form>
           </motion.div>

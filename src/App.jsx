@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { useLocalStorage } from './hooks/useLocalStorage';
-import { initialCustomers, initialJobs } from './data/mockData';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
-import TailorDashboard from './pages/TailorDashboard';
 import CustomerDashboard from './pages/CustomerDashboard';
 import Customers from './pages/Customers';
 import CustomerDetail from './pages/CustomerDetail';
@@ -20,76 +18,66 @@ import Notifications from './pages/Notifications';
 import NotificationDetail from './pages/NotificationDetail';
 import SettingsPage from './pages/SettingsPage';
 import HelpSupport from './pages/HelpSupport';
+import TailorStorefront from './pages/TailorStorefront';
+import StyleDetail from './pages/StyleDetail';
+import PlaceOrder from './pages/PlaceOrder';
+import Referral from './pages/Referral';
+import Onboarding from './pages/Onboarding';
+import Leaderboard from './pages/Leaderboard';
+import News from './pages/News';
+
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return <div className="flex h-screen items-center justify-center"><div className="w-8 h-8 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /></div>;
+  if (!isAuthenticated) return <Navigate to="/" replace />;
+  return children;
+}
 
 export default function App() {
-  const [customers, setCustomers] = useLocalStorage('dinki-customers', initialCustomers);
-  const [jobs, setJobs] = useLocalStorage('dinki-jobs', initialJobs);
-  const [userRole, setUserRole] = useLocalStorage('dinki-user-role', null);
+  const { user, loading } = useAuth();
+  const userRole = user?.role || null;
   const [showAddJob, setShowAddJob] = useState(false);
+
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center bg-cloud"><div className="w-8 h-8 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /></div>;
+  }
 
   return (
     <Routes>
-      <Route path="/" element={<Landing setUserRole={setUserRole} />} />
+      <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Landing />} />
+      <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
       <Route
         path="/*"
         element={
-          <Layout userRole={userRole} onAddJob={() => setShowAddJob(true)}>
-            <Routes>
+          <ProtectedRoute>
+            <Layout userRole={userRole} onAddJob={() => setShowAddJob(true)}>
+              <Routes>
               <Route
                 path="dashboard"
                 element={
-                  <Dashboard
-                    jobs={jobs}
-                    customers={customers}
-                    setShowAddJob={setShowAddJob}
-                  />
+                  userRole === 'customer' ? (
+                    <CustomerDashboard tab="home" />
+                  ) : (
+                    <Dashboard setShowAddJob={setShowAddJob} />
+                  )
                 }
-              />
-              <Route
-                path="tailor-dashboard"
-                element={<TailorDashboard />}
               />
               {/* Customer routes */}
               <Route path="home" element={<CustomerDashboard tab="home" />} />
               <Route path="orders" element={<CustomerDashboard tab="orders" />} />
               <Route path="near-me" element={<CustomerDashboard tab="near-me" />} />
-              <Route path="customer-dashboard" element={<CustomerDashboard tab="home" />} />
-              <Route
-                path="/customers"
-                element={<Customers customers={customers} setCustomers={setCustomers} />}
-              />
-              <Route
-                path="/customers/:id"
-                element={
-                  <CustomerDetail
-                    customers={customers}
-                    setCustomers={setCustomers}
-                    jobs={jobs}
-                  />
-                }
-              />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route
                 path="/jobs"
                 element={
                   <Jobs
-                    jobs={jobs}
-                    setJobs={setJobs}
-                    customers={customers}
                     showAddJob={showAddJob}
                     setShowAddJob={setShowAddJob}
                   />
                 }
               />
-              <Route
-                path="/jobs/:id"
-                element={
-                  <JobDetailPage
-                    jobs={jobs}
-                    setJobs={setJobs}
-                    customers={customers}
-                  />
-                }
-              />
+              <Route path="/jobs/:id" element={<JobDetailPage />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/profile" element={<Profile userRole={userRole} />} />
               <Route path="/messages" element={<Messages />} />
@@ -99,8 +87,15 @@ export default function App() {
               <Route path="/notifications/:id" element={<NotificationDetail />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/help" element={<HelpSupport />} />
+              <Route path="/tailor/:id" element={<TailorStorefront userRole={userRole} />} />
+              <Route path="/marketplace/style/:id" element={<StyleDetail />} />
+              <Route path="/order/new" element={<PlaceOrder />} />
+              <Route path="/referral" element={<Referral />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/news" element={<News />} />
             </Routes>
           </Layout>
+          </ProtectedRoute>
         }
       />
     </Routes>

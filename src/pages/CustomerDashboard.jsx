@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, MapPin, Star, Heart, MessageCircle, Sparkles, Clock, Store, ChevronRight } from 'lucide-react';
+import { ShoppingBag, MapPin, Star, Heart, MessageCircle, Sparkles, Clock, Store, ChevronRight, Search, Shirt, Gift } from 'lucide-react';
+import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
 
 export default function CustomerDashboard({ tab = 'home' }) {
   const navigate = useNavigate();
@@ -13,10 +14,10 @@ export default function CustomerDashboard({ tab = 'home' }) {
   };
 
   const nearbyTailors = [
-    { id: 1, name: 'Aunty Zainab', specialty: 'Traditional Ankara', rating: 4.9, reviews: 324, distance: '0.8 km', image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?w=200&h=200&fit=crop', price: '₦5,000+', responseTime: '2 hours' },
-    { id: 2, name: 'Master Chukwu', specialty: 'Agbada Expert', rating: 4.8, reviews: 287, distance: '1.2 km', image: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?w=200&h=200&fit=crop', price: '₦4,500+', responseTime: '1 hour' },
-    { id: 3, name: 'Mama Amara', specialty: 'Luxury Aso Ebi', rating: 4.95, reviews: 412, distance: '2.1 km', image: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?w=200&h=200&fit=crop', price: '₦8,000+', responseTime: '3 hours' },
-    { id: 4, name: 'Sister Blessing', specialty: 'Modern Trends', rating: 4.7, reviews: 198, distance: '1.5 km', image: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?w=200&h=200&fit=crop', price: '₦3,500+', responseTime: '1 hour' },
+    { id: 1, name: 'Aunty Zainab', specialty: 'Traditional Ankara', rating: 4.9, reviews: 324, distance: '0.8 km', image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?w=200&h=200&fit=crop', price: '₦5,000+', responseTime: '2 hours', verified: true, completedOrders: 580 },
+    { id: 2, name: 'Master Chukwu', specialty: 'Agbada Expert', rating: 4.8, reviews: 287, distance: '1.2 km', image: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?w=200&h=200&fit=crop', price: '₦4,500+', responseTime: '1 hour', verified: true, completedOrders: 430 },
+    { id: 3, name: 'Mama Amara', specialty: 'Luxury Aso Ebi', rating: 4.95, reviews: 412, distance: '2.1 km', image: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?w=200&h=200&fit=crop', price: '₦8,000+', responseTime: '3 hours', verified: true, completedOrders: 720 },
+    { id: 4, name: 'Sister Blessing', specialty: 'Modern Trends', rating: 4.7, reviews: 198, distance: '1.5 km', image: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?w=200&h=200&fit=crop', price: '₦3,500+', responseTime: '1 hour', verified: false, completedOrders: 85 },
   ];
 
   const orders = [
@@ -47,6 +48,46 @@ export default function CustomerDashboard({ tab = 'home' }) {
                   Hello, {customerData.name.split(' ')[0]}
                 </h1>
                 <p className="text-sm text-gray-400 mt-1">Find tailors, track orders, and explore styles.</p>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-2.5">
+                <button
+                  onClick={() => navigate('/near-me')}
+                  className="hidden md:flex bg-white rounded-2xl p-3.5 border border-gray-100 shadow-sm hover:border-gold-200 hover:shadow-md transition-all flex-col items-center gap-2 group"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-gold-50 flex items-center justify-center group-hover:bg-gold-100 transition">
+                    <Search size={19} className="text-gold-600" />
+                  </div>
+                  <span className="text-[11px] sm:text-xs font-medium text-gray-700 leading-tight text-center">Find Tailor</span>
+                </button>
+                <button
+                  onClick={() => navigate('/order/new')}
+                  className="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-sm hover:border-teal-200 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center group-hover:bg-teal-100 transition">
+                    <Shirt size={19} className="text-teal-600" />
+                  </div>
+                  <span className="text-[11px] sm:text-xs font-medium text-gray-700 leading-tight text-center">New Order</span>
+                </button>
+                <button
+                  onClick={() => navigate('/messages')}
+                  className="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition">
+                    <MessageCircle size={19} className="text-indigo-600" />
+                  </div>
+                  <span className="text-[11px] sm:text-xs font-medium text-gray-700 leading-tight text-center">Messages</span>
+                </button>
+                <button
+                  onClick={() => navigate('/referral')}
+                  className="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-sm hover:border-rose-200 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center group-hover:bg-rose-100 transition">
+                    <Gift size={19} className="text-rose-600" />
+                  </div>
+                  <span className="text-[11px] sm:text-xs font-medium text-gray-700 leading-tight text-center">Refer & Earn</span>
+                </button>
               </div>
 
               {/* Stats Grid */}
@@ -122,10 +163,13 @@ export default function CustomerDashboard({ tab = 'home' }) {
                 </div>
                 <div className="space-y-3">
                   {nearbyTailors.slice(0, 2).map((tailor) => (
-                    <div key={tailor.id} className="flex items-center gap-3">
+                    <div key={tailor.id} className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(`/tailor/${tailor.id}`)}>
                       <img src={tailor.image} alt={tailor.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 text-sm truncate">{tailor.name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-medium text-gray-900 text-sm truncate">{tailor.name}</p>
+                          {tailor.verified && <VerifiedBadge size={13} />}
+                        </div>
                         <p className="text-xs text-gray-500 truncate">{tailor.specialty}</p>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0 text-xs text-gray-500">
@@ -186,47 +230,65 @@ export default function CustomerDashboard({ tab = 'home' }) {
                 <MapPin size={18} className="text-teal-500" />
                 <h2 className="text-lg sm:text-xl font-heading font-bold text-gray-900">Tailors Near You</h2>
               </div>
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-3">
                 {nearbyTailors.map((tailor) => (
-                  <motion.div key={tailor.id} whileHover={{ y: -2 }} className="bg-white rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm hover:shadow-md transition">
-                    <div className="flex gap-3 sm:gap-4">
-                      <img src={tailor.image} alt={tailor.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover flex-shrink-0" />
+                  <motion.div key={tailor.id} whileHover={{ y: -2 }} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition">
+                    {/* Top row: avatar + name + distance */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <img src={tailor.image} alt={tailor.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="min-w-0">
-                            <h3 className="font-heading font-bold text-gray-900 text-sm sm:text-base truncate">{tailor.name}</h3>
-                            <p className="text-xs sm:text-sm text-gray-600 truncate">{tailor.specialty}</p>
-                          </div>
-                          <span className="text-xs bg-teal-100 text-teal-700 px-2 sm:px-3 py-1 rounded-lg font-medium flex items-center gap-1 flex-shrink-0 whitespace-nowrap">
-                            <MapPin size={12} /> {tailor.distance}
-                          </span>
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-heading font-bold text-gray-900 text-sm truncate">{tailor.name}</h3>
+                          {tailor.verified && <VerifiedBadge size={14} />}
                         </div>
-                        <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm mb-3">
-                          <span className="flex items-center gap-1 text-gray-700">
-                            <Star size={12} className="text-yellow-400" fill="currentColor" />
-                            {tailor.rating} ({tailor.reviews})
-                          </span>
-                          <span className="text-gray-600">{tailor.price}</span>
-                          <span className="flex items-center gap-1 text-gray-600">
-                            <Clock size={12} /> {tailor.responseTime}
-                          </span>
-                        </div>
-                        <div className="flex gap-2">
-                          <button className="flex-1 py-2 bg-gold-500 text-white rounded-lg text-xs font-medium hover:bg-gold-600 transition flex items-center justify-center gap-1 min-h-[40px]">
-                            <MessageCircle size={13} /> Chat
-                          </button>
-                          <button
-                            onClick={() => toggleSaveTailor(tailor.id)}
-                            className={`px-3 py-2 rounded-lg text-xs font-medium transition border flex-shrink-0 min-h-[40px] flex items-center justify-center ${
-                              savedTailors.includes(tailor.id)
-                                ? 'bg-red-50 border-red-200 text-red-600'
-                                : 'bg-white border-gray-200 text-gray-600 hover:border-red-200'
-                            }`}
-                          >
-                            <Heart size={13} fill={savedTailors.includes(tailor.id) ? 'currentColor' : 'none'} />
-                          </button>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <p className="text-xs text-gray-500 truncate">{tailor.specialty}</p>
+                          <LevelBadge completedOrders={tailor.completedOrders} compact />
                         </div>
                       </div>
+                      <span className="text-[11px] bg-teal-50 text-teal-700 px-2 py-1 rounded-lg font-medium flex items-center gap-1 flex-shrink-0 border border-teal-100">
+                        <MapPin size={11} /> {tailor.distance}
+                      </span>
+                    </div>
+
+                    {/* Stats row */}
+                    <div className="flex items-center gap-3 text-xs text-gray-500 mb-3 pl-0.5">
+                      <span className="flex items-center gap-1">
+                        <Star size={12} className="text-yellow-400" fill="currentColor" />
+                        <span className="text-gray-700 font-medium">{tailor.rating}</span> ({tailor.reviews})
+                      </span>
+                      <span className="text-gray-300">|</span>
+                      <span className="font-medium text-gray-700">{tailor.price}</span>
+                      <span className="text-gray-300">|</span>
+                      <span className="flex items-center gap-1">
+                        <Clock size={11} /> {tailor.responseTime}
+                      </span>
+                    </div>
+
+                    {/* Buttons row — full width, equal sizing */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => navigate(`/tailor/${tailor.id}`)}
+                        className="flex-1 py-2.5 bg-gold-500 text-white rounded-xl text-xs font-semibold hover:bg-gold-600 transition flex items-center justify-center gap-1.5 min-h-[44px] shadow-sm shadow-gold-500/15"
+                      >
+                        View Profile
+                      </button>
+                      <button
+                        onClick={() => navigate(`/messages/${tailor.id}`)}
+                        className="flex-1 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium hover:bg-gray-50 transition flex items-center justify-center gap-1.5 min-h-[44px] text-gray-700"
+                      >
+                        <MessageCircle size={14} /> Chat
+                      </button>
+                      <button
+                        onClick={() => toggleSaveTailor(tailor.id)}
+                        className={`w-11 rounded-xl text-xs font-medium transition border flex-shrink-0 min-h-[44px] flex items-center justify-center ${
+                          savedTailors.includes(tailor.id)
+                            ? 'bg-red-50 border-red-200 text-red-500'
+                            : 'bg-white border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-400'
+                        }`}
+                      >
+                        <Heart size={16} fill={savedTailors.includes(tailor.id) ? 'currentColor' : 'none'} />
+                      </button>
                     </div>
                   </motion.div>
                 ))}

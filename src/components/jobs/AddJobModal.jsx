@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Scissors, ChevronDown } from 'lucide-react';
+import { X, Scissors, ChevronDown, Loader2 } from 'lucide-react';
 
 const statusOptions = [
   { value: 'cutting', label: 'Cutting' },
@@ -18,29 +18,29 @@ export default function AddJobModal({ isOpen, onClose, onSave, customers }) {
     dueDate: '',
     price: '',
   });
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.customerId || !form.title.trim() || !form.dueDate) return;
 
-    const customer = customers.find((c) => c.id === form.customerId);
-    const newJob = {
-      id: `job-${Date.now()}`,
-      customerId: form.customerId,
-      customerName: customer?.name || 'Unknown',
-      title: form.title.trim(),
-      description: form.description.trim(),
-      styleImage: null,
-      status: form.status,
-      dueDate: form.dueDate,
-      price: Number(form.price) || 0,
-      invoiced: false,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-
-    onSave(newJob);
-    setForm({ customerId: '', title: '', description: '', status: 'cutting', dueDate: '', price: '' });
-    onClose();
+    setSaving(true);
+    try {
+      await onSave({
+        customer_id: form.customerId,
+        title: form.title.trim(),
+        description: form.description.trim() || undefined,
+        status: form.status,
+        due_date: form.dueDate,
+        price: Number(form.price) || 0,
+      });
+      setForm({ customerId: '', title: '', description: '', status: 'cutting', dueDate: '', price: '' });
+      onClose();
+    } catch (err) {
+      console.error('Failed to create job:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -162,9 +162,11 @@ export default function AddJobModal({ isOpen, onClose, onSave, customers }) {
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white font-semibold text-sm shadow-sm transition-colors btn-touch"
+                disabled={saving}
+                className="w-full py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white font-semibold text-sm shadow-sm transition-colors btn-touch disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                Create Job
+                {saving && <Loader2 size={16} className="animate-spin" />}
+                {saving ? 'Creating...' : 'Create Job'}
               </motion.button>
             </form>
           </motion.div>

@@ -1,106 +1,100 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MoreVertical, Send, Image, Check, CheckCheck } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Send, Image, Check, CheckCheck, Loader2 } from 'lucide-react';
+import { conversations as convoApi, uploads as uploadsApi } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 
-const chatDataMap = {
-  'chat-1': {
-    name: 'Amina Bello',
-    initials: 'AB',
-    color: 'from-gold-400 to-amber-500',
-    online: true,
-    messages: [
-      { id: 1, sender: 'them', text: 'Good morning! I wanted to check on my Ankara Ensemble order.', time: '9:00 AM', read: true },
-      { id: 2, sender: 'me', text: 'Good morning Amina! The cutting is complete. We are moving to stitching today.', time: '9:05 AM', read: true },
-      { id: 3, sender: 'them', text: 'That\'s wonderful news! I\'m so excited.', time: '9:06 AM', read: true },
-      { id: 4, sender: 'me', text: 'You\'ll love it! The Ankara print came out beautifully. I\'ll send photos once the first piece is done.', time: '9:10 AM', read: true },
-      { id: 5, sender: 'them', text: 'Yes please! Can you also add some gold thread on the neckline like we discussed?', time: '9:15 AM', read: true },
-      { id: 6, sender: 'me', text: 'Absolutely. Already planned for it. The gold thread will complement the print perfectly.', time: '9:20 AM', read: true },
-      { id: 7, sender: 'them', text: 'The Ankara fabric just arrived! When can I come for fitting?', time: '10:30 AM', read: false },
-    ],
-  },
-  'chat-2': {
-    name: 'Musa Abdullahi',
-    initials: 'MA',
-    color: 'from-teal-400 to-emerald-500',
-    online: true,
-    messages: [
-      { id: 1, sender: 'me', text: 'Musa, your Grand Agbada is ready for final fitting!', time: '8:00 AM', read: true },
-      { id: 2, sender: 'them', text: 'Alhamdulillah! I\'ve been looking forward to this.', time: '8:05 AM', read: true },
-      { id: 3, sender: 'me', text: 'The hand embroidery took extra time but it\'s worth every stitch. Gold and silver thread work is pristine.', time: '8:10 AM', read: true },
-      { id: 4, sender: 'them', text: 'Can I come tomorrow at 2pm?', time: '8:12 AM', read: true },
-      { id: 5, sender: 'me', text: 'Perfect. See you then. I\'ll have everything steamed and ready.', time: '8:15 AM', read: true },
-      { id: 6, sender: 'them', text: 'Thank you! The Agbada is absolutely stunning.', time: '8:20 AM', read: true },
-    ],
-  },
-  'chat-3': {
-    name: 'Fatima Yusuf',
-    initials: 'FY',
-    color: 'from-purple-400 to-pink-500',
-    online: false,
-    messages: [
-      { id: 1, sender: 'them', text: 'Hi! I have a question about my Corporate Ankara Dress.', time: '11:00 AM', read: true },
-      { id: 2, sender: 'me', text: 'Of course Fatima, what would you like to know?', time: '11:05 AM', read: true },
-      { id: 3, sender: 'them', text: 'Can we change the sleeve design to bell sleeves?', time: '11:10 AM', read: false },
-    ],
-  },
-};
-
-// Fallback for unknown chat IDs
-const defaultChat = {
-  name: 'Unknown',
-  initials: '??',
-  color: 'from-gray-400 to-gray-500',
-  online: false,
-  messages: [
-    { id: 1, sender: 'them', text: 'Hello!', time: 'Just now', read: true },
-  ],
-};
+function formatTime(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
 
 export default function ChatDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const chat = chatDataMap[id] || defaultChat;
+  const { user } = useAuth();
   const [newMessage, setNewMessage] = useState('');
-  const [messages, setMessages] = useState(chat.messages);
+  const [messages, setMessages] = useState([]);
+  const [participant, setParticipant] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
   const fileInputRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
-  const handleImagePick = (e) => {
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const loadMessages = useCallback(async () => {
+    try {
+      const [convoRes, msgRes] = await Promise.all([
+        convoApi.list(),
+        convoApi.getMessages(id, { limit: 50 }),
+      ]);
+      const convo = (convoRes.data || []).find((c) => c.id === id);
+      if (convo) setParticipant(convo.participant);
+      setMessages((msgRes.data || []).reverse());
+      convoApi.markRead(id).catch(() => {});
+    } catch (err) {
+      console.error('Failed to load messages:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => { loadMessages(); }, [loadMessages]);
+  useEffect(() => { scrollToBottom(); }, [messages]);
+
+  const handleImagePick = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert('Only image files are allowed.');
       e.target.value = '';
       return;
     }
-    if (file.size > 1024 * 1024) {
-      alert('Image must be under 1 MB.');
-      e.target.value = '';
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), sender: 'me', text: '', image: url, time: 'Just now', read: false },
-    ]);
     e.target.value = '';
+    setSending(true);
+    try {
+      const uploadRes = await uploadsApi.image(file);
+      const imageUrl = uploadRes.data?.url;
+      if (imageUrl) {
+        const res = await convoApi.sendMessage(id, { image_url: imageUrl });
+        if (res.data) setMessages((prev) => [...prev, res.data]);
+      }
+    } catch (err) {
+      console.error('Failed to send image:', err);
+    } finally {
+      setSending(false);
+    }
   };
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        sender: 'me',
-        text: newMessage.trim(),
-        time: 'Just now',
-        read: false,
-      },
-    ]);
+    const text = newMessage.trim();
+    if (!text || sending) return;
     setNewMessage('');
+    setSending(true);
+    try {
+      const res = await convoApi.sendMessage(id, { text });
+      if (res.data) setMessages((prev) => [...prev, res.data]);
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      setNewMessage(text);
+    } finally {
+      setSending(false);
+    }
   };
+
+  const p = participant || {};
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 size={28} className="animate-spin text-gold-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100dvh-3.5rem-5rem)] md:h-[calc(100dvh-0px)] max-w-4xl mx-auto">
@@ -113,16 +107,13 @@ export default function ChatDetail() {
           <ArrowLeft size={20} className="text-gray-600" />
         </button>
         <div className="relative">
-          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${chat.color} flex items-center justify-center text-white font-heading font-bold text-xs`}>
-            {chat.initials}
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-heading font-bold text-xs" style={{ backgroundColor: p.avatar_color || '#D4A574' }}>
+            {p.initials || '?'}
           </div>
-          {chat.online && (
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-white rounded-full" />
-          )}
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold text-gray-900 truncate">{chat.name}</h2>
-          <p className="text-xs text-gray-400">{chat.online ? 'Online' : 'Offline'}</p>
+          <h2 className="text-sm font-semibold text-gray-900 truncate">{p.name || 'Chat'}</h2>
+          <p className="text-xs text-gray-400">{p.role || ''}</p>
         </div>
         <button className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
           <MoreVertical size={18} className="text-gray-500" />
@@ -131,35 +122,42 @@ export default function ChatDetail() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-cloud">
-        {messages.map((msg) => (
-          <motion.div
-            key={msg.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                msg.sender === 'me'
-                  ? 'bg-gold-500 text-white rounded-br-md'
-                  : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md shadow-sm'
-              }`}
+        {messages.length === 0 && (
+          <p className="text-center text-sm text-gray-400 py-8">No messages yet. Say hello!</p>
+        )}
+        {messages.map((msg) => {
+          const isMine = msg.sender_id === user?.id;
+          return (
+            <motion.div
+              key={msg.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
             >
-              {msg.image && (
-                <img src={msg.image} alt="Shared" className="rounded-xl max-w-full mb-1.5" loading="lazy" />
-              )}
-              {msg.text && <p>{msg.text}</p>}
-              <div className={`flex items-center justify-end gap-1 mt-1 ${msg.sender === 'me' ? 'text-white/70' : 'text-gray-400'}`}>
-                <span className="text-[10px]">{msg.time}</span>
-                {msg.sender === 'me' && (
-                  msg.read
-                    ? <CheckCheck size={12} className="text-white/80" />
-                    : <Check size={12} />
+              <div
+                className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  isMine
+                    ? 'bg-gold-500 text-white rounded-br-md'
+                    : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md shadow-sm'
+                }`}
+              >
+                {msg.image_url && (
+                  <img src={msg.image_url} alt="Shared" className="rounded-xl max-w-full mb-1.5" loading="lazy" />
                 )}
+                {msg.text && <p>{msg.text}</p>}
+                <div className={`flex items-center justify-end gap-1 mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
+                  <span className="text-[10px]">{formatTime(msg.created_at)}</span>
+                  {isMine && (
+                    msg.is_read
+                      ? <CheckCheck size={12} className="text-white/80" />
+                      : <Check size={12} />
+                  )}
+                </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
@@ -171,7 +169,7 @@ export default function ChatDetail() {
           className="hidden"
           onChange={handleImagePick}
         />
-        <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+        <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 rounded-xl hover:bg-gray-100 transition-colors" disabled={sending}>
           <Image size={18} className="text-gray-400" />
         </button>
         <input
@@ -184,9 +182,10 @@ export default function ChatDetail() {
         <motion.button
           whileTap={{ scale: 0.9 }}
           type="submit"
-          className="w-10 h-10 rounded-xl bg-gold-500 hover:bg-gold-600 flex items-center justify-center transition-colors shadow-sm"
+          disabled={sending || !newMessage.trim()}
+          className="w-10 h-10 rounded-xl bg-gold-500 hover:bg-gold-600 flex items-center justify-center transition-colors shadow-sm disabled:opacity-50"
         >
-          <Send size={16} className="text-white" />
+          {sending ? <Loader2 size={16} className="text-white animate-spin" /> : <Send size={16} className="text-white" />}
         </motion.button>
       </form>
     </div>

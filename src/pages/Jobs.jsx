@@ -1,11 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Scissors } from 'lucide-react';
 import JobList from '../components/jobs/JobList';
 import AddJobModal from '../components/jobs/AddJobModal';
+import { jobs as jobsApi, customers as customersApi } from '../lib/api';
 
-export default function Jobs({ jobs, setJobs, customers, showAddJob, setShowAddJob }) {
-  const handleAddJob = (newJob) => {
-    setJobs((prev) => [newJob, ...prev]);
+export default function Jobs({ showAddJob, setShowAddJob }) {
+  const [jobs, setJobs] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    try {
+      const [jobsRes, custRes] = await Promise.all([
+        jobsApi.list({ limit: 100 }),
+        customersApi.list({ limit: 100 }),
+      ]);
+      setJobs(jobsRes.data.jobs || []);
+      setCustomers(custRes.data.customers || []);
+    } catch (err) {
+      console.error('Failed to load jobs:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const handleAddJob = async (formData) => {
+    try {
+      await jobsApi.create(formData);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to create job:', err);
+    }
   };
 
   return (
@@ -16,7 +43,7 @@ export default function Jobs({ jobs, setJobs, customers, showAddJob, setShowAddJ
         <h1 className="text-xl md:text-2xl font-heading font-bold text-gray-900">Jobs & Orders</h1>
       </div>
 
-      <JobList jobs={jobs} onAddJob={() => setShowAddJob(true)} />
+      <JobList jobs={jobs} onAddJob={() => setShowAddJob(true)} loading={loading} />
 
       <AddJobModal
         isOpen={showAddJob}

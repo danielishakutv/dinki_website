@@ -1,13 +1,50 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Phone, Mail, MapPin, CalendarDays, Scissors, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, MapPin, CalendarDays, Scissors, AlertCircle, Loader2 } from 'lucide-react';
 import MeasurementVault from '../components/customers/MeasurementVault';
+import { customers as customersApi, jobs as jobsApi } from '../lib/api';
 
-export default function CustomerDetail({ customers, setCustomers, jobs }) {
+export default function CustomerDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const customer = customers.find((c) => c.id === id);
+  const [customer, setCustomer] = useState(null);
+  const [customerJobs, setCustomerJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    try {
+      const [custRes, jobsRes] = await Promise.all([
+        customersApi.get(id),
+        jobsApi.list({ customer_id: id, limit: 50 }),
+      ]);
+      setCustomer(custRes.data);
+      setCustomerJobs(jobsRes.data || []);
+    } catch (err) {
+      console.error('Failed to load customer:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const handleSaveMeasurements = async (newMeasurements) => {
+    try {
+      await customersApi.updateMeasurements(id, { measurements: newMeasurements });
+      setCustomer((prev) => prev ? { ...prev, measurements: newMeasurements } : prev);
+    } catch (err) {
+      console.error('Failed to save measurements:', err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 size={28} className="animate-spin text-gold-500" />
+      </div>
+    );
+  }
 
   if (!customer) {
     return (
@@ -17,21 +54,11 @@ export default function CustomerDetail({ customers, setCustomers, jobs }) {
         </div>
         <p className="text-gray-400">Customer not found.</p>
         <Link to="/customers" className="text-gold-500 text-sm mt-2 inline-block">
-          ← Back to customers
+          Back to customers
         </Link>
       </div>
     );
   }
-
-  const customerJobs = jobs.filter((j) => j.customerId === customer.id);
-
-  const handleSaveMeasurements = (newMeasurements) => {
-    setCustomers((prev) =>
-      prev.map((c) =>
-        c.id === customer.id ? { ...c, measurements: newMeasurements } : c
-      )
-    );
-  };
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
@@ -65,27 +92,32 @@ export default function CustomerDetail({ customers, setCustomers, jobs }) {
         <div className="px-5 pb-5 -mt-10 relative z-10">
           {/* Avatar */}
           <div
-            className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${customer.color} flex items-center justify-center text-white font-heading font-bold text-2xl border-4 border-white shadow-lg`}
+            className="w-20 h-20 rounded-2xl flex items-center justify-center text-white font-heading font-bold text-2xl border-4 border-white shadow-lg"
+            style={{ backgroundColor: customer.avatar_color || '#D4A574' }}
           >
-            {customer.initials}
+            {customer.initials || '?'}
           </div>
 
           <div className="mt-3 min-w-0">
             <h2 className="text-xl font-heading font-bold text-gray-900 break-words">{customer.name}</h2>
             <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2">
-              <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                <Phone size={12} className="flex-shrink-0" /> <span className="truncate">{customer.phone}</span>
-              </span>
+              {customer.phone && (
+                <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <Phone size={12} className="flex-shrink-0" /> <span className="truncate">{customer.phone}</span>
+                </span>
+              )}
               {customer.email && (
                 <span className="flex items-center gap-1.5 text-xs text-gray-400 min-w-0">
                   <Mail size={12} className="flex-shrink-0" /> <span className="truncate">{customer.email}</span>
                 </span>
               )}
-              <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                <MapPin size={12} className="flex-shrink-0" /> <span className="truncate">{customer.location}</span>
-              </span>
+              {customer.location && (
+                <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <MapPin size={12} className="flex-shrink-0" /> <span className="truncate">{customer.location}</span>
+                </span>
+              )}
               <span className="flex items-center gap-1.5 text-xs text-gray-400 whitespace-nowrap">
-                <CalendarDays size={12} className="flex-shrink-0" /> Since {new Date(customer.createdAt).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}
+                <CalendarDays size={12} className="flex-shrink-0" /> Since {new Date(customer.created_at).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}
               </span>
             </div>
           </div>
@@ -119,7 +151,7 @@ export default function CustomerDetail({ customers, setCustomers, jobs }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-700 truncate">{job.title}</p>
-                  <p className="text-xs text-gray-400">Due: {new Date(job.dueDate).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}</p>
+                  <p className="text-xs text-gray-400">Due: {new Date(job.due_date || job.dueDate).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}</p>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold status-${job.status}`}>
                   {job.status}

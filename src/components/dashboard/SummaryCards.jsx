@@ -19,12 +19,12 @@ export default function SummaryCards({ jobs, customers }) {
   const activeJobs = jobs.filter((j) => j.status !== 'delivered').length;
   const pendingInvoices = jobs.filter((j) => !j.invoiced).length;
   const newCustomers = customers.filter((c) => {
-    const created = new Date(c.createdAt);
+    const created = new Date(c.created_at || c.createdAt);
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return created >= thirtyDaysAgo;
   }).length;
-  const totalRevenue = jobs.filter((j) => j.invoiced).reduce((sum, j) => sum + j.price, 0);
+  const totalRevenue = jobs.filter((j) => j.invoiced).reduce((sum, j) => sum + (j.price || 0), 0);
 
   const cards = [
     {

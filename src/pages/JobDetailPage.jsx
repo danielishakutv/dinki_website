@@ -1,38 +1,57 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, CalendarDays, User, FileText, DollarSign,
-  CheckCircle, Circle, Scissors as ScissorsIcon,
+  CheckCircle, Circle, Scissors as ScissorsIcon, Loader2,
 } from 'lucide-react';
 import { statusConfig, measurementFields } from '../data/mockData';
+import { jobs as jobsApi, customers as customersApi } from '../lib/api';
 
 const statusFlow = ['cutting', 'stitching', 'ready', 'delivered'];
 
-export default function JobDetailPage({ jobs, setJobs, customers }) {
+export default function JobDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const job = jobs.find((j) => j.id === id);
+  const [job, setJob] = useState(null);
+  const [customer, setCustomer] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!job) {
-    return (
-      <div className="p-4 md:p-8 text-center py-20">
-        <p className="text-gray-400">Job not found.</p>
-        <Link to="/jobs" className="text-gold-500 text-sm mt-2 inline-block">← Back to jobs</Link>
-      </div>
-    );
-  }
+  const loadData = useCallback(async () => {
+    try {
+      const jobRes = await jobsApi.get(id);
+      const j = jobRes.data;
+      setJob(j);
+      if (j?.customer_id) {
+        const custRes = await customersApi.get(j.customer_id);
+        setCustomer(custRes.data);
+      }
+    } catch (err) {
+      console.error('Failed to load job:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
-  const customer = customers.find((c) => c.id === job.customerId);
-  const status = statusConfig[job.status];
-  const currentStatusIndex = statusFlow.indexOf(job.status);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  const updateStatus = (newStatus) => {
-    setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: newStatus } : j)));
+  const updateStatus = async (newStatus) => {
+    try {
+      await jobsApi.updateStatus(id, newStatus);
+      setJob((prev) => prev ? { ...prev, status: newStatus } : prev);
+    } catch (err) {
+      console.error('Failed to update status:', err);
+    }
   };
 
-  const toggleInvoiced = () => {
-    setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, invoiced: !j.invoiced } : j)));
+  const toggleInvoiced = async () => {
+    const newVal = !job.invoiced;
+    try {
+      await jobsApi.toggleInvoice(id, newVal);
+      setJob((prev) => prev ? { ...prev, invoiced: newVal } : prev);
+    } catch (err) {
+      console.error('Failed to toggle invoiced:', err);
+    }
   };
 
   const formatDate = (dateStr) => {
@@ -40,6 +59,30 @@ export default function JobDetailPage({ jobs, setJobs, customers }) {
       weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
     });
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 size={28} className="animate-spin text-gold-500" />
+      </div>
+    );
+  }
+
+  if (!job) {
+    return (
+      <div className="p-4 md:p-8 text-center py-20">
+        <p className="text-gray-400">Job not found.</p>
+        <Link to="/jobs" className="text-gold-500 text-sm mt-2 inline-block">Back to jobs</Link>
+      </div>
+    );
+  }
+
+  const status = statusConfig[job.status] || statusConfig.cutting;
+  const currentStatusIndex = statusFlow.indexOf(job.status);
+  const custId = job.customer_id || job.customerId;
+  const custName = job.customer_name || job.customerName || customer?.name || 'Customer';
+  const dueDate = job.due_date || job.dueDate;
+  const price = job.price || 0;
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
@@ -77,17 +120,17 @@ export default function JobDetailPage({ jobs, setJobs, customers }) {
           <div className="flex flex-wrap gap-4 mt-4">
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <User size={16} className="text-gray-400" />
-              <Link to={`/customers/${job.customerId}`} className="text-gold-500 hover:underline">
-                {job.customerName}
+              <Link to={`/customers/${custId}`} className="text-gold-500 hover:underline">
+                {custName}
               </Link>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <CalendarDays size={16} className="text-gray-400" />
-              Due: {formatDate(job.dueDate)}
+              Due: {formatDate(dueDate)}
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <DollarSign size={16} className="text-gray-400" />
-              ₦{job.price.toLocaleString()}
+              ₦{Number(price).toLocaleString()}
             </div>
           </div>
         </div>
@@ -247,7 +290,7 @@ export default function JobDetailPage({ jobs, setJobs, customers }) {
                 <div key={field.key} className="p-2 rounded-lg bg-gray-50 text-center">
                   <p className="text-[9px] text-gray-400 uppercase">{field.label}</p>
                   <p className="text-sm font-semibold text-gray-700">
-                    {customer.measurements[field.key] ?? '—'}
+                    {customer.measurements?.[field.key] ?? '—'}
                   </p>
                 </div>
               ))}
