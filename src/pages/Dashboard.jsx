@@ -19,8 +19,8 @@ export default function Dashboard({ setShowAddJob }) {
           jobsApi.list({ limit: 50 }),
           customersApi.list({ limit: 50 }),
         ]);
-        setJobs(jobsRes.data.jobs || []);
-        setCustomers(custRes.data.customers || []);
+        setJobs(Array.isArray(jobsRes.data) ? jobsRes.data : []);
+        setCustomers(Array.isArray(custRes.data) ? custRes.data : []);
       } catch (err) {
         console.error('Dashboard load error:', err);
       } finally {

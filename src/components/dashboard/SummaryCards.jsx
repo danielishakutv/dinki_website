@@ -15,7 +15,7 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-export default function SummaryCards({ jobs, customers }) {
+export default function SummaryCards({ jobs = [], customers = [] }) {
   const activeJobs = jobs.filter((j) => j.status !== 'delivered').length;
   const pendingInvoices = jobs.filter((j) => !j.invoiced).length;
   const newCustomers = customers.filter((c) => {
@@ -43,7 +43,7 @@ export default function SummaryCards({ jobs, customers }) {
       color: 'from-rose-400 to-red-500',
       bg: 'bg-rose-50',
       text: 'text-rose-600',
-      trend: `₦${(jobs.filter(j => !j.invoiced).reduce((s, j) => s + j.price, 0)).toLocaleString()}`,
+      trend: `₦${(jobs.filter(j => !j.invoiced).reduce((s, j) => s + (j.price || 0), 0)).toLocaleString()}`,
     },
     {
       label: 'New Customers',

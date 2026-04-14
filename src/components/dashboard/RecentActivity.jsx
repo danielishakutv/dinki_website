@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Clock, ArrowRight, CalendarDays, Bell } from 'lucide-react';
 import { statusConfig } from '../../data/mockData';
 
-export default function RecentActivity({ jobs, customers }) {
+export default function RecentActivity({ jobs = [], customers = [] }) {
   const recentJobs = [...jobs]
     .sort((a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt))
     .slice(0, 3);

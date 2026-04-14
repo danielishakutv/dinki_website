@@ -15,8 +15,8 @@ export default function Jobs({ showAddJob, setShowAddJob }) {
         jobsApi.list({ limit: 100 }),
         customersApi.list({ limit: 100 }),
       ]);
-      setJobs(jobsRes.data.jobs || []);
-      setCustomers(custRes.data.customers || []);
+      setJobs(Array.isArray(jobsRes.data) ? jobsRes.data : []);
+      setCustomers(Array.isArray(custRes.data) ? custRes.data : []);
     } catch (err) {
       console.error('Failed to load jobs:', err);
     } finally {

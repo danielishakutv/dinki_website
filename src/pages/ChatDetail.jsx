@@ -32,9 +32,11 @@ export default function ChatDetail() {
         convoApi.list(),
         convoApi.getMessages(id, { limit: 50 }),
       ]);
-      const convo = (convoRes.data || []).find((c) => c.id === id);
+      const convos = Array.isArray(convoRes.data) ? convoRes.data : [];
+      const convo = convos.find((c) => c.id === id);
       if (convo) setParticipant(convo.participant);
-      setMessages((msgRes.data || []).reverse());
+      const msgs = Array.isArray(msgRes.data) ? msgRes.data : (msgRes.data?.messages || []);
+      setMessages([...msgs].reverse());
       convoApi.markRead(id).catch(() => {});
     } catch (err) {
       console.error('Failed to load messages:', err);

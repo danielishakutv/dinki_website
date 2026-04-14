@@ -12,7 +12,7 @@ export default function Customers() {
   const loadCustomers = useCallback(async () => {
     try {
       const res = await customersApi.list({ limit: 100 });
-      setCustomers(res.data.customers || []);
+      setCustomers(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Failed to load customers:', err);
     } finally {

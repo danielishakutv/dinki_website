@@ -43,7 +43,12 @@ export default function Notifications() {
   const loadNotifications = useCallback(async () => {
     try {
       const res = await notifApi.list();
-      setNotifications(res.data || []);
+      const d = res.data || {};
+      if (Array.isArray(d)) {
+        setNotifications(d);
+      } else {
+        setNotifications([...(d.today || []), ...(d.earlier || [])]);
+      }
     } catch (err) {
       console.error('Failed to load notifications:', err);
     } finally {

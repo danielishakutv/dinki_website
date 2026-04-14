@@ -27,7 +27,7 @@ export default function Messages() {
   const loadConversations = useCallback(async () => {
     try {
       const res = await convoApi.list();
-      setChats(res.data || []);
+      setChats(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Failed to load conversations:', err);
     } finally {

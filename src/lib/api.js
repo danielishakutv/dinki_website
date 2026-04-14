@@ -149,6 +149,7 @@ export const jobs = {
     if (params.status) qs.set('status', params.status);
     if (params.overdue) qs.set('overdue', 'true');
     if (params.search) qs.set('search', params.search);
+    if (params.customer_id) qs.set('customer_id', params.customer_id);
     if (params.page) qs.set('page', params.page);
     if (params.limit) qs.set('limit', params.limit);
     const q = qs.toString();

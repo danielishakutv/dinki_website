@@ -28,6 +28,7 @@ export default function Profile({ userRole }) {
       const p = profileRes.data;
       const s = statsRes.data || {};
 
+      const loc = [p.location_city, p.location_state, p.location_country].filter(Boolean).join(', ') || p.location || '';
       setProfile({
         name: p.business_name || p.name || '',
         role: isTailor ? (p.title || 'Tailor') : 'Customer',
@@ -36,7 +37,7 @@ export default function Profile({ userRole }) {
         avatar_url: p.avatar_url,
         email: p.email || '',
         phone: p.phone || '',
-        location: p.location || '',
+        location: loc,
         bio: p.bio || '',
         joined: new Date(p.created_at).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' }),
         specialties: p.specialties || [],
@@ -45,10 +46,10 @@ export default function Profile({ userRole }) {
 
       if (isTailor) {
         setStats([
-          { label: 'Jobs Done', value: String(s.jobs_completed || 0), icon: Scissors },
-          { label: 'Clients', value: String(s.total_customers || 0), icon: User },
-          { label: 'Rating', value: String(s.average_rating || '0'), icon: Star },
-          { label: 'Active Jobs', value: String(s.active_jobs || 0), icon: Briefcase },
+          { label: 'Jobs Done', value: String(s.completedJobs || 0), icon: Scissors },
+          { label: 'Clients', value: String(s.customers || 0), icon: User },
+          { label: 'Rating', value: String(p.tailor_profile?.rating_avg || '0'), icon: Star },
+          { label: 'Active Jobs', value: String(s.activeJobs || 0), icon: Briefcase },
         ]);
       } else {
         setStats([
@@ -194,7 +195,7 @@ export default function Profile({ userRole }) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {profile.stats.map((stat) => (
+        {stats.map((stat) => (
           <motion.div
             key={stat.label}
             whileTap={{ scale: 0.97 }}
@@ -254,7 +255,7 @@ export default function Profile({ userRole }) {
           {isTailor ? 'Specialties' : 'Style Preferences'}
         </h3>
         <div className="flex flex-wrap gap-2">
-          {profile.specialties.map((item) => (
+          {(profile.specialties || []).map((item) => (
             <span
               key={item}
               className="px-3 py-1.5 rounded-xl bg-gold-50 text-gold-700 text-xs font-medium border border-gold-100"

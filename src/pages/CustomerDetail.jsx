@@ -19,7 +19,7 @@ export default function CustomerDetail() {
         jobsApi.list({ customer_id: id, limit: 50 }),
       ]);
       setCustomer(custRes.data);
-      setCustomerJobs(jobsRes.data || []);
+      setCustomerJobs(Array.isArray(jobsRes.data) ? jobsRes.data : []);
     } catch (err) {
       console.error('Failed to load customer:', err);
     } finally {
