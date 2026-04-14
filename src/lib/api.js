@@ -121,6 +121,7 @@ export const users = {
   getStats: () => request('/users/me/stats'),
   updatePreferences: (body) => request('/users/me/preferences', { method: 'PATCH', body }),
   completeOnboarding: (body) => request('/users/me/onboarding', { method: 'POST', body }),
+  search: (q, role = 'customer') => request(`/users/search?q=${encodeURIComponent(q)}&role=${role}`),
 };
 
 // Customers

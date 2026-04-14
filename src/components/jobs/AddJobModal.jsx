@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Scissors, ChevronDown, Loader2, Edit3 } from 'lucide-react';
+import { X, Scissors, ChevronDown, Loader2, Edit3, Search, User } from 'lucide-react';
+import { users as usersApi } from '../../lib/api';
 
 const statusOptions = [
   { value: 'cutting', label: 'Cutting' },
@@ -9,31 +10,104 @@ const statusOptions = [
   { value: 'delivered', label: 'Delivered' },
 ];
 
-const emptyForm = { customerId: '', title: '', description: '', status: 'cutting', dueDate: '', price: '' };
+const emptyForm = { customerId: '', userId: '', title: '', description: '', status: 'cutting', dueDate: '', price: '' };
 
 export default function AddJobModal({ isOpen, onClose, onSave, customers, editJob }) {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const isEdit = !!editJob;
 
+  // Customer search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [platformResults, setPlatformResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const searchRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const debounceRef = useRef(null);
+
   useEffect(() => {
     if (editJob) {
+      const custName = editJob.customer_name || editJob.customerName || '';
       setForm({
         customerId: editJob.customer_id || editJob.customerId || '',
+        userId: '',
         title: editJob.title || '',
         description: editJob.description || '',
         status: editJob.status || 'cutting',
         dueDate: editJob.due_date || editJob.dueDate ? (editJob.due_date || editJob.dueDate).slice(0, 10) : '',
         price: editJob.price != null ? String(editJob.price) : '',
       });
+      setSelectedCustomer({ name: custName, id: editJob.customer_id || editJob.customerId });
+      setSearchQuery(custName);
     } else {
       setForm(emptyForm);
+      setSelectedCustomer(null);
+      setSearchQuery('');
+      setPlatformResults([]);
     }
   }, [editJob, isOpen]);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target) &&
+          searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Debounced platform user search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (searchQuery.trim().length < 2) {
+      setPlatformResults([]);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await usersApi.search(searchQuery.trim());
+        setPlatformResults(Array.isArray(res.data) ? res.data : []);
+      } catch {
+        setPlatformResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [searchQuery]);
+
+  // Filter local customers by search query
+  const filteredLocal = searchQuery.trim()
+    ? customers.filter((c) => c.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : customers;
+
+  // Exclude platform users already in local customers (by user_id if present)
+  const localUserIds = new Set(customers.filter(c => c.user_id).map(c => c.user_id));
+  const filteredPlatform = platformResults.filter((u) => !localUserIds.has(u.id));
+
+  const selectLocalCustomer = (c) => {
+    setForm({ ...form, customerId: c.id, userId: '' });
+    setSelectedCustomer(c);
+    setSearchQuery(c.name);
+    setShowDropdown(false);
+  };
+
+  const selectPlatformUser = (u) => {
+    setForm({ ...form, customerId: '', userId: u.id });
+    setSelectedCustomer({ ...u, isPlatform: true });
+    setSearchQuery(u.name);
+    setShowDropdown(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isEdit && !form.customerId) return;
+    if (!isEdit && !form.customerId && !form.userId) return;
     if (!form.title.trim() || !form.dueDate) return;
 
     setSaving(true);
@@ -47,11 +121,17 @@ export default function AddJobModal({ isOpen, onClose, onSave, customers, editJo
       if (isEdit) {
         payload.status = form.status;
       } else {
-        payload.customer_id = form.customerId;
+        if (form.userId) {
+          payload.user_id = form.userId;
+        } else {
+          payload.customer_id = form.customerId;
+        }
         payload.status = form.status;
       }
       await onSave(payload, editJob?.id);
       setForm(emptyForm);
+      setSelectedCustomer(null);
+      setSearchQuery('');
       onClose();
     } catch (err) {
       console.error(isEdit ? 'Failed to update job:' : 'Failed to create job:', err);
@@ -91,26 +171,123 @@ export default function AddJobModal({ isOpen, onClose, onSave, customers, editJo
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Customer Select */}
+              {/* Customer Search */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Customer {!isEdit && '*'}</label>
-                <div className="relative">
-                  <select
-                    value={form.customerId}
-                    onChange={(e) => setForm({ ...form, customerId: e.target.value })}
-                    required={!isEdit}
-                    disabled={isEdit}
-                    className={`w-full px-4 py-3 rounded-xl border border-gray-200 text-sm appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all ${isEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  >
-                    <option value="">Select a customer...</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
+                {isEdit ? (
+                  <div className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 text-gray-500 cursor-not-allowed">
+                    {selectedCustomer?.name || 'Customer'}
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <div className="relative">
+                      <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        ref={searchRef}
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setShowDropdown(true);
+                          if (selectedCustomer) {
+                            setSelectedCustomer(null);
+                            setForm({ ...form, customerId: '', userId: '' });
+                          }
+                        }}
+                        onFocus={() => setShowDropdown(true)}
+                        placeholder="Search by customer name..."
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
+                      />
+                      {selectedCustomer && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${selectedCustomer.isPlatform ? 'bg-blue-50 text-blue-600' : 'bg-gold-50 text-gold-600'}`}>
+                            {selectedCustomer.isPlatform ? 'Platform' : 'My Customer'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Dropdown results */}
+                    <AnimatePresence>
+                      {showDropdown && !selectedCustomer && (searchQuery.length > 0 || filteredLocal.length > 0) && (
+                        <motion.div
+                          ref={dropdownRef}
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-56 overflow-y-auto"
+                        >
+                          {/* My Customers */}
+                          {filteredLocal.length > 0 && (
+                            <>
+                              <div className="px-3 pt-2.5 pb-1">
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">My Customers</p>
+                              </div>
+                              {filteredLocal.slice(0, 5).map((c) => (
+                                <button
+                                  key={c.id}
+                                  type="button"
+                                  onClick={() => selectLocalCustomer(c)}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left"
+                                >
+                                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+                                    style={{ backgroundColor: c.avatar_color || '#D4A574' }}>
+                                    {c.initials || c.name?.[0] || '?'}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-800 truncate">{c.name}</p>
+                                    {c.phone && <p className="text-[11px] text-gray-400 truncate">{c.phone}</p>}
+                                  </div>
+                                </button>
+                              ))}
+                            </>
+                          )}
+
+                          {/* Platform Users */}
+                          {searchQuery.trim().length >= 2 && (
+                            <>
+                              <div className="px-3 pt-2.5 pb-1 border-t border-gray-100">
+                                <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wide flex items-center gap-1">
+                                  <User size={10} /> Platform Customers
+                                </p>
+                              </div>
+                              {searching && (
+                                <div className="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-400">
+                                  <Loader2 size={12} className="animate-spin" /> Searching...
+                                </div>
+                              )}
+                              {!searching && filteredPlatform.length === 0 && (
+                                <p className="px-3 py-2.5 text-xs text-gray-400">No platform customers found</p>
+                              )}
+                              {filteredPlatform.slice(0, 5).map((u) => (
+                                <button
+                                  key={u.id}
+                                  type="button"
+                                  onClick={() => selectPlatformUser(u)}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-blue-50/50 transition-colors text-left"
+                                >
+                                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+                                    style={{ backgroundColor: u.avatar_color || '#6366f1' }}>
+                                    {u.initials || u.name?.[0] || '?'}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-800 truncate">{u.name}</p>
+                                    <p className="text-[11px] text-gray-400 truncate">{u.email}</p>
+                                  </div>
+                                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 flex-shrink-0">Platform</span>
+                                </button>
+                              ))}
+                            </>
+                          )}
+
+                          {filteredLocal.length === 0 && (searchQuery.trim().length < 2 || (!searching && filteredPlatform.length === 0)) && (
+                            <p className="px-3 py-3 text-xs text-gray-400 text-center">Type at least 2 characters to search</p>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
               </div>
 
               <div>
