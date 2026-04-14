@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { statusConfig, measurementFields } from '../data/mockData';
 import { jobs as jobsApi, customers as customersApi } from '../lib/api';
+import { useApi, useApiMulti, invalidateCache, TTL } from '../hooks/useApi';
 import AddJobModal from '../components/jobs/AddJobModal';
 
 const statusFlow = ['cutting', 'stitching', 'ready', 'delivered'];
@@ -15,40 +16,33 @@ const statusFlow = ['cutting', 'stitching', 'ready', 'delivered'];
 export default function JobDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [job, setJob] = useState(null);
-  const [customer, setCustomer] = useState(null);
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const loadData = useCallback(async () => {
-    try {
-      const [jobRes, custListRes] = await Promise.all([
-        jobsApi.get(id),
-        customersApi.list({ limit: 100 }),
-      ]);
-      const j = jobRes.data;
-      setJob(j);
-      setCustomers(Array.isArray(custListRes.data) ? custListRes.data : []);
-      if (j?.customer_id) {
-        const custRes = await customersApi.get(j.customer_id);
-        setCustomer(custRes.data);
-      }
-    } catch (err) {
-      console.error('Failed to load job:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  const { data: jobRes, loading: jobLoading, refresh: refreshJob } = useApi(
+    `job-${id}`, () => jobsApi.get(id), { ttl: TTL.long }
+  );
+  const { data: custListRes } = useApi(
+    'customers-list', () => customersApi.list({ limit: 100 }), { ttl: TTL.medium }
+  );
 
-  useEffect(() => { loadData(); }, [loadData]);
+  const job = jobRes?.data || null;
+  const customers = Array.isArray(custListRes?.data) ? custListRes.data : [];
+
+  const { data: custRes } = useApi(
+    job?.customer_id ? `customer-${job.customer_id}` : null,
+    () => customersApi.get(job.customer_id),
+    { ttl: TTL.long }
+  );
+  const customer = custRes?.data || null;
+  const loading = jobLoading;
 
   const updateStatus = async (newStatus) => {
     try {
       await jobsApi.updateStatus(id, newStatus);
-      setJob((prev) => prev ? { ...prev, status: newStatus } : prev);
+      invalidateCache(`job-${id}`, 'jobs');
+      refreshJob();
     } catch (err) {
       console.error('Failed to update status:', err);
     }
@@ -58,23 +52,24 @@ export default function JobDetailPage() {
     const newVal = !job.invoiced;
     try {
       await jobsApi.toggleInvoice(id, newVal);
-      setJob((prev) => prev ? { ...prev, invoiced: newVal } : prev);
+      invalidateCache(`job-${id}`, 'jobs');
+      refreshJob();
     } catch (err) {
       console.error('Failed to toggle invoiced:', err);
     }
   };
 
   const handleEditSave = async (payload) => {
-    const res = await jobsApi.update(id, payload);
-    setJob((prev) => prev ? { ...prev, ...res.data } : res.data);
-    // Re-fetch to get updated customer info if needed
-    await loadData();
+    await jobsApi.update(id, payload);
+    invalidateCache(`job-${id}`, 'jobs', 'customers');
+    refreshJob();
   };
 
   const handleDelete = async () => {
     setDeleting(true);
     try {
       await jobsApi.delete(id);
+      invalidateCache('jobs');
       navigate('/jobs', { replace: true });
     } catch (err) {
       console.error('Failed to delete job:', err);

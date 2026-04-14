@@ -25,4 +25,11 @@ Ready to start Phase 3 Step 9 (Storefronts)?
 
 
 ---------------------------------------
-docker exec dinki-dinki-redis-1 redis-cli GET "otp:testuser@dinki.africa"
+docker exec dinki-dinki-redis-1 redis-cli GET "otp:customer@dinki.africa"
+
+------------------------------
+FRONTEND UPDATE
+cd /home/dinki/public_html && git pull origin main && npm run build && pm2 restart dinki-frontend
+
+UPDATED COMMAND
+cd /home/dinki/frontend-src && git pull origin main && npm run build && cp -r dist/* /home/dinki/public_html/

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auth as authApi, users as usersApi, setToken, clearToken } from '../lib/api';
+import { clearCache } from '../hooks/useApi';
 
 const AuthContext = createContext(null);
 
@@ -48,6 +49,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     try { await authApi.logout(); } catch { /* ignore */ }
     clearToken();
+    clearCache();
     setUser(null);
   }, []);
 

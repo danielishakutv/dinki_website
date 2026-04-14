@@ -1,38 +1,31 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Phone, Mail, MapPin, CalendarDays, Scissors, AlertCircle, Loader2 } from 'lucide-react';
 import MeasurementVault from '../components/customers/MeasurementVault';
 import { customers as customersApi, jobs as jobsApi } from '../lib/api';
+import { useApi, invalidateCache, TTL } from '../hooks/useApi';
 
 export default function CustomerDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [customer, setCustomer] = useState(null);
-  const [customerJobs, setCustomerJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  const loadData = useCallback(async () => {
-    try {
-      const [custRes, jobsRes] = await Promise.all([
-        customersApi.get(id),
-        jobsApi.list({ customer_id: id, limit: 50 }),
-      ]);
-      setCustomer(custRes.data);
-      setCustomerJobs(Array.isArray(jobsRes.data) ? jobsRes.data : []);
-    } catch (err) {
-      console.error('Failed to load customer:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  const { data: custRes, loading: custLoading, refresh: refreshCust } = useApi(
+    `customer-${id}`, () => customersApi.get(id), { ttl: TTL.long }
+  );
+  const { data: jobsRes, loading: jobsLoading } = useApi(
+    `customer-${id}-jobs`, () => jobsApi.list({ customer_id: id, limit: 50 }), { ttl: TTL.medium }
+  );
 
-  useEffect(() => { loadData(); }, [loadData]);
+  const customer = custRes?.data || null;
+  const customerJobs = jobsRes?.data && Array.isArray(jobsRes.data) ? jobsRes.data : [];
+  const loading = custLoading || jobsLoading;
 
   const handleSaveMeasurements = async (newMeasurements) => {
     try {
       await customersApi.updateMeasurements(id, { measurements: newMeasurements });
-      setCustomer((prev) => prev ? { ...prev, measurements: newMeasurements } : prev);
+      invalidateCache(`customer-${id}`, 'customers');
+      refreshCust();
     } catch (err) {
       console.error('Failed to save measurements:', err);
     }

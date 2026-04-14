@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, MoreVertical, Send, Image, Check, CheckCheck, Loader2 } from 'lucide-react';
 import { conversations as convoApi, uploads as uploadsApi } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useApi, invalidateCache, TTL } from '../hooks/useApi';
 
 function formatTime(dateStr) {
   const d = new Date(dateStr);
@@ -15,9 +16,6 @@ export default function ChatDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [newMessage, setNewMessage] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [participant, setParticipant] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -26,27 +24,25 @@ export default function ChatDetail() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadMessages = useCallback(async () => {
-    try {
-      const [convoRes, msgRes] = await Promise.all([
-        convoApi.list(),
-        convoApi.getMessages(id, { limit: 50 }),
-      ]);
-      const convos = Array.isArray(convoRes.data) ? convoRes.data : [];
-      const convo = convos.find((c) => c.id === id);
-      if (convo) setParticipant(convo.participant);
-      const msgs = Array.isArray(msgRes.data) ? msgRes.data : (msgRes.data?.messages || []);
-      setMessages([...msgs].reverse());
-      convoApi.markRead(id).catch(() => {});
-    } catch (err) {
-      console.error('Failed to load messages:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  const { data: convoRes } = useApi(
+    'conversations', () => convoApi.list(), { ttl: TTL.short }
+  );
+  const { data: msgRes, loading, refresh: refreshMessages } = useApi(
+    `chat-messages-${id}`, () => convoApi.getMessages(id, { limit: 50 }), { ttl: TTL.short }
+  );
 
-  useEffect(() => { loadMessages(); }, [loadMessages]);
-  useEffect(() => { scrollToBottom(); }, [messages]);
+  const convos = Array.isArray(convoRes?.data) ? convoRes.data : [];
+  const convo = convos.find((c) => c.id === id);
+  const participant = convo?.participant || null;
+  const messages = (() => {
+    const msgs = Array.isArray(msgRes?.data) ? msgRes.data : (msgRes?.data?.messages || []);
+    return [...msgs].reverse();
+  })();
+
+  useEffect(() => {
+    if (!loading && id) convoApi.markRead(id).catch(() => {});
+  }, [id, loading]);
+  useEffect(() => { scrollToBottom(); }, [messages.length]);
 
   const handleImagePick = async (e) => {
     const file = e.target.files?.[0];
@@ -61,8 +57,9 @@ export default function ChatDetail() {
       const uploadRes = await uploadsApi.image(file);
       const imageUrl = uploadRes.data?.url;
       if (imageUrl) {
-        const res = await convoApi.sendMessage(id, { image_url: imageUrl });
-        if (res.data) setMessages((prev) => [...prev, res.data]);
+        await convoApi.sendMessage(id, { image_url: imageUrl });
+        invalidateCache(`chat-messages-${id}`, 'conversations');
+        refreshMessages();
       }
     } catch (err) {
       console.error('Failed to send image:', err);
@@ -78,8 +75,9 @@ export default function ChatDetail() {
     setNewMessage('');
     setSending(true);
     try {
-      const res = await convoApi.sendMessage(id, { text });
-      if (res.data) setMessages((prev) => [...prev, res.data]);
+      await convoApi.sendMessage(id, { text });
+      invalidateCache(`chat-messages-${id}`, 'conversations');
+      refreshMessages();
     } catch (err) {
       console.error('Failed to send message:', err);
       setNewMessage(text);

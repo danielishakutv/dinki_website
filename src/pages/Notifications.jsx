@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Bell, Scissors, CreditCard, MessageSquare, Star, Package, CheckCircle, AlertCircle, Info, Loader2 } from 'lucide-react';
 import { notifications as notifApi } from '../lib/api';
+import { useApi, invalidateCache, TTL } from '../hooks/useApi';
 
 const iconMap = {
   job: { icon: Scissors, bg: 'bg-gold-50', color: 'text-gold-500' },
@@ -37,33 +38,22 @@ function isToday(dateStr) {
 
 export default function Notifications() {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  const loadNotifications = useCallback(async () => {
-    try {
-      const res = await notifApi.list();
-      const d = res.data || {};
-      if (Array.isArray(d)) {
-        setNotifications(d);
-      } else {
-        setNotifications([...(d.today || []), ...(d.earlier || [])]);
-      }
-    } catch (err) {
-      console.error('Failed to load notifications:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data: notifRes, loading } = useApi(
+    'notifications', () => notifApi.list(), { ttl: TTL.short }
+  );
 
-  useEffect(() => { loadNotifications(); }, [loadNotifications]);
+  const rawData = notifRes?.data || {};
+  const notifications = Array.isArray(rawData)
+    ? rawData
+    : [...(rawData.today || []), ...(rawData.earlier || [])];
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const markAllRead = async () => {
     try {
       await notifApi.markAllRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      invalidateCache('notifications');
     } catch (err) {
       console.error('Failed to mark all read:', err);
     }

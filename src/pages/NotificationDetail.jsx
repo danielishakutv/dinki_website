@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Scissors, CreditCard, MessageSquare, Star, Package, CheckCircle, AlertCircle, Info, ExternalLink, Bell, Loader2 } from 'lucide-react';
 import { notifications as notifApi } from '../lib/api';
+import { useApi, invalidateCache, TTL } from '../hooks/useApi';
 
 const iconMap = {
   job: { icon: Scissors, bg: 'bg-gold-50', color: 'text-gold-500' },
@@ -20,24 +21,20 @@ const defaultIcon = { icon: Bell, bg: 'bg-gray-100', color: 'text-gray-500' };
 export default function NotificationDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [notif, setNotif] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await notifApi.get(id);
-        setNotif(res.data);
-        if (res.data && !res.data.is_read) {
-          notifApi.markRead(id).catch(() => {});
-        }
-      } catch (err) {
-        console.error('Failed to load notification:', err);
-      } finally {
-        setLoading(false);
+  const { data: res, loading } = useApi(
+    `notification-${id}`,
+    async () => {
+      const r = await notifApi.get(id);
+      if (r.data && !r.data.is_read) {
+        notifApi.markRead(id).catch(() => {});
+        invalidateCache('notifications');
       }
-    })();
-  }, [id]);
+      return r;
+    },
+    { ttl: TTL.long }
+  );
+  const notif = res?.data || null;
 
   if (loading) {
     return (

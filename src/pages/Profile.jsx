@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mail, Phone, MapPin, Camera, Edit3, Star, Scissors, Briefcase, Calendar, X, Plus, Trash2, Loader2 } from 'lucide-react';
 import { users as usersApi } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useApi, invalidateCache, TTL } from '../hooks/useApi';
 
 function getInitials(name) {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
@@ -11,62 +12,49 @@ function getInitials(name) {
 export default function Profile({ userRole }) {
   const { user: authUser } = useAuth();
   const isTailor = userRole === 'tailor' || authUser?.role === 'tailor';
-  const [profile, setProfile] = useState(null);
-  const [stats, setStats] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [newSpecialty, setNewSpecialty] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const loadProfile = useCallback(async () => {
-    try {
-      const [profileRes, statsRes] = await Promise.all([
-        usersApi.getProfile(),
-        usersApi.getStats().catch(() => ({ data: {} })),
-      ]);
-      const p = profileRes.data;
-      const s = statsRes.data || {};
+  const { data: profileRes, loading: profileLoading, refresh: refreshProfile } = useApi(
+    'profile', () => usersApi.getProfile(), { ttl: TTL.long }
+  );
+  const { data: statsRes, loading: statsLoading } = useApi(
+    'profile-stats', () => usersApi.getStats().catch(() => ({ data: {} })), { ttl: TTL.long }
+  );
 
-      const loc = [p.location_city, p.location_state, p.location_country].filter(Boolean).join(', ') || p.location || '';
-      setProfile({
-        name: p.business_name || p.name || '',
-        role: isTailor ? (p.title || 'Tailor') : 'Customer',
-        initials: getInitials(p.business_name || p.name || '??'),
-        avatar_color: p.avatar_color || '#D4A574',
-        avatar_url: p.avatar_url,
-        email: p.email || '',
-        phone: p.phone || '',
-        location: loc,
-        bio: p.bio || '',
-        joined: new Date(p.created_at).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' }),
-        specialties: p.specialties || [],
-        raw: p,
-      });
+  const loading = profileLoading || statsLoading;
+  const p = profileRes?.data || {};
+  const s = statsRes?.data || {};
 
-      if (isTailor) {
-        setStats([
-          { label: 'Jobs Done', value: String(s.completedJobs || 0), icon: Scissors },
-          { label: 'Clients', value: String(s.customers || 0), icon: User },
-          { label: 'Rating', value: String(p.tailor_profile?.rating_avg || '0'), icon: Star },
-          { label: 'Active Jobs', value: String(s.activeJobs || 0), icon: Briefcase },
-        ]);
-      } else {
-        setStats([
-          { label: 'Orders', value: String(s.total_orders || 0), icon: Scissors },
-          { label: 'Tailors', value: String(s.tailors_used || 0), icon: User },
-          { label: 'Reviews', value: String(s.reviews_given || 0), icon: Star },
-          { label: 'Since', value: new Date(p.created_at).getFullYear().toString(), icon: Calendar },
-        ]);
-      }
-    } catch (err) {
-      console.error('Failed to load profile:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [isTailor]);
+  const loc = [p.location_city, p.location_state, p.location_country].filter(Boolean).join(', ') || p.location || '';
+  const profile = p.id ? {
+    name: p.business_name || p.name || '',
+    role: isTailor ? (p.title || 'Tailor') : 'Customer',
+    initials: getInitials(p.business_name || p.name || '??'),
+    avatar_color: p.avatar_color || '#D4A574',
+    avatar_url: p.avatar_url,
+    email: p.email || '',
+    phone: p.phone || '',
+    location: loc,
+    bio: p.bio || '',
+    joined: new Date(p.created_at).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' }),
+    specialties: p.specialties || [],
+    raw: p,
+  } : null;
 
-  useEffect(() => { loadProfile(); }, [loadProfile]);
+  const stats = isTailor ? [
+    { label: 'Jobs Done', value: String(s.completedJobs || 0), icon: Scissors },
+    { label: 'Clients', value: String(s.customers || 0), icon: User },
+    { label: 'Rating', value: String(p.tailor_profile?.rating_avg || '0'), icon: Star },
+    { label: 'Active Jobs', value: String(s.activeJobs || 0), icon: Briefcase },
+  ] : [
+    { label: 'Orders', value: String(s.total_orders || 0), icon: Scissors },
+    { label: 'Tailors', value: String(s.tailors_used || 0), icon: User },
+    { label: 'Reviews', value: String(s.reviews_given || 0), icon: Star },
+    { label: 'Since', value: p.created_at ? new Date(p.created_at).getFullYear().toString() : '', icon: Calendar },
+  ];
 
   const openEdit = () => {
     setEditForm({
@@ -92,16 +80,8 @@ export default function Profile({ userRole }) {
         location: editForm.location,
         specialties: editForm.specialties,
       });
-      setProfile(prev => ({
-        ...prev,
-        name: editForm.name,
-        bio: editForm.bio,
-        email: editForm.email,
-        phone: editForm.phone,
-        location: editForm.location,
-        specialties: editForm.specialties,
-        initials: getInitials(editForm.name),
-      }));
+      invalidateCache('profile');
+      refreshProfile();
       setEditing(false);
     } catch (err) {
       console.error('Failed to save profile:', err);
@@ -114,8 +94,9 @@ export default function Profile({ userRole }) {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const res = await usersApi.updateAvatar(file);
-      setProfile(prev => prev ? { ...prev, avatar_url: res.data?.avatar_url } : prev);
+      await usersApi.updateAvatar(file);
+      invalidateCache('profile');
+      refreshProfile();
     } catch (err) {
       console.error('Failed to upload avatar:', err);
     }

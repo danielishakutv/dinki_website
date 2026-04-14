@@ -1,34 +1,26 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Scissors } from 'lucide-react';
 import JobList from '../components/jobs/JobList';
 import AddJobModal from '../components/jobs/AddJobModal';
 import { jobs as jobsApi, customers as customersApi } from '../lib/api';
+import { useApi, invalidateCache, TTL } from '../hooks/useApi';
 
 export default function Jobs({ showAddJob, setShowAddJob }) {
-  const [jobs, setJobs] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: jobsRes, loading: jobsLoading, refresh: refreshJobs } = useApi(
+    'jobs-list', () => jobsApi.list({ limit: 100 }), { ttl: TTL.medium }
+  );
+  const { data: custRes, loading: custLoading } = useApi(
+    'customers-list', () => customersApi.list({ limit: 100 }), { ttl: TTL.medium }
+  );
 
-  const loadData = useCallback(async () => {
-    try {
-      const [jobsRes, custRes] = await Promise.all([
-        jobsApi.list({ limit: 100 }),
-        customersApi.list({ limit: 100 }),
-      ]);
-      setJobs(Array.isArray(jobsRes.data) ? jobsRes.data : []);
-      setCustomers(Array.isArray(custRes.data) ? custRes.data : []);
-    } catch (err) {
-      console.error('Failed to load jobs:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { loadData(); }, [loadData]);
+  const jobs = jobsRes?.data && Array.isArray(jobsRes.data) ? jobsRes.data : [];
+  const customers = custRes?.data && Array.isArray(custRes.data) ? custRes.data : [];
+  const loading = jobsLoading || custLoading;
 
   const handleSaveJob = async (formData) => {
     await jobsApi.create(formData);
-    await loadData();
+    invalidateCache('jobs');
+    refreshJobs();
   };
 
   return (

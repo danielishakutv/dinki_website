@@ -1,34 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sparkles, Lightbulb, Plus, MessageCircle, UserPlus, Share2, Loader2 } from 'lucide-react';
 import SummaryCards from '../components/dashboard/SummaryCards';
 import RecentActivity from '../components/dashboard/RecentActivity';
 import { jobs as jobsApi, customers as customersApi } from '../lib/api';
+import { useApi, TTL } from '../hooks/useApi';
 
 export default function Dashboard({ setShowAddJob }) {
   const navigate = useNavigate();
-  const [jobs, setJobs] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [jobsRes, custRes] = await Promise.all([
-          jobsApi.list({ limit: 50 }),
-          customersApi.list({ limit: 50 }),
-        ]);
-        setJobs(Array.isArray(jobsRes.data) ? jobsRes.data : []);
-        setCustomers(Array.isArray(custRes.data) ? custRes.data : []);
-      } catch (err) {
-        console.error('Dashboard load error:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  const { data: jobsRes, loading: jobsLoading } = useApi(
+    'jobs-list', () => jobsApi.list({ limit: 50 }), { ttl: TTL.medium }
+  );
+  const { data: custRes, loading: custLoading } = useApi(
+    'customers-list', () => customersApi.list({ limit: 50 }), { ttl: TTL.medium }
+  );
+
+  const jobs = jobsRes?.data && Array.isArray(jobsRes.data) ? jobsRes.data : [];
+  const customers = custRes?.data && Array.isArray(custRes.data) ? custRes.data : [];
+  const loading = jobsLoading || custLoading;
 
   const getGreeting = () => {
     const hour = new Date().getHours();

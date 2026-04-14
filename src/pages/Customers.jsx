@@ -1,34 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Users, Loader2 } from 'lucide-react';
 import CustomerList from '../components/customers/CustomerList';
 import AddCustomerModal from '../components/customers/AddCustomerModal';
 import { customers as customersApi } from '../lib/api';
+import { useApi, invalidateCache, TTL } from '../hooks/useApi';
 
 export default function Customers() {
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
 
-  const loadCustomers = useCallback(async () => {
-    try {
-      const res = await customersApi.list({ limit: 100 });
-      setCustomers(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      console.error('Failed to load customers:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { loadCustomers(); }, [loadCustomers]);
+  const { data: custRes, loading, refresh } = useApi(
+    'customers-list', () => customersApi.list({ limit: 100 }), { ttl: TTL.medium }
+  );
+  const customers = custRes?.data && Array.isArray(custRes.data) ? custRes.data : [];
 
   const handleAddCustomer = async (formData) => {
-    try {
-      await customersApi.create(formData);
-      await loadCustomers();
-    } catch (err) {
-      console.error('Failed to create customer:', err);
-    }
+    await customersApi.create(formData);
+    invalidateCache('customers');
+    refresh();
   };
 
   return (

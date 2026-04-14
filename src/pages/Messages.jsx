@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, Pin, PinOff, Check, CheckCheck, MessageSquare, Loader2 } from 'lucide-react';
 import { conversations as convoApi } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useApi, invalidateCache, TTL } from '../hooks/useApi';
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -21,29 +22,17 @@ export default function Messages() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [search, setSearch] = useState('');
-  const [chats, setChats] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  const loadConversations = useCallback(async () => {
-    try {
-      const res = await convoApi.list();
-      setChats(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      console.error('Failed to load conversations:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { loadConversations(); }, [loadConversations]);
+  const { data: convoRes, loading } = useApi(
+    'conversations', () => convoApi.list(), { ttl: TTL.short }
+  );
+  const chats = convoRes?.data && Array.isArray(convoRes.data) ? convoRes.data : [];
 
   const togglePin = async (id, e) => {
     e.stopPropagation();
     try {
       await convoApi.togglePin(id);
-      setChats((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, pinned: !c.pinned } : c))
-      );
+      invalidateCache('conversations');
     } catch (err) {
       console.error('Failed to toggle pin:', err);
     }
