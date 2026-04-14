@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, CalendarDays, User, FileText, DollarSign,
   CheckCircle, Circle, Scissors as ScissorsIcon, Loader2,
+  Edit3, Trash2, AlertTriangle,
 } from 'lucide-react';
 import { statusConfig, measurementFields } from '../data/mockData';
 import { jobs as jobsApi, customers as customersApi } from '../lib/api';
+import AddJobModal from '../components/jobs/AddJobModal';
 
 const statusFlow = ['cutting', 'stitching', 'ready', 'delivered'];
 
@@ -15,13 +17,21 @@ export default function JobDetailPage() {
   const navigate = useNavigate();
   const [job, setJob] = useState(null);
   const [customer, setCustomer] = useState(null);
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
-      const jobRes = await jobsApi.get(id);
+      const [jobRes, custListRes] = await Promise.all([
+        jobsApi.get(id),
+        customersApi.list({ limit: 100 }),
+      ]);
       const j = jobRes.data;
       setJob(j);
+      setCustomers(Array.isArray(custListRes.data) ? custListRes.data : []);
       if (j?.customer_id) {
         const custRes = await customersApi.get(j.customer_id);
         setCustomer(custRes.data);
@@ -51,6 +61,25 @@ export default function JobDetailPage() {
       setJob((prev) => prev ? { ...prev, invoiced: newVal } : prev);
     } catch (err) {
       console.error('Failed to toggle invoiced:', err);
+    }
+  };
+
+  const handleEditSave = async (payload) => {
+    const res = await jobsApi.update(id, payload);
+    setJob((prev) => prev ? { ...prev, ...res.data } : res.data);
+    // Re-fetch to get updated customer info if needed
+    await loadData();
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await jobsApi.delete(id);
+      navigate('/jobs', { replace: true });
+    } catch (err) {
+      console.error('Failed to delete job:', err);
+      setDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -86,14 +115,32 @@ export default function JobDetailPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
-      {/* Back */}
-      <motion.button
-        whileTap={{ scale: 0.95 }}
-        onClick={() => navigate(-1)}
-        className="btn-touch flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-      >
-        <ArrowLeft size={18} /> Back
-      </motion.button>
+      {/* Back + Actions */}
+      <div className="flex items-center justify-between">
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate(-1)}
+          className="btn-touch flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ArrowLeft size={18} /> Back
+        </motion.button>
+        <div className="flex items-center gap-2">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowEditModal(true)}
+            className="btn-touch flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gold-50 text-gold-600 hover:bg-gold-100 text-sm font-medium transition-colors"
+          >
+            <Edit3 size={15} /> Edit
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowDeleteConfirm(true)}
+            className="btn-touch flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 text-sm font-medium transition-colors"
+          >
+            <Trash2 size={15} /> Delete
+          </motion.button>
+        </div>
+      </div>
 
       {/* Job Header */}
       <motion.div
@@ -304,6 +351,61 @@ export default function JobDetailPage() {
           </motion.div>
         )}
       </div>
+
+      {/* Edit Job Modal */}
+      <AddJobModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleEditSave}
+        customers={customers}
+        editJob={job}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+            onClick={() => !deleting && setShowDeleteConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center"
+            >
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle size={24} className="text-red-500" />
+              </div>
+              <h3 className="font-heading font-bold text-lg text-gray-900 mb-2">Delete Job?</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to delete <strong>"{job.title}"</strong>? This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleting}
+                  className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {deleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

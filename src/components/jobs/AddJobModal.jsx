@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Scissors, ChevronDown, Loader2 } from 'lucide-react';
+import { X, Scissors, ChevronDown, Loader2, Edit3 } from 'lucide-react';
 
 const statusOptions = [
   { value: 'cutting', label: 'Cutting' },
@@ -9,35 +9,52 @@ const statusOptions = [
   { value: 'delivered', label: 'Delivered' },
 ];
 
-export default function AddJobModal({ isOpen, onClose, onSave, customers }) {
-  const [form, setForm] = useState({
-    customerId: '',
-    title: '',
-    description: '',
-    status: 'cutting',
-    dueDate: '',
-    price: '',
-  });
+const emptyForm = { customerId: '', title: '', description: '', status: 'cutting', dueDate: '', price: '' };
+
+export default function AddJobModal({ isOpen, onClose, onSave, customers, editJob }) {
+  const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const isEdit = !!editJob;
+
+  useEffect(() => {
+    if (editJob) {
+      setForm({
+        customerId: editJob.customer_id || editJob.customerId || '',
+        title: editJob.title || '',
+        description: editJob.description || '',
+        status: editJob.status || 'cutting',
+        dueDate: editJob.due_date || editJob.dueDate ? (editJob.due_date || editJob.dueDate).slice(0, 10) : '',
+        price: editJob.price != null ? String(editJob.price) : '',
+      });
+    } else {
+      setForm(emptyForm);
+    }
+  }, [editJob, isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.customerId || !form.title.trim() || !form.dueDate) return;
+    if (!isEdit && !form.customerId) return;
+    if (!form.title.trim() || !form.dueDate) return;
 
     setSaving(true);
     try {
-      await onSave({
-        customer_id: form.customerId,
+      const payload = {
         title: form.title.trim(),
         description: form.description.trim() || undefined,
-        status: form.status,
         due_date: form.dueDate,
         price: Number(form.price) || 0,
-      });
-      setForm({ customerId: '', title: '', description: '', status: 'cutting', dueDate: '', price: '' });
+      };
+      if (isEdit) {
+        payload.status = form.status;
+      } else {
+        payload.customer_id = form.customerId;
+        payload.status = form.status;
+      }
+      await onSave(payload, editJob?.id);
+      setForm(emptyForm);
       onClose();
     } catch (err) {
-      console.error('Failed to create job:', err);
+      console.error(isEdit ? 'Failed to update job:' : 'Failed to create job:', err);
     } finally {
       setSaving(false);
     }
@@ -64,8 +81,8 @@ export default function AddJobModal({ isOpen, onClose, onSave, customers }) {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 sticky top-0 bg-white z-10">
               <div className="flex items-center gap-2">
-                <Scissors size={20} className="text-gold-500" />
-                <h2 className="font-heading font-bold text-lg text-gray-900">New Job</h2>
+                {isEdit ? <Edit3 size={20} className="text-gold-500" /> : <Scissors size={20} className="text-gold-500" />}
+                <h2 className="font-heading font-bold text-lg text-gray-900">{isEdit ? 'Edit Job' : 'New Job'}</h2>
               </div>
               <button onClick={onClose} className="btn-touch p-2 rounded-xl hover:bg-gray-100 transition-colors">
                 <X size={20} className="text-gray-400" />
@@ -76,13 +93,14 @@ export default function AddJobModal({ isOpen, onClose, onSave, customers }) {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {/* Customer Select */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">Customer *</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Customer {!isEdit && '*'}</label>
                 <div className="relative">
                   <select
                     value={form.customerId}
                     onChange={(e) => setForm({ ...form, customerId: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
+                    required={!isEdit}
+                    disabled={isEdit}
+                    className={`w-full px-4 py-3 rounded-xl border border-gray-200 text-sm appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all ${isEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
                     <option value="">Select a customer...</option>
                     {customers.map((c) => (
@@ -166,7 +184,7 @@ export default function AddJobModal({ isOpen, onClose, onSave, customers }) {
                 className="w-full py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white font-semibold text-sm shadow-sm transition-colors btn-touch disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {saving && <Loader2 size={16} className="animate-spin" />}
-                {saving ? 'Creating...' : 'Create Job'}
+                {saving ? (isEdit ? 'Saving...' : 'Creating...') : (isEdit ? 'Save Changes' : 'Create Job')}
               </motion.button>
             </form>
           </motion.div>

@@ -8,6 +8,7 @@ export default function Jobs({ showAddJob, setShowAddJob }) {
   const [jobs, setJobs] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editJob, setEditJob] = useState(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -26,13 +27,28 @@ export default function Jobs({ showAddJob, setShowAddJob }) {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const handleAddJob = async (formData) => {
-    try {
+  const handleSaveJob = async (formData, jobId) => {
+    if (jobId) {
+      await jobsApi.update(jobId, formData);
+    } else {
       await jobsApi.create(formData);
-      await loadData();
-    } catch (err) {
-      console.error('Failed to create job:', err);
     }
+    await loadData();
+  };
+
+  const handleDeleteJob = async (jobId) => {
+    await jobsApi.delete(jobId);
+    await loadData();
+  };
+
+  const handleEditJob = (job) => {
+    setEditJob(job);
+    setShowAddJob(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowAddJob(false);
+    setEditJob(null);
   };
 
   return (
@@ -43,13 +59,20 @@ export default function Jobs({ showAddJob, setShowAddJob }) {
         <h1 className="text-xl md:text-2xl font-heading font-bold text-gray-900">Jobs & Orders</h1>
       </div>
 
-      <JobList jobs={jobs} onAddJob={() => setShowAddJob(true)} loading={loading} />
+      <JobList
+        jobs={jobs}
+        onAddJob={() => { setEditJob(null); setShowAddJob(true); }}
+        onDeleteJob={handleDeleteJob}
+        onEditJob={handleEditJob}
+        loading={loading}
+      />
 
       <AddJobModal
         isOpen={showAddJob}
-        onClose={() => setShowAddJob(false)}
-        onSave={handleAddJob}
+        onClose={handleCloseModal}
+        onSave={handleSaveJob}
         customers={customers}
+        editJob={editJob}
       />
     </div>
   );
