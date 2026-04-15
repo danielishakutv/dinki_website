@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Phone, Mail, MapPin, CalendarDays, Scissors, AlertCircle, Loader2, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, MapPin, CalendarDays, Scissors, AlertCircle, Loader2, MessageCircle, AtSign, Copy, Check } from 'lucide-react';
+
+function maskPhone(phone) {
+  if (!phone || phone.length < 6) return phone;
+  return phone.slice(0, 3) + '***' + phone.slice(-3);
+}
+
+function maskEmail(email) {
+  if (!email) return email;
+  const [local, domain] = email.split('@');
+  if (!domain) return email;
+  const masked = local.length <= 2 ? local[0] + '***' : local.slice(0, 2) + '***';
+  return masked + '@' + domain;
+}
 import MeasurementVault from '../components/customers/MeasurementVault';
 import { customers as customersApi, jobs as jobsApi, conversations as convoApi } from '../lib/api';
 import { useApi, invalidateCache, TTL } from '../hooks/useApi';
@@ -21,6 +34,14 @@ export default function CustomerDetail() {
   const customerJobs = jobsRes?.data && Array.isArray(jobsRes.data) ? jobsRes.data : [];
   const loading = custLoading || jobsLoading;
   const [startingChat, setStartingChat] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyUsername = () => {
+    if (!customer?.username) return;
+    navigator.clipboard.writeText(customer.username);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   const handleMessageCustomer = async () => {
     if (!customer?.user_id || startingChat) return;
@@ -111,15 +132,25 @@ export default function CustomerDetail() {
 
           <div className="mt-3 min-w-0">
             <h2 className="text-xl font-heading font-bold text-gray-900 break-words">{customer.name}</h2>
+            {customer.username && (
+              <button
+                onClick={copyUsername}
+                className="flex items-center gap-1.5 mt-0.5 text-sm text-gold-500 font-medium hover:text-gold-600 transition-colors"
+              >
+                <AtSign size={14} />
+                {customer.username}
+                {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} className="text-gray-300" />}
+              </button>
+            )}
             <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2">
               {customer.phone && (
                 <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                  <Phone size={12} className="flex-shrink-0" /> <span className="truncate">{customer.phone}</span>
+                  <Phone size={12} className="flex-shrink-0" /> <span className="truncate">{maskPhone(customer.phone)}</span>
                 </span>
               )}
               {customer.email && (
                 <span className="flex items-center gap-1.5 text-xs text-gray-400 min-w-0">
-                  <Mail size={12} className="flex-shrink-0" /> <span className="truncate">{customer.email}</span>
+                  <Mail size={12} className="flex-shrink-0" /> <span className="truncate">{maskEmail(customer.email)}</span>
                 </span>
               )}
               {customer.location && (

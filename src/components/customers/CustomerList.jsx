@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, MapPin, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, Plus, MapPin, ChevronRight, Loader2, AtSign } from 'lucide-react';
+
+function maskPhone(phone) {
+  if (!phone || phone.length < 6) return phone;
+  return phone.slice(0, 3) + '***' + phone.slice(-3);
+}
 
 export default function CustomerList({ customers, onAddCustomer, loading }) {
   const [search, setSearch] = useState('');
@@ -72,11 +77,20 @@ export default function CustomerList({ customers, onAddCustomer, loading }) {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-800 text-sm truncate">{customer.name}</p>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <MapPin size={12} className="text-gray-300 flex-shrink-0" />
-                    <p className="text-xs text-gray-400 truncate">{customer.location}</p>
+                  {customer.username && (
+                    <p className="text-xs text-gold-500 font-medium truncate">@{customer.username}</p>
+                  )}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {customer.location && (
+                      <span className="flex items-center gap-1">
+                        <MapPin size={12} className="text-gray-300 flex-shrink-0" />
+                        <span className="text-xs text-gray-400 truncate">{customer.location}</span>
+                      </span>
+                    )}
+                    {customer.phone && (
+                      <span className="text-xs text-gray-300">{maskPhone(customer.phone)}</span>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-300 mt-0.5">{customer.phone || ''}</p>
                 </div>
 
                 {/* Arrow */}
