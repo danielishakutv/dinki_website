@@ -30,6 +30,7 @@ const Referral = lazy(() => import('./pages/Referral'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const News = lazy(() => import('./pages/News'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 function PageLoader() {
   return (
@@ -57,6 +58,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Landing />} />
+      <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
       <Route path="/onboarding" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Onboarding /></Suspense></ProtectedRoute>} />
       <Route
         path="/*"
