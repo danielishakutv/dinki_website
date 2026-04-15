@@ -357,14 +357,28 @@ export default function JobDetailPage() {
           >
             <h3 className="font-heading font-semibold text-gray-800 mb-3">Linked Measurements</h3>
             <div className="grid grid-cols-3 gap-2">
-              {measurementFields.slice(0, 6).map((field) => (
-                <div key={field.key} className="p-2 rounded-lg bg-gray-50 text-center">
-                  <p className="text-[9px] text-gray-400 uppercase">{field.label}</p>
-                  <p className="text-sm font-semibold text-gray-700">
-                    {customer.measurements?.[field.key] ?? '—'}
-                  </p>
-                </div>
-              ))}
+              {measurementFields.map((field) => {
+                const val = customer.measurements?.standard?.[field.key];
+                return (
+                  <div key={field.key} className="p-2 rounded-lg bg-gray-50 text-center">
+                    <p className="text-[9px] text-gray-400 uppercase">{field.label}</p>
+                    <p className="text-sm font-semibold text-gray-700">
+                      {val != null ? `${val} ${field.unit}` : '—'}
+                    </p>
+                  </div>
+                );
+              })}
+              {(customer.measurements?.custom || []).map((field) => {
+                const val = customer.measurements?.standard?.[field.key];
+                return (
+                  <div key={field.key} className="p-2 rounded-lg bg-gray-50 text-center">
+                    <p className="text-[9px] text-gray-400 uppercase">{field.label}</p>
+                    <p className="text-sm font-semibold text-gray-700">
+                      {val != null ? `${val} ${field.unit || 'in'}` : '—'}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
             <Link
               to={`/customers/${customer.id}`}
