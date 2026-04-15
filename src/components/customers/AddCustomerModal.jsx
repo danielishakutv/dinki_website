@@ -10,6 +10,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
     location: '',
   });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
   const [matchedUser, setMatchedUser] = useState(null);
   const [matchField, setMatchField] = useState(null);
 
@@ -17,6 +18,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
     setForm({ name: '', phone: '', email: '', location: '' });
     setMatchedUser(null);
     setMatchField(null);
+    setError(null);
     setSaving(false);
   };
 
@@ -30,6 +32,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
     if (!form.name.trim() || !form.phone.trim()) return;
 
     setSaving(true);
+    setError(null);
     try {
       const result = await onSave({
         name: form.name.trim(),
@@ -51,6 +54,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
       onClose();
     } catch (err) {
       console.error('Failed to save customer:', err);
+      setError(err.message || 'Failed to add customer');
       setSaving(false);
     }
   };
@@ -70,12 +74,14 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
       onClose();
     } catch (err) {
       console.error('Failed to link customer:', err);
+      setError(err.message || 'Failed to link customer');
       setSaving(false);
     }
   };
 
   const handleDenyLink = async () => {
     setSaving(true);
+    setError(null);
     try {
       await onForceCreate({
         name: form.name.trim(),
@@ -87,6 +93,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
       onClose();
     } catch (err) {
       console.error('Failed to create customer:', err);
+      setError(err.message || 'Failed to create customer');
       setSaving(false);
     }
   };
@@ -165,6 +172,12 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
                   </div>
                 </div>
 
+                {error && (
+                  <div className="bg-red-50 border border-red-100 rounded-xl p-3">
+                    <p className="text-xs text-red-600">{error}</p>
+                  </div>
+                )}
+
                 <div className="flex gap-3">
                   <motion.button
                     whileTap={{ scale: 0.98 }}
@@ -230,6 +243,12 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
                   />
                 </div>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-100 rounded-xl p-3">
+                    <p className="text-xs text-red-600">{error}</p>
+                  </div>
+                )}
 
                 <motion.button
                   whileTap={{ scale: 0.98 }}
