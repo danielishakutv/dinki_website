@@ -14,7 +14,23 @@ export default function Customers() {
   const customers = custRes?.data && Array.isArray(custRes.data) ? custRes.data : [];
 
   const handleAddCustomer = async (formData) => {
-    await customersApi.create(formData);
+    const result = await customersApi.create(formData);
+    // If the backend found a matching user, return the result for confirmation
+    if (result?.data?.requires_confirmation) {
+      return result.data;
+    }
+    invalidateCache('customers');
+    refresh();
+  };
+
+  const handleLinkCustomer = async (linkData) => {
+    await customersApi.link(linkData);
+    invalidateCache('customers');
+    refresh();
+  };
+
+  const handleForceCreate = async (formData) => {
+    await customersApi.forceCreate(formData);
     invalidateCache('customers');
     refresh();
   };
@@ -33,6 +49,8 @@ export default function Customers() {
         isOpen={showAdd}
         onClose={() => setShowAdd(false)}
         onSave={handleAddCustomer}
+        onLink={handleLinkCustomer}
+        onForceCreate={handleForceCreate}
       />
     </div>
   );

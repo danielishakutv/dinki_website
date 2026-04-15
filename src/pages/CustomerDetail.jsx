@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Phone, Mail, MapPin, CalendarDays, Scissors, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, MapPin, CalendarDays, Scissors, AlertCircle, Loader2, MessageCircle } from 'lucide-react';
 import MeasurementVault from '../components/customers/MeasurementVault';
-import { customers as customersApi, jobs as jobsApi } from '../lib/api';
+import { customers as customersApi, jobs as jobsApi, conversations as convoApi } from '../lib/api';
 import { useApi, invalidateCache, TTL } from '../hooks/useApi';
 
 export default function CustomerDetail() {
@@ -20,6 +20,24 @@ export default function CustomerDetail() {
   const customer = custRes?.data || null;
   const customerJobs = jobsRes?.data && Array.isArray(jobsRes.data) ? jobsRes.data : [];
   const loading = custLoading || jobsLoading;
+  const [startingChat, setStartingChat] = useState(false);
+
+  const handleMessageCustomer = async () => {
+    if (!customer?.user_id || startingChat) return;
+    setStartingChat(true);
+    try {
+      const res = await convoApi.start({ participant_id: customer.user_id });
+      const conversationId = res.data?.id;
+      if (conversationId) {
+        invalidateCache('conversations');
+        navigate(`/messages/${conversationId}`);
+      }
+    } catch (err) {
+      console.error('Failed to start conversation:', err);
+    } finally {
+      setStartingChat(false);
+    }
+  };
 
   const handleSaveMeasurements = async (newMeasurements) => {
     try {
@@ -113,6 +131,18 @@ export default function CustomerDetail() {
                 <CalendarDays size={12} className="flex-shrink-0" /> Since {new Date(customer.created_at).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}
               </span>
             </div>
+
+            {customer.user_id && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleMessageCustomer}
+                disabled={startingChat}
+                className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gold-50 text-gold-600 hover:bg-gold-100 text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {startingChat ? <Loader2 size={15} className="animate-spin" /> : <MessageCircle size={15} />}
+                Message
+              </motion.button>
+            )}
           </div>
         </div>
       </motion.div>

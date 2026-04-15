@@ -4,10 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, CalendarDays, User, FileText, DollarSign,
   CheckCircle, Circle, Scissors as ScissorsIcon, Loader2,
-  Edit3, Trash2, AlertTriangle,
+  Edit3, Trash2, AlertTriangle, MessageCircle,
 } from 'lucide-react';
 import { statusConfig, measurementFields } from '../data/mockData';
-import { jobs as jobsApi, customers as customersApi } from '../lib/api';
+import { jobs as jobsApi, customers as customersApi, conversations as convoApi } from '../lib/api';
 import { useApi, useApiMulti, invalidateCache, TTL } from '../hooks/useApi';
 import AddJobModal from '../components/jobs/AddJobModal';
 
@@ -19,6 +19,7 @@ export default function JobDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [startingChat, setStartingChat] = useState(false);
 
   const { data: jobRes, loading: jobLoading, refresh: refreshJob } = useApi(
     `job-${id}`, () => jobsApi.get(id), { ttl: TTL.long }
@@ -75,6 +76,23 @@ export default function JobDetailPage() {
       console.error('Failed to delete job:', err);
       setDeleting(false);
       setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleMessageCustomer = async () => {
+    if (!customer?.user_id || startingChat) return;
+    setStartingChat(true);
+    try {
+      const res = await convoApi.start({ participant_id: customer.user_id });
+      const conversationId = res.data?.id;
+      if (conversationId) {
+        invalidateCache('conversations');
+        navigate(`/messages/${conversationId}`);
+      }
+    } catch (err) {
+      console.error('Failed to start conversation:', err);
+    } finally {
+      setStartingChat(false);
     }
   };
 
@@ -165,6 +183,17 @@ export default function JobDetailPage() {
               <Link to={`/customers/${custId}`} className="text-gold-500 hover:underline">
                 {custName}
               </Link>
+              {customer?.user_id && (
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleMessageCustomer}
+                  disabled={startingChat}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gold-50 text-gold-600 hover:bg-gold-100 text-xs font-medium transition-colors disabled:opacity-50"
+                >
+                  {startingChat ? <Loader2 size={12} className="animate-spin" /> : <MessageCircle size={12} />}
+                  Message
+                </motion.button>
+              )}
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <CalendarDays size={16} className="text-gray-400" />

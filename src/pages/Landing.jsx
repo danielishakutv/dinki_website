@@ -18,7 +18,7 @@ const BG_IMAGES = {
 };
 
 function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
-  const { signup, verifyEmail, login } = useAuth();
+  const { signup, activate, verifyEmail, login } = useAuth();
   const [mode, setMode]                 = useState(initialMode);
   const [formData, setFormData]         = useState({ email: '', password: '', name: '', accountType: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -28,6 +28,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
   const [resetSent, setResetSent]       = useState(false);
   const [otpStep, setOtpStep]           = useState(false);
   const [otp, setOtp]                   = useState('');
+  const [activationFlow, setActivationFlow] = useState(null); // { user_id, name }
 
   const isSignup  = mode === 'signup';
 
@@ -69,7 +70,13 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
 
     try {
       if (isSignup) {
-        await signup({ email: formData.email, password: formData.password, name: formData.name.trim(), role: formData.accountType });
+        const result = await signup({ email: formData.email, password: formData.password, name: formData.name.trim(), role: formData.accountType });
+        // Backend detected an inactive account with this email
+        if (result.inactive_account) {
+          setActivationFlow({ user_id: result.user_id, name: result.name });
+          setError('');
+          return;
+        }
         setOtpStep(true);
       } else {
         await login({ email: formData.email, password: formData.password });
@@ -130,6 +137,34 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
     setResetSent(false);
     setOtpStep(false);
     setOtp('');
+    setActivationFlow(null);
+  };
+
+  const handleActivateSubmit = async () => {
+    if (!formData.email || !isValidEmail(formData.email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    if (!formData.password || formData.password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await activate({
+        user_id: activationFlow.user_id,
+        email: formData.email,
+        password: formData.password,
+        name: formData.name.trim() || undefined,
+      });
+      setActivationFlow(null);
+      setOtpStep(true);
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -231,17 +266,78 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
               {/* heading */}
               <div className="mb-5">
                 <h1 style={{ fontFamily: "'Georgia', serif", fontWeight: 700, color: '#1a0a00', fontSize: 'clamp(22px, 4vw, 30px)', lineHeight: 1.15 }} className="mb-1">
-                  {forgotPassword ? 'Reset Password' : isSignup ? 'Create account' : 'Sign in'}
+                  {activationFlow ? 'Activate your account' : forgotPassword ? 'Reset Password' : isSignup ? 'Create account' : 'Sign in'}
                 </h1>
                 <p style={{ color: '#9a8a7a', fontSize: 14 }}>
-                  {forgotPassword
+                  {activationFlow
+                    ? 'A tailor has already set up your account on Dinki.'
+                    : forgotPassword
                     ? "Enter your email and we'll send you a reset link."
                     : isSignup ? 'Start your tailoring journey today.' : 'Welcome back — sign in to continue.'}
                 </p>
               </div>
 
-              {/* Forgot Password Flow */}
-              {forgotPassword ? (
+              {/* Activation Flow */}
+              {activationFlow ? (
+                <div>
+                  <div style={{ background: '#fff8ec', border: '1px solid #f0d8a8', borderRadius: 12, padding: 16, marginBottom: 20 }}>
+                    <p style={{ fontSize: 13, color: '#8a6a20', lineHeight: 1.6 }}>
+                      Hi <strong>{activationFlow.name}</strong>! A tailor on Dinki created your account. Enter your email and a password to activate it and see all your orders and measurements.
+                    </p>
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#5a4a3a', marginBottom: 6, letterSpacing: '0.02em' }}>Email address</label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={e => set('email', e.target.value)}
+                      placeholder="you@example.com"
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.7rem 1rem', borderRadius: 12, border: '1.5px solid #e0d8d0', background: '#fff', fontSize: 14, color: '#1a0a00', outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }}
+                      onFocus={e => { e.target.style.borderColor = '#e8a020'; e.target.style.boxShadow = '0 0 0 3px rgba(232,160,32,0.12)'; }}
+                      onBlur={e  => { e.target.style.borderColor = '#e0d8d0'; e.target.style.boxShadow = 'none'; }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#5a4a3a', marginBottom: 6, letterSpacing: '0.02em' }}>Create a password</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.password}
+                        onChange={e => set('password', e.target.value)}
+                        placeholder="Min. 6 characters"
+                        onKeyDown={e => e.key === 'Enter' && handleActivateSubmit()}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '0.7rem 2.8rem 0.7rem 1rem', borderRadius: 12, border: '1.5px solid #e0d8d0', background: '#fff', fontSize: 14, color: '#1a0a00', outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }}
+                        onFocus={e => { e.target.style.borderColor = '#e8a020'; e.target.style.boxShadow = '0 0 0 3px rgba(232,160,32,0.12)'; }}
+                        onBlur={e  => { e.target.style.borderColor = '#e0d8d0'; e.target.style.boxShadow = 'none'; }}
+                      />
+                      <button onClick={() => setShowPassword(p => !p)} type="button" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9a8a7a' }}>
+                        {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {error && <p style={{ fontSize: 12, color: '#c0392b', marginBottom: 10, paddingLeft: 2 }}>{error}</p>}
+
+                  <motion.button
+                    whileHover={{ scale: 1.015 }}
+                    whileTap={{ scale: 0.975 }}
+                    onClick={handleActivateSubmit}
+                    disabled={loading}
+                    style={{ width: '100%', padding: '0.82rem', borderRadius: 14, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, #e8a020 0%, #c87d10 100%)', color: '#fff', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 20px rgba(232,160,32,0.35)', marginBottom: 16, opacity: loading ? 0.7 : 1 }}
+                  >
+                    {loading ? <Loader2 size={16} className="animate-spin" /> : <>Activate Account <ArrowRight size={16} /></>}
+                  </motion.button>
+
+                  <p style={{ textAlign: 'center', fontSize: 13, color: '#9a8a7a' }}>
+                    Not you?{' '}
+                    <button onClick={() => switchMode('signup')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e8a020', fontWeight: 700, fontSize: 13 }}>
+                      Create a new account
+                    </button>
+                  </p>
+                </div>
+              ) : forgotPassword ? (
                 resetSent ? (
                   <div style={{ textAlign: 'center', padding: '24px 0' }}>
                     <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#e8f5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>

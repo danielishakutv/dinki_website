@@ -29,6 +29,11 @@ export function AuthProvider({ children }) {
 
   const signup = useCallback(async ({ email, password, name, role }) => {
     const res = await authApi.signup({ email, password, name, role });
+    return res.data; // { message, userId } or { inactive_account, user_id, name, message }
+  }, []);
+
+  const activate = useCallback(async ({ user_id, email, password, name }) => {
+    const res = await authApi.activate({ user_id, email, password, name });
     return res.data; // { message, userId }
   }, []);
 
@@ -65,6 +70,7 @@ export function AuthProvider({ children }) {
     loading,
     isAuthenticated: !!user,
     signup,
+    activate,
     verifyEmail,
     login,
     logout,

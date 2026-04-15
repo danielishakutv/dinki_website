@@ -101,6 +101,7 @@ async function request(endpoint, options = {}) {
 // Auth
 export const auth = {
   signup: (body) => request('/auth/signup', { method: 'POST', body }),
+  activate: (body) => request('/auth/activate', { method: 'POST', body }),
   verifyEmail: (body) => request('/auth/verify-email', { method: 'POST', body }),
   login: (body) => request('/auth/login', { method: 'POST', body }),
   refresh: () => refreshAccessToken(),
@@ -136,6 +137,8 @@ export const customers = {
   },
   get: (id) => request(`/customers/${id}`),
   create: (body) => request('/customers', { method: 'POST', body }),
+  link: (body) => request('/customers/link', { method: 'POST', body }),
+  forceCreate: (body) => request('/customers/force', { method: 'POST', body }),
   update: (id, body) => request(`/customers/${id}`, { method: 'PATCH', body }),
   delete: (id) => request(`/customers/${id}`, { method: 'DELETE' }),
   updateMeasurements: (id, body) => request(`/customers/${id}/measurements`, { method: 'PATCH', body }),
