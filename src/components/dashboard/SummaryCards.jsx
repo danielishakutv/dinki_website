@@ -37,7 +37,7 @@ export default function SummaryCards({ jobs = [], customers = [] }) {
       trend: '+2 this week',
     },
     {
-      label: 'Pending Invoices',
+      label: 'Unpaid Jobs',
       value: pendingInvoices,
       icon: FileText,
       color: 'from-rose-400 to-red-500',
@@ -61,7 +61,7 @@ export default function SummaryCards({ jobs = [], customers = [] }) {
       color: 'from-blue-400 to-indigo-400',
       bg: 'bg-blue-50',
       text: 'text-blue-600',
-      trend: 'Invoiced total',
+      trend: 'Total paid',
     },
   ];
 

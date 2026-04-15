@@ -326,9 +326,9 @@ export default function JobDetailPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-heading font-semibold text-gray-800">Invoice Status</h3>
+              <h3 className="font-heading font-semibold text-gray-800">Payment Status</h3>
               <p className="text-xs text-gray-400 mt-0.5">
-                {job.invoiced ? 'This job has been invoiced' : 'Mark as invoiced when payment is received'}
+                {job.invoiced ? 'Paid' : 'Unpaid — mark as paid when payment is received'}
               </p>
             </div>
             <motion.button
