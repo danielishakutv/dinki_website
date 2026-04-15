@@ -37,3 +37,13 @@ cd /home/dinki/public_html && git pull origin main && npm run build && pm2 resta
 
 UPDATED COMMAND
 cd /home/dinki/frontend-src && git pull origin main && npm run build && cp -r dist/* /home/dinki/public_html/
+
+
+
+
+postsuper -d ALL
+postqueue -p
+
+
+
+echo "Test from Dinki Africa mail server" | mail -s "Dinki Mail Test" -a "From: noreply@dinki.africa" tokotechnologies@gmail.com
