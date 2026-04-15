@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, ArrowRight, Loader2, Check, Lock } from 'lucide-react';
 import Logo from '../components/layout/Logo';
-import { authApi } from '../lib/api';
+import { auth } from '../lib/api';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -36,7 +36,7 @@ export default function ResetPassword() {
     setLoading(true);
     setError('');
     try {
-      await authApi.resetPassword({ token, password });
+      await auth.resetPassword({ token, password });
       setSuccess(true);
     } catch (err) {
       setError(err.message || 'Failed to reset password. The link may have expired.');
