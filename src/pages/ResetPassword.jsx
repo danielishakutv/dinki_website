@@ -48,7 +48,7 @@ export default function ResetPassword() {
     return (
       <div style={{ minHeight: '100vh', background: '#faf8f5', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ maxWidth: 420, width: '100%', background: '#fff', borderRadius: 20, padding: 32, boxShadow: '0 4px 24px rgba(0,0,0,0.06)', textAlign: 'center' }}>
-          <Logo size={36} style={{ marginBottom: 16 }} />
+          <Logo size="sm" />
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1a0a00', marginBottom: 8 }}>Invalid Reset Link</h2>
           <p style={{ fontSize: 14, color: '#9a8a7a', marginBottom: 24, lineHeight: 1.6 }}>
             This password reset link is invalid or has expired. Please request a new one.
@@ -68,7 +68,7 @@ export default function ResetPassword() {
     return (
       <div style={{ minHeight: '100vh', background: '#faf8f5', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ maxWidth: 420, width: '100%', background: '#fff', borderRadius: 20, padding: 32, boxShadow: '0 4px 24px rgba(0,0,0,0.06)', textAlign: 'center' }}>
-          <Logo size={36} style={{ marginBottom: 16 }} />
+          <Logo size="sm" />
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#e8f5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
             <Check size={22} style={{ color: '#2e7d32' }} />
           </div>
@@ -91,7 +91,7 @@ export default function ResetPassword() {
     <div style={{ minHeight: '100vh', background: '#faf8f5', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ maxWidth: 420, width: '100%', background: '#fff', borderRadius: 20, padding: 32, boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <Logo size={36} style={{ marginBottom: 16 }} />
+          <Logo size="sm" />
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#fff8ec', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', border: '2px solid #e8a020' }}>
             <Lock size={20} style={{ color: '#e8a020' }} />
           </div>
