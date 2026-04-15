@@ -128,6 +128,26 @@ export function useApi(key, fetcher, options = {}) {
     return () => { mountedRef.current = false; };
   }, [load]);
 
+  // Revalidate stale data when user returns to the tab
+  useEffect(() => {
+    if (!enabled) return;
+    const onFocus = () => {
+      const entry = getCacheEntry(keyRef.current);
+      if (entry && Date.now() - entry.timestamp >= ttl) {
+        load(); // background revalidation — no loading spinner since stale data is shown
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') onFocus();
+    };
+    window.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [load, ttl, enabled]);
+
   const refresh = useCallback(() => load(true), [load]);
 
   return { data, loading, error, refresh };
@@ -158,4 +178,11 @@ export function useApiMulti(queries) {
   return { data, loading, results, refresh };
 }
 
-export { TTL, invalidateCache, clearCache, cachedFetch, getCacheEntry };
+// Prefetch data without subscribing — useful for warming cache on hover
+function prefetch(key, fetcher, ttl = TTL.medium) {
+  const entry = getCacheEntry(key);
+  if (entry && Date.now() - entry.timestamp < ttl) return; // already fresh
+  cachedFetch(key, fetcher, ttl).catch(() => {}); // fire & forget
+}
+
+export { TTL, invalidateCache, clearCache, cachedFetch, getCacheEntry, prefetch };

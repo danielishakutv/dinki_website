@@ -7,4 +7,20 @@ export default defineConfig({
     port: 3000,
     open: true,
   },
+  build: {
+    target: 'es2020',
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React runtime — cached long-term, rarely changes
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // Animation library — sizeable, used on many pages
+          'vendor-motion': ['framer-motion'],
+          // Icons — tree-shaken per-page but shared chunk avoids duplication
+          'vendor-icons': ['lucide-react'],
+        },
+      },
+    },
+  },
 });
