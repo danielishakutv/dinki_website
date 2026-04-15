@@ -7,7 +7,11 @@ root@mail:/var/www/dinki# curl -s -X POST https://be.dinki.africa/v1/auth/verify
 {"success":true,"data":{"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwYmUxYjgxNC0yNjkyLTQ0ZjUtOTdlZi04ZGRlOWE2OGNlYmUiLCJyb2xlIjoidGFpbG9yIiwiZW1haWwiOiJ0ZXN0QGRpbmtpLmFmcmljYSIsImlhdCI6MTc3NjA5Njc4OSwiZXhwIjoxNzc2MDk3Njg5fQ.SAImQ_jwcOfKlSfpF83dZjiYqaxn-JPTXTzqGTLUYEI","user":{"id":"0be1b814-2692-44f5-97ef-8dde9a68cebe","name":"Test Tailor","email":"test@dinki.africa","role":"tailor","avatar_url":null,"initials":"TT","avatar_color":null,"onboarding_completed":false,"storefront_slug":"test-tailor-RVBd"}}}root@mail:/var/www/dinki# 
 
 
+/////////////////////////////////////
 
+docker exec dinki-dinki-redis-1 redis-cli GET "otp:<user_id_here>"
+
+////////////////////////////////////
 
 
 Phase 3: Core Customer Features is next. It has 4 steps:

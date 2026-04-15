@@ -63,13 +63,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
     if (!matchedUser) return;
     setSaving(true);
     try {
-      await onLink({
-        user_id: matchedUser.id,
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        email: form.email.trim() || undefined,
-        location: form.location.trim() || undefined,
-      });
+      await onLink({ user_id: matchedUser.id });
       resetState();
       onClose();
     } catch (err) {
@@ -152,13 +146,19 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
 
                 <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-heading font-bold text-lg"
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-heading font-bold text-lg flex-shrink-0"
                     style={{ backgroundColor: matchedUser.avatar_color || '#D4A574' }}
                   >
                     {matchedUser.initials || '?'}
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-semibold text-gray-900 text-sm">{matchedUser.name}</p>
+                    {matchedUser.phone && (
+                      <p className="text-xs text-gray-500 truncate">{matchedUser.phone}</p>
+                    )}
+                    {matchedUser.email && (
+                      <p className="text-xs text-gray-400 truncate">{matchedUser.email}</p>
+                    )}
                     {matchedUser.location_city && (
                       <p className="text-xs text-gray-400">{matchedUser.location_city}</p>
                     )}
