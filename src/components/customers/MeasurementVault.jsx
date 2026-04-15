@@ -4,9 +4,14 @@ import { measurementFields } from '../../data/mockData';
 import { Save, Edit3, X, Ruler, FileText, Plus, Trash2 } from 'lucide-react';
 
 export default function MeasurementVault({ measurements, onSave }) {
+  // DB stores: { _version, standard: { neck: 15, ... }, custom: [...], notes: '...' }
+  // Flatten standard into top-level for the form
+  const stored = measurements || {};
+  const flat = { ...(stored.standard || {}), notes: stored.notes || '' };
+
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ ...measurements });
-  const [customFields, setCustomFields] = useState(measurements._custom || []);
+  const [form, setForm] = useState({ ...flat });
+  const [customFields, setCustomFields] = useState(stored.custom || []);
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldUnit, setNewFieldUnit] = useState('in');
   const [showAddField, setShowAddField] = useState(false);
@@ -44,8 +49,9 @@ export default function MeasurementVault({ measurements, onSave }) {
   };
 
   const handleCancel = () => {
-    setForm({ ...measurements });
-    setCustomFields(measurements._custom || []);
+    const s = measurements || {};
+    setForm({ ...(s.standard || {}), notes: s.notes || '' });
+    setCustomFields(s.custom || []);
     setEditing(false);
     setShowAddField(false);
     setNewFieldName('');

@@ -62,7 +62,7 @@ export default function CustomerDetail() {
 
   const handleSaveMeasurements = async (newMeasurements) => {
     try {
-      await customersApi.updateMeasurements(id, { measurements: newMeasurements });
+      await customersApi.updateMeasurements(id, newMeasurements);
       invalidateCache(`customer-${id}`, 'customers');
       refreshCust();
     } catch (err) {
