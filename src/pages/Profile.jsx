@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Camera, Edit3, Star, Scissors, Briefcase, Calendar, X, Plus, Trash2, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Camera, Edit3, Star, Scissors, Briefcase, Calendar, X, Plus, Trash2, Loader2, AtSign, Check, AlertCircle } from 'lucide-react';
 import { users as usersApi } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi, invalidateCache, TTL } from '../hooks/useApi';
@@ -16,6 +16,11 @@ export default function Profile({ userRole }) {
   const [editForm, setEditForm] = useState({});
   const [newSpecialty, setNewSpecialty] = useState('');
   const [saving, setSaving] = useState(false);
+  const [usernameInput, setUsernameInput] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState(null); // null | 'checking' | 'available' | 'taken' | 'invalid'
+  const [settingUsername, setSettingUsername] = useState(false);
+  const [usernameError, setUsernameError] = useState(null);
+  const [showUsernameForm, setShowUsernameForm] = useState(false);
 
   const { data: profileRes, loading: profileLoading, refresh: refreshProfile } = useApi(
     'profile', () => usersApi.getProfile(), { ttl: TTL.long }
@@ -114,6 +119,43 @@ export default function Profile({ userRole }) {
     setEditForm(prev => ({ ...prev, specialties: prev.specialties.filter(s => s !== item) }));
   };
 
+  const usernameRegex = /^[a-zA-Z][a-zA-Z0-9._]{2,29}$/;
+
+  const handleUsernameChange = useCallback((val) => {
+    setUsernameInput(val);
+    setUsernameError(null);
+    if (!val.trim()) { setUsernameStatus(null); return; }
+    if (!usernameRegex.test(val)) { setUsernameStatus('invalid'); return; }
+    setUsernameStatus('checking');
+    const check = val;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await usersApi.checkUsername(check);
+        if (check !== val) return; // stale
+        setUsernameStatus(res?.data?.available ? 'available' : 'taken');
+      } catch { setUsernameStatus(null); }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleSetUsername = async () => {
+    if (usernameStatus !== 'available') return;
+    setSettingUsername(true);
+    setUsernameError(null);
+    try {
+      await usersApi.setUsername(usernameInput.trim());
+      invalidateCache('profile');
+      refreshProfile();
+      setShowUsernameForm(false);
+      setUsernameInput('');
+      setUsernameStatus(null);
+    } catch (err) {
+      setUsernameError(err.message || 'Failed to set username');
+    } finally {
+      setSettingUsername(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -170,9 +212,78 @@ export default function Profile({ userRole }) {
       {/* Name + Info */}
       <div className="pt-14 md:pt-16 px-1">
         <h1 className="text-xl md:text-2xl font-heading font-bold text-gray-900">{profile.name}</h1>
+        {p.username ? (
+          <p className="text-sm text-gray-400 font-medium">@{p.username}</p>
+        ) : null}
         <p className="text-sm text-gold-600 font-medium">{profile.role}</p>
         <p className="text-sm text-gray-500 mt-2 leading-relaxed max-w-lg">{profile.bio}</p>
       </div>
+
+      {/* Username prompt */}
+      {!p.username && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          {showUsernameForm ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-1">
+                <AtSign size={16} className="text-amber-600" />
+                <p className="text-sm font-semibold text-amber-800">Choose your username</p>
+              </div>
+              <p className="text-xs text-amber-600">This can only be set once. Letters, numbers, dots, underscores. Starts with a letter.</p>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                <input
+                  type="text"
+                  value={usernameInput}
+                  onChange={e => handleUsernameChange(e.target.value.toLowerCase())}
+                  placeholder="yourname"
+                  maxLength={30}
+                  className="w-full pl-8 pr-10 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {usernameStatus === 'checking' && <Loader2 size={16} className="animate-spin text-gray-400" />}
+                  {usernameStatus === 'available' && <Check size={16} className="text-emerald-500" />}
+                  {usernameStatus === 'taken' && <X size={16} className="text-red-500" />}
+                  {usernameStatus === 'invalid' && <AlertCircle size={16} className="text-amber-500" />}
+                </span>
+              </div>
+              {usernameStatus === 'taken' && <p className="text-xs text-red-500">Username is already taken</p>}
+              {usernameStatus === 'invalid' && <p className="text-xs text-amber-600">3-30 chars, starts with a letter, only letters/numbers/dots/underscores</p>}
+              {usernameError && <p className="text-xs text-red-500">{usernameError}</p>}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowUsernameForm(false); setUsernameInput(''); setUsernameStatus(null); }}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSetUsername}
+                  disabled={usernameStatus !== 'available' || settingUsername}
+                  className="flex-1 py-2.5 rounded-xl bg-gold-500 text-white text-sm font-semibold hover:bg-gold-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {settingUsername ? <Loader2 size={14} className="animate-spin" /> : 'Set Username'}
+                </motion.button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AtSign size={16} className="text-amber-600" />
+                <p className="text-sm text-amber-800">
+                  <span className="font-semibold">Set your username</span> — you can only do this once.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowUsernameForm(true)}
+                className="px-4 py-2 rounded-xl bg-gold-500 text-white text-xs font-semibold hover:bg-gold-600 transition-colors"
+              >
+                Choose
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

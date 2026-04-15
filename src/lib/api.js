@@ -123,6 +123,8 @@ export const users = {
   updatePreferences: (body) => request('/users/me/preferences', { method: 'PATCH', body }),
   completeOnboarding: (body) => request('/users/me/onboarding', { method: 'POST', body }),
   search: (q, role = 'customer') => request(`/users/search?q=${encodeURIComponent(q)}&role=${role}`),
+  checkUsername: (username) => request(`/users/check-username?username=${encodeURIComponent(username)}`),
+  setUsername: (username) => request('/users/me/username', { method: 'PUT', body: { username } }),
 };
 
 // Customers
