@@ -1,27 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Scissors } from 'lucide-react';
 import JobList from '../components/jobs/JobList';
-import AddJobModal from '../components/jobs/AddJobModal';
-import { jobs as jobsApi, customers as customersApi } from '../lib/api';
-import { useApi, invalidateCache, TTL } from '../hooks/useApi';
+import { jobs as jobsApi } from '../lib/api';
+import { useApi, TTL } from '../hooks/useApi';
 
-export default function Jobs({ showAddJob, setShowAddJob }) {
-  const { data: jobsRes, loading: jobsLoading, refresh: refreshJobs } = useApi(
+export default function Jobs() {
+  const navigate = useNavigate();
+  const { data: jobsRes, loading } = useApi(
     'jobs-list', () => jobsApi.list({ limit: 100 }), { ttl: TTL.medium }
-  );
-  const { data: custRes, loading: custLoading } = useApi(
-    'customers-list', () => customersApi.list({ limit: 100 }), { ttl: TTL.medium }
   );
 
   const jobs = jobsRes?.data && Array.isArray(jobsRes.data) ? jobsRes.data : [];
-  const customers = custRes?.data && Array.isArray(custRes.data) ? custRes.data : [];
-  const loading = jobsLoading || custLoading;
-
-  const handleSaveJob = async (formData) => {
-    await jobsApi.create(formData);
-    invalidateCache('jobs');
-    refreshJobs();
-  };
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto">
@@ -33,15 +23,8 @@ export default function Jobs({ showAddJob, setShowAddJob }) {
 
       <JobList
         jobs={jobs}
-        onAddJob={() => setShowAddJob(true)}
+        onAddJob={() => navigate('/jobs/new')}
         loading={loading}
-      />
-
-      <AddJobModal
-        isOpen={showAddJob}
-        onClose={() => setShowAddJob(false)}
-        onSave={handleSaveJob}
-        customers={customers}
       />
     </div>
   );

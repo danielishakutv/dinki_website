@@ -30,7 +30,7 @@ const drawerItems = [
   { to: '/help', icon: HelpCircle, label: 'Help & Support' },
 ];
 
-export default function Layout({ children, userRole, onAddJob }) {
+export default function Layout({ children, userRole }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -201,7 +201,7 @@ export default function Layout({ children, userRole, onAddJob }) {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <BottomNav userRole={userRole} onAddJob={onAddJob} onRecordMeasurement={() => navigate('/customers')} onNavClick={() => setDrawerOpen(false)} />
+      <BottomNav userRole={userRole} onRecordMeasurement={() => navigate('/customers')} onNavClick={() => setDrawerOpen(false)} />
     </div>
   );
 }

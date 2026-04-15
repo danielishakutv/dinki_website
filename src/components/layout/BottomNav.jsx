@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Scissors, Users, ShoppingBag, MapPin, ClipboardList, Plus, X, Ruler, Store } from 'lucide-react';
+import { Home, Scissors, ShoppingBag, MapPin, ClipboardList, Plus, Ruler, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const tailorLeft = [
@@ -71,14 +71,15 @@ const fabActions = [
   },
 ];
 
-export default function BottomNav({ userRole, onAddJob, onRecordMeasurement, onNavClick }) {
+export default function BottomNav({ userRole, onRecordMeasurement, onNavClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const isTailor = userRole === 'tailor';
   const homeRoute = '/dashboard';
+  const navigate = useNavigate();
 
   const handleAction = (key) => {
     setMenuOpen(false);
-    if (key === 'addJob') onAddJob?.();
+    if (key === 'addJob') navigate('/jobs/new');
     if (key === 'recordMeasurement') onRecordMeasurement?.();
   };
 

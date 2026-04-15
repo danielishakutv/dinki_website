@@ -179,7 +179,7 @@ export default function TailorDashboard() {
           className="grid grid-cols-4 gap-2.5 sm:gap-3 mb-6 sm:mb-8"
         >
           <button
-            onClick={() => navigate('/jobs')}
+            onClick={() => navigate('/jobs/new')}
             className="bg-white rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm hover:border-gold-200 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
           >
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gold-50 flex items-center justify-center group-hover:bg-gold-100 transition">

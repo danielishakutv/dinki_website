@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
@@ -21,6 +21,7 @@ import HelpSupport from './pages/HelpSupport';
 import TailorStorefront from './pages/TailorStorefront';
 import StyleDetail from './pages/StyleDetail';
 import PlaceOrder from './pages/PlaceOrder';
+import NewJobPage from './pages/NewJobPage';
 import Referral from './pages/Referral';
 import Onboarding from './pages/Onboarding';
 import Leaderboard from './pages/Leaderboard';
@@ -36,7 +37,6 @@ function ProtectedRoute({ children }) {
 export default function App() {
   const { user, loading } = useAuth();
   const userRole = user?.role || null;
-  const [showAddJob, setShowAddJob] = useState(false);
 
   if (loading) {
     return <div className="flex h-screen items-center justify-center bg-cloud"><div className="w-8 h-8 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /></div>;
@@ -50,7 +50,7 @@ export default function App() {
         path="/*"
         element={
           <ProtectedRoute>
-            <Layout userRole={userRole} onAddJob={() => setShowAddJob(true)}>
+            <Layout userRole={userRole}>
               <Routes>
               <Route
                 path="dashboard"
@@ -58,7 +58,7 @@ export default function App() {
                   userRole === 'customer' ? (
                     <CustomerDashboard tab="home" />
                   ) : (
-                    <Dashboard setShowAddJob={setShowAddJob} />
+                    <Dashboard />
                   )
                 }
               />
@@ -68,15 +68,8 @@ export default function App() {
               <Route path="near-me" element={<CustomerDashboard tab="near-me" />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/customers/:id" element={<CustomerDetail />} />
-              <Route
-                path="/jobs"
-                element={
-                  <Jobs
-                    showAddJob={showAddJob}
-                    setShowAddJob={setShowAddJob}
-                  />
-                }
-              />
+              <Route path="/jobs" element={<Jobs />} />
+              <Route path="/jobs/new" element={<NewJobPage />} />
               <Route path="/jobs/:id" element={<JobDetailPage />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/profile" element={<Profile userRole={userRole} />} />

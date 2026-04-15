@@ -7,7 +7,7 @@ import RecentActivity from '../components/dashboard/RecentActivity';
 import { jobs as jobsApi, customers as customersApi } from '../lib/api';
 import { useApi, TTL } from '../hooks/useApi';
 
-export default function Dashboard({ setShowAddJob }) {
+export default function Dashboard() {
   const navigate = useNavigate();
 
   const { data: jobsRes, loading: jobsLoading } = useApi(
@@ -74,7 +74,7 @@ export default function Dashboard({ setShowAddJob }) {
         className="grid grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3"
       >
         <button
-          onClick={() => setShowAddJob(true)}
+          onClick={() => navigate('/jobs/new')}
           className="hidden md:flex bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm hover:border-gold-200 hover:shadow-md transition-all flex-col items-center gap-2.5 group"
         >
           <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gold-50 flex items-center justify-center group-hover:bg-gold-100 transition">
