@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Eye, EyeOff, ArrowRight, Loader2, Check, Lock } from 'lucide-react';
 import Logo from '../components/layout/Logo';
 import { auth } from '../lib/api';
@@ -142,9 +141,7 @@ export default function ResetPassword() {
 
         {error && <p style={{ fontSize: 12, color: '#c0392b', marginBottom: 10, paddingLeft: 2 }}>{error}</p>}
 
-        <motion.button
-          whileHover={canSubmit && !loading ? { scale: 1.015 } : {}}
-          whileTap={canSubmit && !loading ? { scale: 0.975 } : {}}
+        <button
           onClick={handleSubmit}
           disabled={loading || !canSubmit}
           style={{
@@ -155,12 +152,12 @@ export default function ResetPassword() {
             fontSize: 15, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             boxShadow: canSubmit ? '0 4px 20px rgba(232,160,32,0.35)' : 'none',
-            transition: 'background 0.2s',
+            transition: 'background 0.2s, transform 0.1s',
             opacity: loading ? 0.7 : 1,
           }}
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <>Reset Password <ArrowRight size={16} /></>}
-        </motion.button>
+        </button>
       </div>
     </div>
   );
