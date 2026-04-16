@@ -184,7 +184,22 @@ export const storefronts = {
   getFeatured: () => request('/storefronts/featured'),
   getMine: () => request('/storefronts/me'),
   update: (body) => request('/storefronts/me', { method: 'PATCH', body }),
-  updatePortfolio: (body) => request('/storefronts/me/portfolio', { method: 'PATCH', body }),
+  addPortfolio: (body) => request('/storefronts/me/portfolio', { method: 'POST', body }),
+  removePortfolio: (id) => request(`/storefronts/me/portfolio/${id}`, { method: 'DELETE' }),
+  getPortfolio: (slug, params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set('page', params.page);
+    if (params.limit) qs.set('limit', params.limit);
+    const q = qs.toString();
+    return request(`/storefronts/${slug}/portfolio${q ? `?${q}` : ''}`);
+  },
+  getReviews: (slug, params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set('page', params.page);
+    if (params.limit) qs.set('limit', params.limit);
+    const q = qs.toString();
+    return request(`/storefronts/${slug}/reviews${q ? `?${q}` : ''}`);
+  },
 };
 
 // Orders

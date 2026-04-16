@@ -98,7 +98,7 @@ export default function App() {
                 <Route path="/notifications/:id" element={<NotificationDetail />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/help" element={<HelpSupport />} />
-                <Route path="/tailor/:id" element={<TailorStorefront userRole={userRole} />} />
+                <Route path="/tailor/:slug" element={<TailorStorefront userRole={userRole} />} />
                 <Route path="/marketplace/style/:id" element={<StyleDetail />} />
                 <Route path="/order/new" element={<PlaceOrder />} />
                 <Route path="/referral" element={<Referral />} />
