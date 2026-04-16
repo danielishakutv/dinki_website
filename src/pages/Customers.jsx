@@ -11,7 +11,8 @@ export default function Customers() {
   const { data: custRes, loading, refresh } = useApi(
     'customers-list', () => customersApi.list({ limit: 100 }), { ttl: TTL.medium }
   );
-  const customers = custRes?.data && Array.isArray(custRes.data) ? custRes.data : [];
+  const raw = custRes?.data;
+  const customers = Array.isArray(raw) ? raw : Array.isArray(raw?.customers) ? raw.customers : [];
 
   const handleAddCustomer = async (formData) => {
     const result = await customersApi.create(formData);

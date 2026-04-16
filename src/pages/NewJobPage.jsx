@@ -12,7 +12,8 @@ export default function NewJobPage() {
     'customers-list', () => customersApi.list({ limit: 100 }), { ttl: TTL.medium }
   );
 
-  const customers = custRes?.data && Array.isArray(custRes.data) ? custRes.data : [];
+  const raw = custRes?.data;
+  const customers = Array.isArray(raw) ? raw : Array.isArray(raw?.customers) ? raw.customers : [];
 
   const handleSaveJob = async (formData) => {
     await jobsApi.create(formData);

@@ -29,7 +29,8 @@ export default function JobDetailPage() {
   );
 
   const job = jobRes?.data || null;
-  const customers = Array.isArray(custListRes?.data) ? custListRes.data : [];
+  const rawCust = custListRes?.data;
+  const customers = Array.isArray(rawCust) ? rawCust : Array.isArray(rawCust?.customers) ? rawCust.customers : [];
 
   const { data: custRes } = useApi(
     job?.customer_id ? `customer-${job.customer_id}` : null,

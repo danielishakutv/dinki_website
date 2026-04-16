@@ -20,7 +20,8 @@ export default function Dashboard() {
   );
 
   const jobs = jobsRes?.data && Array.isArray(jobsRes.data) ? jobsRes.data : [];
-  const customers = custRes?.data && Array.isArray(custRes.data) ? custRes.data : [];
+  const rawCust = custRes?.data;
+  const customers = Array.isArray(rawCust) ? rawCust : Array.isArray(rawCust?.customers) ? rawCust.customers : [];
   const loading = jobsLoading || custLoading;
 
   const getGreeting = () => {
