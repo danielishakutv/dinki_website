@@ -19,6 +19,8 @@ export default defineConfig({
           'vendor-motion': ['framer-motion'],
           // Icons — tree-shaken per-page but shared chunk avoids duplication
           'vendor-icons': ['lucide-react'],
+          // Location data — large dataset, only needed on onboarding
+          'vendor-geodata': ['country-state-city'],
         },
       },
     },
