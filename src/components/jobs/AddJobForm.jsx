@@ -149,7 +149,7 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
     debounceRef.current = setTimeout(async () => {
       setSearching(true);
       try {
-        const res = await usersApi.search(searchQuery.trim(), 'customer');
+        const res = await usersApi.search(searchQuery.trim());
         setPlatformResults(Array.isArray(res.data) ? res.data : []);
       } catch {
         setPlatformResults([]);
@@ -335,7 +335,7 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
                   )}
 
                   {/* Quick Add Customer */}
-                  {!quickAddMode && searchQuery.trim().length >= 2 && !searching && filteredLocal.length === 0 && filteredPlatform.length === 0 && (
+                  {!quickAddMode && searchQuery.trim().length >= 2 && !searching && (
                     <div className="border-t border-gray-100 p-3">
                       <button
                         type="button"
@@ -343,10 +343,10 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
                           setQuickAddMode(true);
                           setQuickAddForm({ ...quickAddForm, name: searchQuery.trim() });
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-gold-50 hover:bg-gold-100 text-gold-700 transition-colors text-left"
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-400 transition-colors text-left"
                       >
-                        <UserPlus size={16} />
-                        <span className="text-sm font-medium">Quick Add Customer</span>
+                        <UserPlus size={14} />
+                        <span className="text-xs">Can't find them? <span className="font-semibold text-gold-600">Add new customer</span></span>
                       </button>
                     </div>
                   )}
