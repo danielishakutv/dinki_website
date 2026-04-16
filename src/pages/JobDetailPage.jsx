@@ -85,7 +85,7 @@ export default function JobDetailPage() {
     setStartingChat(true);
     try {
       const res = await convoApi.start({ participant_id: customer.user_id });
-      const conversationId = res.data?.id;
+      const conversationId = res.data?.conversation?.id || res.data?.id;
       if (conversationId) {
         invalidateCache('conversations');
         navigate(`/messages/${conversationId}`);
