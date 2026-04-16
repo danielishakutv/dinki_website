@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, MapPin, MessageCircle, Heart, ChevronLeft, Share2, Image, ShoppingBag, Edit3, Plus, Trash2, Settings, Eye, Loader2, Camera, Move, Check, X } from 'lucide-react';
+import { Star, MapPin, MessageCircle, Heart, ChevronLeft, Share2, Image, ShoppingBag, Edit3, Plus, Trash2, Settings, Eye, Loader2, Camera, Move, Check, X, UserPlus, Sparkles, Shield, Clock, Users } from 'lucide-react';
 import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
 import { useAuth } from '../contexts/AuthContext';
 import { storefronts as storefrontsApi, uploads as uploadsApi, users as usersApi } from '../lib/api';
@@ -25,6 +25,7 @@ export default function TailorStorefront({ userRole }) {
   const isOwner = isOwnSlug && !!tailor;
   const previewMode = isOwner && searchParams.get('preview') === 'customer';
   const isEditing = isOwner && !previewMode;
+  const isGuest = !user;
 
   const [activeTab, setActiveTab] = useState('portfolio');
   const [saved, setSaved] = useState(false);
@@ -54,6 +55,10 @@ export default function TailorStorefront({ userRole }) {
   // Avatar upload states
   const [savingAvatar, setSavingAvatar] = useState(false);
   const avatarInputRef = useRef(null);
+
+  // Guest join modal
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const joinTimerRef = useRef(null);
 
   // Load storefront data
   const loadStorefront = useCallback(async () => {
@@ -87,6 +92,14 @@ export default function TailorStorefront({ userRole }) {
   useEffect(() => {
     loadStorefront();
   }, [loadStorefront]);
+
+  // Guest: show join modal after 5 seconds
+  useEffect(() => {
+    if (isGuest && tailor && !showJoinModal) {
+      joinTimerRef.current = setTimeout(() => setShowJoinModal(true), 5000);
+    }
+    return () => { if (joinTimerRef.current) clearTimeout(joinTimerRef.current); };
+  }, [isGuest, tailor]);
 
   useEffect(() => {
     if (activeTab === 'portfolio' && tailor) loadPortfolio();
@@ -539,6 +552,45 @@ export default function TailorStorefront({ userRole }) {
               <span className="hidden sm:inline">Preview</span>
             </button>
           </>
+        ) : previewMode ? (
+          <>
+            <button
+              disabled
+              className="flex-1 py-3.5 bg-gray-300 text-gray-500 rounded-xl text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <ShoppingBag size={16} />
+              Place Order
+            </button>
+            <button
+              disabled
+              className="px-5 py-3.5 bg-gray-100 text-gray-400 rounded-xl text-sm font-medium border border-gray-200 cursor-not-allowed flex items-center gap-2"
+            >
+              <MessageCircle size={16} />
+              Chat
+            </button>
+          </>
+        ) : isGuest ? (
+          <>
+            <button
+              onClick={() => navigate('/onboarding')}
+              className="flex-1 py-3.5 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition shadow-sm shadow-gold-500/20 flex items-center justify-center gap-2"
+            >
+              <UserPlus size={16} />
+              Sign Up to Order
+            </button>
+            <button
+              onClick={shareStorefront}
+              className="px-5 py-3.5 bg-white text-gray-700 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 transition flex items-center gap-2 relative"
+            >
+              <Share2 size={16} />
+              <span className="hidden sm:inline">Share</span>
+              {showCopied && (
+                <span className="absolute -top-9 right-0 text-[10px] bg-black/80 text-white px-2.5 py-1 rounded-lg whitespace-nowrap">
+                  Link copied!
+                </span>
+              )}
+            </button>
+          </>
         ) : (
           <>
             <button
@@ -726,6 +778,91 @@ export default function TailorStorefront({ userRole }) {
                 <p className="text-sm text-gray-600 leading-relaxed">{review.text}</p>
               </div>
             ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Guest Join Modal */}
+      <AnimatePresence>
+        {showJoinModal && isGuest && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+            onClick={() => setShowJoinModal(false)}
+          >
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Drag handle (mobile) */}
+              <div className="flex justify-center pt-3 pb-1 sm:hidden">
+                <div className="w-10 h-1 rounded-full bg-gray-300" />
+              </div>
+
+              {/* Close button */}
+              <div className="flex justify-end px-4 pt-2 sm:pt-4">
+                <button
+                  onClick={() => setShowJoinModal(false)}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition"
+                >
+                  <X size={16} className="text-gray-500" />
+                </button>
+              </div>
+
+              <div className="px-6 pb-6 pt-1 text-center">
+                {/* Icon */}
+                <div className="w-14 h-14 rounded-2xl bg-gold-50 border border-gold-200 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles size={26} className="text-gold-500" />
+                </div>
+
+                <h3 className="text-lg font-heading font-bold text-gray-900 mb-1">
+                  Join Dinki Africa
+                </h3>
+                <p className="text-sm text-gray-500 mb-5">
+                  Create a free account to order from {tailor?.name || 'this tailor'} and thousands more.
+                </p>
+
+                {/* Benefits */}
+                <div className="space-y-3 text-left mb-6">
+                  {[
+                    { icon: ShoppingBag, text: 'Place orders with trusted tailors' },
+                    { icon: MessageCircle, text: 'Chat directly with your tailor' },
+                    { icon: Shield, text: 'Secure payments & order tracking' },
+                    { icon: Clock, text: 'Real-time delivery updates' },
+                    { icon: Users, text: 'Join a growing community of fashion lovers' },
+                  ].map(({ icon: Icon, text }) => (
+                    <div key={text} className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gold-50 flex items-center justify-center flex-shrink-0">
+                        <Icon size={15} className="text-gold-600" />
+                      </div>
+                      <span className="text-sm text-gray-700">{text}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA */}
+                <button
+                  onClick={() => navigate('/onboarding')}
+                  className="w-full py-3.5 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition shadow-sm shadow-gold-500/20 flex items-center justify-center gap-2"
+                >
+                  <UserPlus size={16} />
+                  Create Free Account
+                </button>
+
+                <p className="text-xs text-gray-400 mt-3">
+                  Already have an account?
+                  <button onClick={() => navigate('/onboarding')} className="text-gold-600 font-medium ml-1 hover:underline">
+                    Sign in
+                  </button>
+                </p>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
