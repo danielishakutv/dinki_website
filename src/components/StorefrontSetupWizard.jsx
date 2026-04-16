@@ -100,7 +100,7 @@ export default function StorefrontSetupWizard({ user, slug, onComplete }) {
     setSaving(false);
   };
 
-  const storeUrl = `dinki.africa/tailor/${customSlug.toLowerCase() || slug}`;
+  const storeUrl = `dinki.africa/${customSlug.toLowerCase() || slug}`;
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-8">
@@ -139,7 +139,7 @@ export default function StorefrontSetupWizard({ user, slug, onComplete }) {
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1.5">Store Handle</label>
                 <div className="flex items-center gap-0 border border-gray-200 rounded-xl overflow-hidden focus-within:border-gold-400 focus-within:ring-2 focus-within:ring-gold-400/20">
-                  <span className="px-3 py-2.5 bg-gray-50 text-xs text-gray-400 border-r border-gray-200 flex-shrink-0 select-none">dinki.africa/tailor/</span>
+                  <span className="px-3 py-2.5 bg-gray-50 text-xs text-gray-400 border-r border-gray-200 flex-shrink-0 select-none">dinki.africa/</span>
                   <input
                     value={customSlug}
                     onChange={(e) => { setCustomSlug(e.target.value.replace(/[^a-zA-Z0-9-]/g, '')); setSlugTouched(true); }}

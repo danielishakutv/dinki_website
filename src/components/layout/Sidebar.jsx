@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const getTailorNav = (storefrontSlug) => [
   { to: '/dashboard', icon: Home, label: 'Dashboard' },
-  { to: storefrontSlug ? `/tailor/${storefrontSlug}` : '/dashboard', icon: Store, label: 'My Storefront' },
+  { to: storefrontSlug ? `/${storefrontSlug}` : '/dashboard', icon: Store, label: 'My Storefront' },
   { to: '/jobs', icon: Scissors, label: 'Jobs & Orders' },
   { to: '/customers', icon: Users, label: 'Customers' },
   { to: '/marketplace', icon: ShoppingBag, label: 'Marketplace' },

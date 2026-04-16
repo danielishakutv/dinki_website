@@ -108,7 +108,7 @@ export default function Leaderboard() {
           return (
             <motion.button
               key={tailor.id}
-              onClick={() => navigate(`/tailor/${tailor.id}`)}
+              onClick={() => navigate(`/${tailor.slug || tailor.id}`)}
               className="w-full flex items-center gap-2.5 p-3 bg-white rounded-xl border border-gray-100 hover:border-gold-200 transition text-left shadow-sm"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

@@ -103,7 +103,7 @@ export default function TailorDashboard() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={() => { const s = user?.storefront_slug || user?.tailor_profile?.storefront_slug; navigate(s ? `/tailor/${s}` : '/dashboard'); }}
+              onClick={() => { const s = user?.storefront_slug || user?.tailor_profile?.storefront_slug; navigate(s ? `/${s}` : '/dashboard'); }}
               className="flex items-center gap-1.5 px-3 py-2 sm:py-2.5 bg-gold-500 text-white rounded-lg sm:rounded-xl transition hover:bg-gold-600 text-xs sm:text-sm font-medium shadow-sm shadow-gold-500/15"
               title="View My Storefront"
             >
@@ -210,7 +210,7 @@ export default function TailorDashboard() {
           <button
             onClick={() => {
               const s = user?.storefront_slug || user?.tailor_profile?.storefront_slug || '';
-              const url = `${window.location.origin}/tailor/${s}`;
+              const url = `${window.location.origin}/${s}`;
               if (navigator.share) {
                 navigator.share({ title: 'Aunty Zainab — Dinki Africa', text: 'Check out my storefront on Dinki Africa', url }).catch(() => {});
               } else {

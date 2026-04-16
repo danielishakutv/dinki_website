@@ -8,7 +8,8 @@ import { storefronts as storefrontsApi, uploads as uploadsApi, users as usersApi
 import StorefrontSetupWizard from '../components/StorefrontSetupWizard';
 
 export default function TailorStorefront({ userRole }) {
-  const { slug } = useParams();
+  const { handle } = useParams();
+  const slug = handle;
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -202,7 +203,7 @@ export default function TailorStorefront({ userRole }) {
   };
 
   const shareStorefront = async () => {
-    const url = `${window.location.origin}/tailor/${slug}`;
+    const url = `${window.location.origin}/${slug}`;
     const shareData = {
       title: tailor ? `${tailor.name} — Dinki Africa` : 'Dinki Africa',
       text: tailor ? `Check out ${tailor.name} on Dinki Africa` : 'Check out this tailor on Dinki Africa',
@@ -225,7 +226,7 @@ export default function TailorStorefront({ userRole }) {
   // Wizard completion handler
   const handleSetupComplete = (newSlug) => {
     if (newSlug && newSlug !== slug) {
-      navigate(`/tailor/${newSlug}`, { replace: true });
+      navigate(`/${newSlug}`, { replace: true });
     } else {
       loadStorefront();
     }
@@ -498,9 +499,9 @@ export default function TailorStorefront({ userRole }) {
               onClick={() => {
                 const params = new URLSearchParams(window.location.search);
                 if (params.get('preview') === 'customer') {
-                  navigate(`/tailor/${slug}`);
+                  navigate(`/${slug}`);
                 } else {
-                  navigate(`/tailor/${slug}?preview=customer`);
+                  navigate(`/${slug}?preview=customer`);
                 }
               }}
               className="px-5 py-3.5 bg-white text-gray-700 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 transition flex items-center gap-2"

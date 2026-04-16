@@ -105,7 +105,7 @@ export default function Dashboard() {
         <button
           onClick={() => {
             const s = user?.storefront_slug || user?.tailor_profile?.storefront_slug || '';
-            const url = `${window.location.origin}/tailor/${s}`;
+            const url = `${window.location.origin}/${s}`;
             if (navigator.share) {
               navigator.share({ title: 'Dinki Africa', text: 'Check out my storefront on Dinki Africa', url }).catch(() => {});
             } else {

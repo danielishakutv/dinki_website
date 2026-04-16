@@ -163,7 +163,7 @@ export default function CustomerDashboard({ tab = 'home' }) {
                 </div>
                 <div className="space-y-3">
                   {nearbyTailors.slice(0, 2).map((tailor) => (
-                    <div key={tailor.id} className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(`/tailor/${tailor.id}`)}>
+                    <div key={tailor.id} className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(`/${tailor.slug || tailor.id}`)}>
                       <img src={tailor.image} alt={tailor.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
@@ -268,7 +268,7 @@ export default function CustomerDashboard({ tab = 'home' }) {
                     {/* Buttons row — full width, equal sizing */}
                     <div className="flex gap-2">
                       <button
-                        onClick={() => navigate(`/tailor/${tailor.id}`)}
+                        onClick={() => navigate(`/${tailor.slug || tailor.id}`)}
                         className="flex-1 py-2.5 bg-gold-500 text-white rounded-xl text-xs font-semibold hover:bg-gold-600 transition flex items-center justify-center gap-1.5 min-h-[44px] shadow-sm shadow-gold-500/15"
                       >
                         View Profile

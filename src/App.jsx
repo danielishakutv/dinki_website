@@ -98,12 +98,12 @@ export default function App() {
                 <Route path="/notifications/:id" element={<NotificationDetail />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/help" element={<HelpSupport />} />
-                <Route path="/tailor/:slug" element={<TailorStorefront userRole={userRole} />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/news" element={<News />} />
                 <Route path="/marketplace/style/:id" element={<StyleDetail />} />
                 <Route path="/order/new" element={<PlaceOrder />} />
                 <Route path="/referral" element={<Referral />} />
-                <Route path="/leaderboard" element={<Leaderboard />} />
-                <Route path="/news" element={<News />} />
+                <Route path=":handle" element={<TailorStorefront userRole={userRole} />} />
               </Routes>
               </Suspense>
             </Layout>
