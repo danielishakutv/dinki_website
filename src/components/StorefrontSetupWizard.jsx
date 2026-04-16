@@ -46,8 +46,8 @@ export default function StorefrontSetupWizard({ user, slug, onComplete }) {
   const handleCoverPick = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be under 5MB');
+    if (file.size > 1 * 1024 * 1024) {
+      setError('Image must be under 1MB');
       return;
     }
     setCoverFile(file);
@@ -234,7 +234,7 @@ export default function StorefrontSetupWizard({ user, slug, onComplete }) {
                   <input ref={coverRef} type="file" accept="image/*" className="hidden" onChange={handleCoverPick} />
                   <Camera size={28} className="text-gray-300 mb-2" />
                   <p className="text-sm font-medium text-gray-500">Upload a cover photo</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">JPG, PNG under 5MB</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">JPG, PNG under 1MB</p>
                 </label>
               ) : (
                 <div className="relative rounded-xl overflow-hidden">
