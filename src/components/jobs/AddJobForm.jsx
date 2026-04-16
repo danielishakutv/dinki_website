@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Loader2, Search, User } from 'lucide-react';
-import { users as usersApi } from '../../lib/api';
+import { ChevronDown, Loader2, Search, User, UserPlus, AlertCircle, UserCheck } from 'lucide-react';
+import { users as usersApi, customers as customersApi } from '../../lib/api';
 
 const statusOptions = [
   { value: 'cutting', label: 'Cutting' },
@@ -24,6 +24,85 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
   const searchRef = useRef(null);
   const dropdownRef = useRef(null);
   const debounceRef = useRef(null);
+
+  // Quick Add Customer state
+  const [quickAddMode, setQuickAddMode] = useState(false);
+  const [quickAddForm, setQuickAddForm] = useState({ name: '', phone: '', email: '' });
+  const [quickAddSaving, setQuickAddSaving] = useState(false);
+  const [quickAddError, setQuickAddError] = useState(null);
+  const [matchedUser, setMatchedUser] = useState(null);
+  const [matchField, setMatchField] = useState(null);
+
+  const resetQuickAdd = () => {
+    setQuickAddMode(false);
+    setQuickAddForm({ name: '', phone: '', email: '' });
+    setQuickAddSaving(false);
+    setQuickAddError(null);
+    setMatchedUser(null);
+    setMatchField(null);
+  };
+
+  const handleQuickAddSubmit = async () => {
+    if (!quickAddForm.name.trim() || !quickAddForm.phone.trim()) return;
+    setQuickAddSaving(true);
+    setQuickAddError(null);
+    try {
+      const result = await customersApi.create({
+        name: quickAddForm.name.trim(),
+        phone: quickAddForm.phone.trim(),
+        email: quickAddForm.email.trim() || undefined,
+      });
+      if (result?.data?.requires_confirmation) {
+        setMatchedUser(result.data.existing_user);
+        setMatchField(result.data.match_field);
+        setQuickAddSaving(false);
+        return;
+      }
+      const newCustomer = result?.data?.customer || result?.data;
+      if (newCustomer?.id) {
+        selectLocalCustomer(newCustomer);
+      }
+      resetQuickAdd();
+    } catch (err) {
+      setQuickAddError(err.message || 'Failed to add customer');
+      setQuickAddSaving(false);
+    }
+  };
+
+  const handleQuickAddLink = async () => {
+    if (!matchedUser) return;
+    setQuickAddSaving(true);
+    try {
+      const result = await customersApi.link({ user_id: matchedUser.id });
+      const newCustomer = result?.data?.customer || result?.data;
+      if (newCustomer?.id) {
+        selectLocalCustomer(newCustomer);
+      }
+      resetQuickAdd();
+    } catch (err) {
+      setQuickAddError(err.message || 'Failed to link customer');
+      setQuickAddSaving(false);
+    }
+  };
+
+  const handleQuickAddForce = async () => {
+    setQuickAddSaving(true);
+    try {
+      const result = await customersApi.forceCreate({
+        name: quickAddForm.name.trim(),
+        phone: quickAddForm.phone.trim(),
+        email: quickAddForm.email.trim() || undefined,
+      });
+      const newCustomer = result?.data?.customer || result?.data;
+      if (newCustomer?.id) {
+        selectLocalCustomer(newCustomer);
+      }
+      resetQuickAdd();
+    } catch (err) {
+      setQuickAddError(err.message || 'Failed to create customer');
+      setQuickAddSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (editJob) {
@@ -178,13 +257,13 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
             </div>
 
             <AnimatePresence>
-              {showDropdown && !selectedCustomer && (searchQuery.length > 0 || filteredLocal.length > 0) && (
+              {showDropdown && !selectedCustomer && (searchQuery.length > 0 || filteredLocal.length > 0 || quickAddMode) && (
                 <motion.div
                   ref={dropdownRef}
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
-                  className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-56 overflow-y-auto"
+                  className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 overflow-y-auto"
                 >
                   {filteredLocal.length > 0 && (
                     <>
@@ -243,7 +322,7 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
-                            <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
+                            <p className="text-[11px] text-gray-400 truncate">{user.phone || user.email}</p>
                           </div>
                           <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 flex-shrink-0">Platform</span>
                         </button>
@@ -251,8 +330,123 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
                     </>
                   )}
 
-                  {filteredLocal.length === 0 && (searchQuery.trim().length < 2 || (!searching && filteredPlatform.length === 0)) && (
+                  {filteredLocal.length === 0 && (searchQuery.trim().length < 2 || (!searching && filteredPlatform.length === 0)) && !quickAddMode && (
                     <p className="px-3 py-3 text-xs text-gray-400 text-center">Type at least 2 characters to search</p>
+                  )}
+
+                  {/* Quick Add Customer */}
+                  {!quickAddMode && searchQuery.trim().length >= 2 && !searching && filteredLocal.length === 0 && filteredPlatform.length === 0 && (
+                    <div className="border-t border-gray-100 p-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQuickAddMode(true);
+                          setQuickAddForm({ ...quickAddForm, name: searchQuery.trim() });
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-gold-50 hover:bg-gold-100 text-gold-700 transition-colors text-left"
+                      >
+                        <UserPlus size={16} />
+                        <span className="text-sm font-medium">Quick Add Customer</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {quickAddMode && !matchedUser && (
+                    <div className="border-t border-gray-100 p-3 space-y-2.5">
+                      <div className="flex items-center gap-2 mb-1">
+                        <UserPlus size={14} className="text-gold-500" />
+                        <p className="text-xs font-semibold text-gray-600">Quick Add Customer</p>
+                      </div>
+                      <input
+                        type="text"
+                        value={quickAddForm.name}
+                        onChange={(e) => setQuickAddForm({ ...quickAddForm, name: e.target.value })}
+                        placeholder="Full Name *"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500"
+                      />
+                      <input
+                        type="tel"
+                        value={quickAddForm.phone}
+                        onChange={(e) => setQuickAddForm({ ...quickAddForm, phone: e.target.value })}
+                        placeholder="Phone * e.g. +234..."
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500"
+                      />
+                      <input
+                        type="email"
+                        value={quickAddForm.email}
+                        onChange={(e) => setQuickAddForm({ ...quickAddForm, email: e.target.value })}
+                        placeholder="Email (optional)"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500"
+                      />
+                      {quickAddError && (
+                        <p className="text-xs text-red-500">{quickAddError}</p>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={resetQuickAdd}
+                          className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:bg-gray-50 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleQuickAddSubmit}
+                          disabled={quickAddSaving || !quickAddForm.name.trim() || !quickAddForm.phone.trim()}
+                          className="flex-1 py-2 rounded-lg bg-gold-500 hover:bg-gold-600 text-white text-xs font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-1"
+                        >
+                          {quickAddSaving && <Loader2 size={12} className="animate-spin" />}
+                          {quickAddSaving ? 'Adding...' : 'Add'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {quickAddMode && matchedUser && (
+                    <div className="border-t border-gray-100 p-3 space-y-2.5">
+                      <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle size={14} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-blue-800">
+                            A customer with this {matchField} already exists.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2.5 p-2.5 bg-gray-50 rounded-lg">
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+                          style={{ backgroundColor: matchedUser.avatar_color || '#D4A574' }}
+                        >
+                          {matchedUser.initials || '?'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-800 truncate">{matchedUser.name}</p>
+                          {matchedUser.phone && <p className="text-[11px] text-gray-400 truncate">{matchedUser.phone}</p>}
+                        </div>
+                      </div>
+                      {quickAddError && (
+                        <p className="text-xs text-red-500">{quickAddError}</p>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={handleQuickAddForce}
+                          disabled={quickAddSaving}
+                          className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-60"
+                        >
+                          Different person
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleQuickAddLink}
+                          disabled={quickAddSaving}
+                          className="flex-1 py-2 rounded-lg bg-gold-500 hover:bg-gold-600 text-white text-xs font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-1"
+                        >
+                          {quickAddSaving && <Loader2 size={12} className="animate-spin" />}
+                          Yes, link them
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </motion.div>
               )}
