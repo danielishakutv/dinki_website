@@ -17,7 +17,8 @@ export default function TailorStorefront({ userRole }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const isOwner = user?.role === 'tailor' && tailor?.storefront_slug === user?.storefront_slug;
+  const userSlug = user?.storefront_slug || user?.tailor_profile?.storefront_slug;
+  const isOwner = user?.role === 'tailor' && tailor?.storefront_slug === userSlug;
 
   const [activeTab, setActiveTab] = useState('portfolio');
   const [saved, setSaved] = useState(false);

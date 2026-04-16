@@ -78,7 +78,8 @@ export default function BottomNav({ userRole, onRecordMeasurement, onNavClick })
   const homeRoute = '/dashboard';
   const navigate = useNavigate();
   const { user } = useAuth();
-  const tailorRight = getTailorRight(user?.storefront_slug);
+  const slug = user?.storefront_slug || user?.tailor_profile?.storefront_slug;
+  const tailorRight = getTailorRight(slug);
 
   const handleAction = (key) => {
     setMenuOpen(false);

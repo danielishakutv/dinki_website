@@ -63,7 +63,8 @@ function SideLink({ to, icon: Icon, label, end }) {
 export default function Sidebar({ userRole }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const mainNav = userRole === 'customer' ? customerNav : getTailorNav(user?.storefront_slug);
+  const slug = user?.storefront_slug || user?.tailor_profile?.storefront_slug;
+  const mainNav = userRole === 'customer' ? customerNav : getTailorNav(slug);
   const homeRoute = '/dashboard';
 
   const profileName = user?.name || (userRole === 'tailor' ? 'Tailor' : 'Customer');
