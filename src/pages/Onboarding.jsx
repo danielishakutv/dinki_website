@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Scissors, User, MapPin, ChevronRight, Check, Sparkles, Loader2, Search, ChevronDown, LocateFixed } from 'lucide-react';
+import { Scissors, User, MapPin, ChevronRight, Check, Sparkles, Loader2, Search, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { users as usersApi } from '../lib/api';
 import { Country, State, City } from 'country-state-city';
@@ -103,9 +103,17 @@ export default function Onboarding() {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [detectingLocation, setDetectingLocation] = useState(false);
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const toggleSpecialty = (item) => {
+    setForm(prev => ({
+      ...prev,
+      specialties: prev.specialties.includes(item)
+        ? prev.specialties.filter(s => s !== item)
+        : [...prev.specialties, item],
+    }));
+  };
 
   // Build dropdown items
   const countryItems = useMemo(() =>
@@ -124,57 +132,27 @@ export default function Onboarding() {
       : [],
   [form.countryCode, form.stateCode]);
 
-  // Auto-detect location on mount
+  // Auto-detect country on mount using timezone
   useEffect(() => {
-    if (form.countryCode) return; // already set
-    detectLocation();
+    if (form.countryCode) return;
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      // Map common timezone prefixes to country codes
+      const tzCountryMap = {
+        'Africa/Lagos': 'NG', 'Africa/Accra': 'GH', 'Africa/Nairobi': 'KE',
+        'Africa/Johannesburg': 'ZA', 'Africa/Cairo': 'EG', 'Africa/Casablanca': 'MA',
+        'Africa/Dar_es_Salaam': 'TZ', 'Africa/Kampala': 'UG', 'Africa/Addis_Ababa': 'ET',
+        'Africa/Kigali': 'RW', 'Africa/Lusaka': 'ZM', 'Africa/Harare': 'ZW',
+        'Africa/Douala': 'CM', 'Africa/Abidjan': 'CI', 'Africa/Dakar': 'SN',
+        'Africa/Kinshasa': 'CD', 'Africa/Luanda': 'AO', 'Africa/Maputo': 'MZ',
+        'Africa/Algiers': 'DZ', 'Africa/Tunis': 'TN', 'Africa/Tripoli': 'LY',
+      };
+      const code = tzCountryMap[tz];
+      if (code) {
+        set('countryCode', code);
+      }
+    } catch { /* ignore */ }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const detectLocation = () => {
-    if (!navigator.geolocation) return;
-    setDetectingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const { latitude, longitude } = pos.coords;
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=en`, {
-            headers: { 'User-Agent': 'DinkiAfrica/1.0' },
-          });
-          const data = await res.json();
-          const addr = data.address || {};
-
-          // Find country code
-          const countryCode = addr.country_code?.toUpperCase() || '';
-          if (countryCode) {
-            set('countryCode', countryCode);
-
-            // Find state
-            const stateName = addr.state || addr.region || '';
-            if (stateName) {
-              const states = State.getStatesOfCountry(countryCode);
-              const match = states.find(s =>
-                s.name.toLowerCase() === stateName.toLowerCase() ||
-                s.isoCode.toLowerCase() === stateName.toLowerCase()
-              );
-              if (match) {
-                setForm(prev => ({ ...prev, countryCode, stateCode: match.isoCode }));
-                // Find city
-                const cityName = addr.city || addr.town || addr.village || addr.county || '';
-                if (cityName) {
-                  const cities = City.getCitiesOfState(countryCode, match.isoCode);
-                  const cityMatch = cities.find(c => c.name.toLowerCase() === cityName.toLowerCase());
-                  setForm(prev => ({ ...prev, countryCode, stateCode: match.isoCode, cityName: cityMatch ? cityMatch.name : cityName }));
-                }
-              }
-            }
-          }
-        } catch { /* ignore geocoding errors */ }
-        setDetectingLocation(false);
-      },
-      () => setDetectingLocation(false),
-      { timeout: 8000 }
-    );
-  };
 
   const canProceed = () => {
     if (step === 1) return form.displayName.trim().length >= 2;
@@ -315,19 +293,10 @@ export default function Onboarding() {
                 <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center">
                   <MapPin size={18} className="text-teal-600" />
                 </div>
-                <div className="flex-1">
+                <div>
                   <h2 className="text-lg font-heading font-bold text-gray-900">Where are you based?</h2>
                   <p className="text-xs text-gray-400">Step 2 of {totalSteps}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={detectLocation}
-                  disabled={detectingLocation}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-teal-600 bg-teal-50 rounded-lg hover:bg-teal-100 transition border border-teal-200 disabled:opacity-50"
-                >
-                  {detectingLocation ? <Loader2 size={13} className="animate-spin" /> : <LocateFixed size={13} />}
-                  Detect
-                </button>
               </div>
 
               <div className="space-y-4">
