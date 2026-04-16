@@ -173,27 +173,27 @@ export default function Profile({ userRole }) {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="px-3 py-4 sm:p-4 md:p-8 max-w-4xl mx-auto space-y-5 md:space-y-6">
       {/* Cover + Avatar */}
-      <div className="relative bg-gradient-to-br from-gold-400 via-gold-500 to-amber-600 rounded-3xl h-40 md:h-48">
-        <div className="absolute inset-0 opacity-20 overflow-hidden rounded-3xl">
+      <div className="relative bg-gradient-to-br from-gold-400 via-gold-500 to-amber-600 rounded-2xl sm:rounded-3xl h-32 sm:h-40 md:h-48">
+        <div className="absolute inset-0 opacity-20 overflow-hidden rounded-2xl sm:rounded-3xl">
           <div className="absolute top-4 right-8 w-32 h-32 bg-white/20 rounded-full" />
           <div className="absolute bottom-0 left-12 w-20 h-20 bg-white/15 rounded-full" />
           <div className="absolute top-8 left-1/3 w-16 h-16 bg-white/10 rounded-full" />
         </div>
 
         {/* Avatar */}
-        <div className="absolute -bottom-12 left-6 md:left-8">
+        <div className="absolute -bottom-10 sm:-bottom-12 left-4 sm:left-6 md:left-8">
           <div className="relative">
             {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt={profile.name} className="w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover ring-4 ring-white shadow-lg" />
+              <img src={profile.avatar_url} alt={profile.name} className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl object-cover ring-[3px] sm:ring-4 ring-white shadow-lg" />
             ) : (
-              <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl flex items-center justify-center text-white font-heading font-bold text-2xl md:text-3xl ring-4 ring-white shadow-lg" style={{ backgroundColor: profile.avatar_color || '#D4A574' }}>
+              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl flex items-center justify-center text-white font-heading font-bold text-xl sm:text-2xl md:text-3xl ring-[3px] sm:ring-4 ring-white shadow-lg" style={{ backgroundColor: profile.avatar_color || '#D4A574' }}>
                 {profile.initials}
               </div>
             )}
-            <label className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-xl shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer">
-              <Camera size={14} className="text-gray-500" />
+            <label className="absolute -bottom-1 -right-1 w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-xl shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer">
+              <Camera size={13} className="text-gray-500" />
               <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
             </label>
           </div>
@@ -202,21 +202,35 @@ export default function Profile({ userRole }) {
         {/* Edit button */}
         <button
           onClick={openEdit}
-          className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-2 bg-white/20 backdrop-blur-sm rounded-xl text-white text-xs font-medium hover:bg-white/30 transition-colors"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/20 backdrop-blur-sm rounded-xl text-white text-xs font-medium hover:bg-white/30 transition-colors"
         >
-          <Edit3 size={14} />
-          Edit Profile
+          <Edit3 size={13} />
+          <span className="hidden sm:inline">Edit Profile</span>
+          <span className="sm:hidden">Edit</span>
         </button>
       </div>
 
-      {/* Name + Info */}
-      <div className="pt-14 md:pt-16 px-1">
-        <h1 className="text-xl md:text-2xl font-heading font-bold text-gray-900">{profile.name}</h1>
-        {p.username ? (
-          <p className="text-sm text-gray-400 font-medium">@{p.username}</p>
-        ) : null}
-        <p className="text-sm text-gold-600 font-medium">{profile.role}</p>
-        <p className="text-sm text-gray-500 mt-2 leading-relaxed max-w-lg">{profile.bio}</p>
+      {/* Name + Username + Role Badge */}
+      <div className="pt-12 sm:pt-14 md:pt-16 px-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-gray-900">{profile.name}</h1>
+          {p.username && (
+            <span className="text-sm text-gray-400 font-medium">@{p.username}</span>
+          )}
+        </div>
+        <div className="mt-1.5">
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+            isTailor
+              ? 'bg-gold-50 text-gold-700 border border-gold-200'
+              : 'bg-indigo-50 text-indigo-600 border border-indigo-200'
+          }`}>
+            {isTailor ? <Scissors size={12} /> : <User size={12} />}
+            {profile.role}
+          </span>
+        </div>
+        {profile.bio && (
+          <p className="text-sm text-gray-500 mt-3 leading-relaxed max-w-lg">{profile.bio}</p>
+        )}
       </div>
 
       {/* Username prompt */}
@@ -286,16 +300,16 @@ export default function Profile({ userRole }) {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-4 gap-2 sm:gap-3">
         {stats.map((stat) => (
           <motion.div
             key={stat.label}
             whileTap={{ scale: 0.97 }}
-            className="bg-white rounded-2xl border border-gray-100 p-4 text-center shadow-sm"
+            className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 p-2.5 sm:p-4 text-center shadow-sm"
           >
-            <stat.icon size={18} className="text-gold-500 mx-auto mb-1.5" />
-            <p className="text-lg md:text-xl font-heading font-bold text-gray-900">{stat.value}</p>
-            <p className="text-xs text-gray-400 font-medium">{stat.label}</p>
+            <stat.icon size={16} className="text-gold-500 mx-auto mb-1 sm:mb-1.5" />
+            <p className="text-base sm:text-lg md:text-xl font-heading font-bold text-gray-900">{stat.value}</p>
+            <p className="text-[10px] sm:text-xs text-gray-400 font-medium">{stat.label}</p>
           </motion.div>
         ))}
       </div>
