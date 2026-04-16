@@ -5,6 +5,7 @@ import { Star, MapPin, MessageCircle, Heart, ChevronLeft, Share2, Image, Shoppin
 import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
 import { useAuth } from '../contexts/AuthContext';
 import { storefronts as storefrontsApi, uploads as uploadsApi, users as usersApi } from '../lib/api';
+import StorefrontSetupWizard from '../components/StorefrontSetupWizard';
 
 export default function TailorStorefront({ userRole }) {
   const { slug } = useParams();
@@ -18,7 +19,8 @@ export default function TailorStorefront({ userRole }) {
   const [error, setError] = useState('');
 
   const userSlug = user?.storefront_slug || user?.tailor_profile?.storefront_slug;
-  const isOwner = user?.role === 'tailor' && tailor?.storefront_slug === userSlug;
+  const isOwnSlug = user?.role === 'tailor' && slug === userSlug;
+  const isOwner = isOwnSlug && !!tailor;
 
   const [activeTab, setActiveTab] = useState('portfolio');
   const [saved, setSaved] = useState(false);
@@ -220,12 +222,27 @@ export default function TailorStorefront({ userRole }) {
     return new Intl.NumberFormat('en-NG').format(kobo / 100);
   };
 
+  // Wizard completion handler
+  const handleSetupComplete = (newSlug) => {
+    if (newSlug && newSlug !== slug) {
+      navigate(`/tailor/${newSlug}`, { replace: true });
+    } else {
+      loadStorefront();
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 size={28} className="animate-spin text-gold-500" />
       </div>
     );
+  }
+
+  // Owner needs setup: API error on own slug OR storefront not set up yet
+  const needsSetup = isOwnSlug && (!tailor || !tailor.storefront_setup_completed);
+  if (needsSetup) {
+    return <StorefrontSetupWizard user={user} slug={slug} onComplete={handleSetupComplete} />;
   }
 
   if (error || !tailor) {
