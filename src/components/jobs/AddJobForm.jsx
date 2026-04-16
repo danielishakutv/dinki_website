@@ -70,7 +70,7 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
     debounceRef.current = setTimeout(async () => {
       setSearching(true);
       try {
-        const res = await usersApi.search(searchQuery.trim(), '');
+        const res = await usersApi.search(searchQuery.trim(), 'customer');
         setPlatformResults(Array.isArray(res.data) ? res.data : []);
       } catch {
         setPlatformResults([]);
@@ -217,7 +217,7 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
                     <>
                       <div className="px-3 pt-2.5 pb-1 border-t border-gray-100">
                         <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wide flex items-center gap-1">
-                          <User size={10} /> Platform Users
+                          <User size={10} /> Platform Customers
                         </p>
                       </div>
                       {searching && (
@@ -226,7 +226,7 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
                         </div>
                       )}
                       {!searching && filteredPlatform.length === 0 && (
-                        <p className="px-3 py-2.5 text-xs text-gray-400">No platform users found</p>
+                        <p className="px-3 py-2.5 text-xs text-gray-400">No platform customers found</p>
                       )}
                       {filteredPlatform.slice(0, 5).map((user) => (
                         <button
