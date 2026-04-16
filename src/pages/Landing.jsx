@@ -35,7 +35,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const canSubmit = isSignup
-    ? formData.email && isValidEmail(formData.email) && formData.password.length >= 6 && formData.accountType && formData.name.trim().length >= 2
+    ? formData.email && isValidEmail(formData.email) && formData.password.length >= 8 && formData.accountType && formData.name.trim().length >= 2
     : formData.email && isValidEmail(formData.email) && formData.password;
 
   const set = (k, v) => {
@@ -56,8 +56,8 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
       setError('Please enter your full name.');
       return;
     }
-    if (isSignup && formData.password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (isSignup && formData.password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
     if (isSignup && !formData.accountType) {
@@ -145,8 +145,8 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
       setError('Please enter a valid email address.');
       return;
     }
-    if (!formData.password || formData.password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (!formData.password || formData.password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
     setLoading(true);
@@ -306,7 +306,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
                         type={showPassword ? 'text' : 'password'}
                         value={formData.password}
                         onChange={e => set('password', e.target.value)}
-                        placeholder="Min. 6 characters"
+                        placeholder="Min. 8 characters"
                         onKeyDown={e => e.key === 'Enter' && handleActivateSubmit()}
                         style={{ width: '100%', boxSizing: 'border-box', padding: '0.7rem 2.8rem 0.7rem 1rem', borderRadius: 12, border: '1.5px solid #e0d8d0', background: '#fff', fontSize: 14, color: '#1a0a00', outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }}
                         onFocus={e => { e.target.style.borderColor = '#e8a020'; e.target.style.boxShadow = '0 0 0 3px rgba(232,160,32,0.12)'; }}
@@ -395,7 +395,8 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
                     </div>
                     <p style={{ fontSize: 15, fontWeight: 700, color: '#1a0a00', marginBottom: 4 }}>Verify your email</p>
                     <p style={{ fontSize: 13, color: '#9a8a7a', lineHeight: 1.6 }}>
-                      We sent a 6-digit code to <strong style={{ color: '#1a0a00' }}>{formData.email}</strong>
+                      We sent a 6-digit code to <strong style={{ color: '#1a0a00' }}>{formData.email}</strong>.
+                    <br />Check your spam/junk folder if you don't see it.
                     </p>
                   </div>
                   <div style={{ marginBottom: 16 }}>
@@ -515,7 +516,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#5a4a3a', marginBottom: 6, letterSpacing: '0.02em' }}>
-                    Password {isSignup && <span style={{ fontWeight: 400, color: '#b0a090' }}>(min. 6 chars)</span>}
+                    Password {isSignup && <span style={{ fontWeight: 400, color: '#b0a090' }}>(min. 8 chars)</span>}
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
