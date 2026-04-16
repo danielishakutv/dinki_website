@@ -98,6 +98,11 @@ export default function Profile({ userRole }) {
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 800 * 1024) {
+      alert('Image must be under 800KB. Please compress it before uploading.');
+      e.target.value = '';
+      return;
+    }
     try {
       await usersApi.updateAvatar(file);
       invalidateCache('profile');

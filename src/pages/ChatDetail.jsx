@@ -51,6 +51,11 @@ export default function ChatDetail() {
       e.target.value = '';
       return;
     }
+    if (file.size > 800 * 1024) {
+      alert('Image must be under 800KB. Please compress it before uploading.');
+      e.target.value = '';
+      return;
+    }
     e.target.value = '';
     setSending(true);
     try {

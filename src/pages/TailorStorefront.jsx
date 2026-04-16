@@ -119,6 +119,10 @@ export default function TailorStorefront({ userRole }) {
 
   const handleAddWork = async () => {
     if (!newWorkTitle.trim() || !newWorkFile) return;
+    if (newWorkFile.size > 800 * 1024) {
+      alert('Image must be under 800KB. Please compress it before uploading.');
+      return;
+    }
     setAddingWork(true);
     try {
       const uploadRes = await uploadsApi.image(newWorkFile);
@@ -145,6 +149,11 @@ export default function TailorStorefront({ userRole }) {
   const handleCoverSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 800 * 1024) {
+      alert('Image must be under 800KB. Please compress it before uploading.');
+      e.target.value = '';
+      return;
+    }
     setCoverFile(file);
     const url = URL.createObjectURL(file);
     setCoverPreview(url);
@@ -209,6 +218,11 @@ export default function TailorStorefront({ userRole }) {
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 800 * 1024) {
+      alert('Image must be under 800KB. Please compress it before uploading.');
+      e.target.value = '';
+      return;
+    }
     setSavingAvatar(true);
     try {
       const res = await usersApi.updateAvatar(file);

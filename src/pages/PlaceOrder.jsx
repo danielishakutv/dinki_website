@@ -43,7 +43,11 @@ export default function PlaceOrder() {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
-    const validFiles = files.filter(f => f.type.startsWith('image/') && f.size <= 2 * 1024 * 1024);
+    const oversized = files.filter(f => f.size > 800 * 1024);
+    if (oversized.length > 0) {
+      alert('Each image must be under 800KB. Please compress before uploading.');
+    }
+    const validFiles = files.filter(f => f.type.startsWith('image/') && f.size <= 800 * 1024);
     const newImages = validFiles.map(f => ({ name: f.name, url: URL.createObjectURL(f) }));
     set('referenceImages', [...form.referenceImages, ...newImages].slice(0, 4));
   };
