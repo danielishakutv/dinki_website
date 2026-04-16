@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingBag, DollarSign, Users, Image, Edit, Settings, LogOut, Sparkles, Briefcase, Star, Clock, Store, ExternalLink, Plus, MessageCircle, Share2, UserPlus } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function TailorDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('jobs');
   const [portfolio, setPortfolio] = useState([]);
 
@@ -101,7 +103,7 @@ export default function TailorDashboard() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={() => navigate('/tailor/1')}
+              onClick={() => navigate(user?.storefront_slug ? `/tailor/${user.storefront_slug}` : '/dashboard')}
               className="flex items-center gap-1.5 px-3 py-2 sm:py-2.5 bg-gold-500 text-white rounded-lg sm:rounded-xl transition hover:bg-gold-600 text-xs sm:text-sm font-medium shadow-sm shadow-gold-500/15"
               title="View My Storefront"
             >
@@ -207,7 +209,7 @@ export default function TailorDashboard() {
           </button>
           <button
             onClick={() => {
-              const url = `${window.location.origin}/tailor/1`;
+              const url = `${window.location.origin}/tailor/${user?.storefront_slug || ''}`;
               if (navigator.share) {
                 navigator.share({ title: 'Aunty Zainab — Dinki Africa', text: 'Check out my storefront on Dinki Africa', url }).catch(() => {});
               } else {

@@ -6,9 +6,11 @@ import SummaryCards from '../components/dashboard/SummaryCards';
 import RecentActivity from '../components/dashboard/RecentActivity';
 import { jobs as jobsApi, customers as customersApi } from '../lib/api';
 import { useApi, TTL } from '../hooks/useApi';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data: jobsRes, loading: jobsLoading } = useApi(
     'jobs-list', () => jobsApi.list({ limit: 50 }), { ttl: TTL.medium }
@@ -102,7 +104,7 @@ export default function Dashboard() {
         </button>
         <button
           onClick={() => {
-            const url = `${window.location.origin}/tailor/1`;
+            const url = `${window.location.origin}/tailor/${user?.storefront_slug || ''}`;
             if (navigator.share) {
               navigator.share({ title: 'Dinki Africa', text: 'Check out my storefront on Dinki Africa', url }).catch(() => {});
             } else {

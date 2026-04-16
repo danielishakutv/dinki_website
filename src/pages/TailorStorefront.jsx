@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, MapPin, MessageCircle, Heart, ChevronLeft, Share2, Image, ShoppingBag, Edit3, Plus, Trash2, Settings, Eye, Loader2 } from 'lucide-react';
+import { Star, MapPin, MessageCircle, Heart, ChevronLeft, Share2, Image, ShoppingBag, Edit3, Plus, Trash2, Settings, Eye, Loader2, Camera, Move, Check, X } from 'lucide-react';
 import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
 import { useAuth } from '../contexts/AuthContext';
-import { storefronts as storefrontsApi, uploads as uploadsApi } from '../lib/api';
+import { storefronts as storefrontsApi, uploads as uploadsApi, users as usersApi } from '../lib/api';
 
 export default function TailorStorefront({ userRole }) {
   const { slug } = useParams();
@@ -32,6 +32,21 @@ export default function TailorStorefront({ userRole }) {
   const [newWorkFile, setNewWorkFile] = useState(null);
   const [addingWork, setAddingWork] = useState(false);
   const [removingId, setRemovingId] = useState(null);
+
+  // Cover image states
+  const [coverFile, setCoverFile] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
+  const [coverPosition, setCoverPosition] = useState('center center');
+  const [showPositionEditor, setShowPositionEditor] = useState(false);
+  const [savingCover, setSavingCover] = useState(false);
+  const coverInputRef = useRef(null);
+  const posEditorRef = useRef(null);
+  const [dragStart, setDragStart] = useState(null);
+  const [posY, setPosY] = useState(50); // percentage 0-100
+
+  // Avatar upload states
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const avatarInputRef = useRef(null);
 
   // Load storefront data
   const loadStorefront = useCallback(async () => {
@@ -106,6 +121,83 @@ export default function TailorStorefront({ userRole }) {
     setRemovingId(null);
   };
 
+  // Cover image handlers
+  const handleCoverSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverFile(file);
+    const url = URL.createObjectURL(file);
+    setCoverPreview(url);
+    // Parse current position to get initial Y
+    const currentPos = tailor?.cover_image_position || 'center center';
+    const yMatch = currentPos.match(/(\d+)%/);
+    setPosY(yMatch ? parseInt(yMatch[1]) : 50);
+    setShowPositionEditor(true);
+  };
+
+  const handlePositionDrag = (e) => {
+    if (!posEditorRef.current) return;
+    const rect = posEditorRef.current.getBoundingClientRect();
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const pct = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+    setPosY(Math.round(pct));
+  };
+
+  const handlePositionPointerDown = (e) => {
+    e.preventDefault();
+    setDragStart(true);
+    const onMove = (ev) => {
+      ev.preventDefault();
+      handlePositionDrag(ev);
+    };
+    const onUp = () => {
+      setDragStart(null);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+  };
+
+  const handleSaveCover = async () => {
+    if (!coverFile) return;
+    setSavingCover(true);
+    try {
+      const uploadRes = await uploadsApi.image(coverFile);
+      const imageUrl = uploadRes.data.url;
+      const position = `center ${posY}%`;
+      await storefrontsApi.update({ image: imageUrl, cover_position: position });
+      setTailor(prev => ({ ...prev, storefront_image: imageUrl, cover_image_position: position }));
+      setShowPositionEditor(false);
+      setCoverFile(null);
+      if (coverPreview) { URL.revokeObjectURL(coverPreview); setCoverPreview(null); }
+    } catch { /* ignore */ }
+    setSavingCover(false);
+  };
+
+  const handleCancelCover = () => {
+    setShowPositionEditor(false);
+    setCoverFile(null);
+    if (coverPreview) { URL.revokeObjectURL(coverPreview); setCoverPreview(null); }
+  };
+
+  // Avatar upload handler
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSavingAvatar(true);
+    try {
+      const res = await usersApi.updateAvatar(file);
+      const newUrl = res.data.avatar_url || res.data.url;
+      setTailor(prev => ({ ...prev, avatar_url: newUrl }));
+    } catch { /* ignore */ }
+    setSavingAvatar(false);
+  };
+
   const shareStorefront = async () => {
     const url = `${window.location.origin}/tailor/${slug}`;
     const shareData = {
@@ -147,13 +239,85 @@ export default function TailorStorefront({ userRole }) {
   const displayImage = tailor.storefront_image || tailor.avatar_url;
   const displayBio = tailor.storefront_bio || tailor.bio || '';
   const displayLocation = [tailor.location_city, tailor.location_state].filter(Boolean).join(', ');
+  const coverPos = tailor.cover_image_position || 'center center';
 
   return (
     <div className="max-w-4xl mx-auto pb-24 md:pb-8">
+      {/* Position Editor Modal */}
+      {showPositionEditor && coverPreview && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex flex-col items-center justify-center p-4">
+          <div className="bg-white rounded-2xl overflow-hidden w-full max-w-lg shadow-xl">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-sm font-heading font-semibold text-gray-800">Adjust Cover Position</h3>
+              <p className="text-xs text-gray-400">Drag image up or down</p>
+            </div>
+            <div
+              ref={posEditorRef}
+              className="relative h-56 sm:h-64 overflow-hidden cursor-ns-resize select-none"
+              onMouseDown={handlePositionPointerDown}
+              onTouchStart={handlePositionPointerDown}
+            >
+              <img
+                src={coverPreview}
+                alt="Cover preview"
+                className="w-full h-full object-cover pointer-events-none"
+                style={{ objectPosition: `center ${posY}%` }}
+                draggable={false}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                  <Move size={13} />
+                  Drag to reposition
+                </div>
+              </div>
+            </div>
+            <div className="px-4 py-3 flex gap-2 border-t border-gray-100">
+              <button
+                onClick={handleCancelCover}
+                className="flex-1 py-2.5 text-sm font-medium text-gray-500 bg-gray-100 rounded-xl flex items-center justify-center gap-1.5"
+              >
+                <X size={14} />
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveCover}
+                disabled={savingCover}
+                className="flex-1 py-2.5 text-sm font-semibold text-white bg-gold-500 rounded-xl flex items-center justify-center gap-1.5 hover:bg-gold-600 transition"
+              >
+                {savingCover ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                {savingCover ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Image + Info */}
       <div className="relative h-56 sm:h-60 md:h-72 bg-gradient-to-br from-indigo-900 to-indigo-800 overflow-hidden">
-        {displayImage && <img src={displayImage} alt={tailor.name} className="w-full h-full object-cover opacity-30" />}
+        {displayImage && (
+          <img
+            src={displayImage}
+            alt={tailor.name}
+            className="w-full h-full object-cover opacity-30"
+            style={{ objectPosition: coverPos }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+
+        {/* Cover upload button (owner only) */}
+        {isOwner && (
+          <>
+            <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverSelect} />
+            <button
+              onClick={() => coverInputRef.current?.click()}
+              className="absolute bottom-20 right-4 sm:bottom-24 sm:right-5 z-10 w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition"
+              title="Change cover image"
+            >
+              <Camera size={16} className="text-white" />
+            </button>
+          </>
+        )}
 
         {/* Top nav */}
         <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between">
@@ -194,13 +358,28 @@ export default function TailorStorefront({ userRole }) {
         {/* Tailor info overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">
           <div className="flex items-end gap-4">
-            {displayImage ? (
-              <img src={displayImage} alt={tailor.name} className="w-18 h-18 md:w-22 md:h-22 rounded-2xl object-cover ring-3 ring-white shadow-lg flex-shrink-0" style={{ width: '4.5rem', height: '4.5rem' }} />
-            ) : (
-              <div className="rounded-2xl ring-3 ring-white shadow-lg flex-shrink-0 flex items-center justify-center text-white font-bold text-xl" style={{ width: '4.5rem', height: '4.5rem', backgroundColor: tailor.avatar_color || '#6366f1' }}>
-                {tailor.initials || tailor.name?.charAt(0)}
-              </div>
-            )}
+            <div className="relative flex-shrink-0">
+              {displayImage ? (
+                <img src={tailor.avatar_url || displayImage} alt={tailor.name} className="w-18 h-18 md:w-22 md:h-22 rounded-2xl object-cover ring-3 ring-white shadow-lg" style={{ width: '4.5rem', height: '4.5rem' }} />
+              ) : (
+                <div className="rounded-2xl ring-3 ring-white shadow-lg flex items-center justify-center text-white font-bold text-xl" style={{ width: '4.5rem', height: '4.5rem', backgroundColor: tailor.avatar_color || '#6366f1' }}>
+                  {tailor.initials || tailor.name?.charAt(0)}
+                </div>
+              )}
+              {isOwner && (
+                <>
+                  <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                  <button
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={savingAvatar}
+                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gold-500 flex items-center justify-center ring-2 ring-white shadow-sm hover:bg-gold-600 transition"
+                    title="Change avatar"
+                  >
+                    {savingAvatar ? <Loader2 size={11} className="text-white animate-spin" /> : <Camera size={11} className="text-white" />}
+                  </button>
+                </>
+              )}
+            </div>
             <div className="flex-1 min-w-0 mb-1">
               <div className="flex items-center gap-2 mb-1">
                 <h1 className="text-xl md:text-2xl font-heading font-bold text-white truncate">{tailor.name}</h1>

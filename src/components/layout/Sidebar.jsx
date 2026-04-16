@@ -5,9 +5,9 @@ import { motion } from 'framer-motion';
 import Logo from './Logo';
 import { useAuth } from '../../contexts/AuthContext';
 
-const tailorNav = [
+const getTailorNav = (storefrontSlug) => [
   { to: '/dashboard', icon: Home, label: 'Dashboard' },
-  { to: '/tailor/1', icon: Store, label: 'My Storefront' },
+  { to: storefrontSlug ? `/tailor/${storefrontSlug}` : '/dashboard', icon: Store, label: 'My Storefront' },
   { to: '/jobs', icon: Scissors, label: 'Jobs & Orders' },
   { to: '/customers', icon: Users, label: 'Customers' },
   { to: '/marketplace', icon: ShoppingBag, label: 'Marketplace' },
@@ -63,7 +63,7 @@ function SideLink({ to, icon: Icon, label, end }) {
 export default function Sidebar({ userRole }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const mainNav = userRole === 'customer' ? customerNav : tailorNav;
+  const mainNav = userRole === 'customer' ? customerNav : getTailorNav(user?.storefront_slug);
   const homeRoute = '/dashboard';
 
   const profileName = user?.name || (userRole === 'tailor' ? 'Tailor' : 'Customer');

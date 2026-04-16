@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, Scissors, ShoppingBag, MapPin, ClipboardList, Plus, Ruler, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../contexts/AuthContext';
 
 const tailorLeft = [
   { to: '/dashboard', icon: Home, label: 'Home' },
   { to: '/jobs', icon: Scissors, label: 'Jobs' },
 ];
 
-const tailorRight = [
-  { to: '/tailor/1', icon: Store, label: 'Store' },
+const getTailorRight = (storefrontSlug) => [
+  { to: storefrontSlug ? `/tailor/${storefrontSlug}` : '/dashboard', icon: Store, label: 'Store' },
   { to: '/marketplace', icon: ShoppingBag, label: 'Market' },
 ];
 
@@ -76,6 +77,8 @@ export default function BottomNav({ userRole, onRecordMeasurement, onNavClick })
   const isTailor = userRole === 'tailor';
   const homeRoute = '/dashboard';
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const tailorRight = getTailorRight(user?.storefront_slug);
 
   const handleAction = (key) => {
     setMenuOpen(false);
