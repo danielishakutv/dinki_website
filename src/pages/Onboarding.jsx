@@ -1,27 +1,31 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Scissors, User, MapPin, Camera, ChevronRight, Check, Sparkles } from 'lucide-react';
+import { Scissors, User, MapPin, ChevronRight, Check, Sparkles, Loader2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { users as usersApi } from '../lib/api';
 
 const tailorSpecialties = ['Agbada', 'Kaftan', 'Ankara', 'Aso Ebi', 'Lace', 'Embroidery', 'Bridal', 'Corporate Wear', 'Senator', 'Wrapper & Blouse'];
 const customerPreferences = ['Ankara Dresses', 'Agbada', 'Kaftan', 'Aso-Oke', 'Lace Styles', 'Corporate Wear', 'Casual Wear', 'Bridal', 'Event Wear', 'Evening Gowns'];
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const role = searchParams.get('role') || 'customer';
+  const { user, refreshProfile } = useAuth();
+  const role = user?.role || 'customer';
   const isTailor = role === 'tailor';
 
   const [step, setStep] = useState(1);
   const totalSteps = 3;
 
   const [form, setForm] = useState({
-    displayName: '',
+    displayName: user?.name || '',
     location: '',
     bio: '',
     specialties: [],
     phone: '',
   });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
@@ -40,8 +44,35 @@ export default function Onboarding() {
     return true;
   };
 
-  const handleFinish = () => {
-    navigate('/dashboard');
+  const handleFinish = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      const locationParts = form.location.split(',').map(s => s.trim());
+      const body = {
+        name: form.displayName.trim(),
+        location_city: locationParts[0] || form.location.trim(),
+        location_state: locationParts[1] || '',
+      };
+      if (form.specialties.length > 0) body.specialties = form.specialties;
+
+      await usersApi.completeOnboarding(body);
+
+      // Also update bio and phone if provided
+      const profileUpdate = {};
+      if (form.bio.trim()) profileUpdate.bio = form.bio.trim();
+      if (form.phone.trim()) profileUpdate.phone = form.phone.trim();
+      if (Object.keys(profileUpdate).length > 0) {
+        await usersApi.updateProfile(profileUpdate);
+      }
+
+      await refreshProfile();
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -239,17 +270,38 @@ export default function Onboarding() {
           ) : (
             <button
               onClick={handleFinish}
-              className="flex-1 py-3 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition shadow-sm shadow-gold-500/20 flex items-center justify-center gap-2"
+              disabled={saving}
+              className="flex-1 py-3 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition shadow-sm shadow-gold-500/20 flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              <Check size={16} />
-              Get Started
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+              {saving ? 'Setting up...' : 'Get Started'}
             </button>
           )}
         </div>
 
+        {error && (
+          <p className="mt-3 text-xs text-red-500 text-center">{error}</p>
+        )}
+
         {/* Skip */}
         <button
-          onClick={handleFinish}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await usersApi.completeOnboarding({
+                name: form.displayName.trim() || user?.name || 'User',
+                location_city: form.location.trim() || 'Not set',
+                location_state: '',
+              });
+              await refreshProfile();
+              navigate('/dashboard', { replace: true });
+            } catch {
+              navigate('/dashboard', { replace: true });
+            } finally {
+              setSaving(false);
+            }
+          }}
+          disabled={saving}
           className="w-full mt-3 py-2 text-xs text-gray-400 hover:text-gray-600 transition text-center"
         >
           Skip for now
