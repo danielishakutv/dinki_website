@@ -122,7 +122,11 @@ export const users = {
   getStats: () => request('/users/me/stats'),
   updatePreferences: (body) => request('/users/me/preferences', { method: 'PATCH', body }),
   completeOnboarding: (body) => request('/users/me/onboarding', { method: 'POST', body }),
-  search: (q, role = 'customer') => request(`/users/search?q=${encodeURIComponent(q)}&role=${role}`),
+  search: (q, role = 'customer') => {
+    const params = new URLSearchParams({ q });
+    if (role) params.set('role', role);
+    return request(`/users/search?${params.toString()}`);
+  },
   checkUsername: (username) => request(`/users/check-username?username=${encodeURIComponent(username)}`),
   setUsername: (username) => request('/users/me/username', { method: 'PUT', body: { username } }),
 };
