@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, MapPin, MessageCircle, Heart, ChevronLeft, Share2, Image, ShoppingBag, Edit3, Plus, Trash2, Settings, Eye, Loader2, Camera, Move, Check, X } from 'lucide-react';
 import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
@@ -19,9 +19,12 @@ export default function TailorStorefront({ userRole }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [searchParams] = useSearchParams();
   const userSlug = user?.storefront_slug || user?.tailor_profile?.storefront_slug;
   const isOwnSlug = user?.role === 'tailor' && slug === userSlug;
   const isOwner = isOwnSlug && !!tailor;
+  const previewMode = isOwner && searchParams.get('preview') === 'customer';
+  const isEditing = isOwner && !previewMode;
 
   const [activeTab, setActiveTab] = useState('portfolio');
   const [saved, setSaved] = useState(false);
@@ -262,6 +265,22 @@ export default function TailorStorefront({ userRole }) {
 
   return (
     <div className="max-w-4xl mx-auto pb-24 md:pb-8">
+      {/* Preview Mode Banner */}
+      {previewMode && (
+        <div className="sticky top-0 z-40 bg-indigo-600 text-white px-4 py-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm">
+            <Eye size={15} />
+            <span className="font-medium">Viewing as customer</span>
+          </div>
+          <button
+            onClick={() => navigate(`/${slug}`)}
+            className="text-sm font-medium bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition"
+          >
+            Exit Preview
+          </button>
+        </div>
+      )}
+
       {/* Position Editor Modal */}
       {showPositionEditor && coverPreview && (
         <div className="fixed inset-0 z-50 bg-black/70 flex flex-col items-center justify-center p-4">
@@ -325,7 +344,7 @@ export default function TailorStorefront({ userRole }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
         {/* Cover upload button (owner only) */}
-        {isOwner && (
+        {isEditing && (
           <>
             <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverSelect} />
             <button
@@ -344,7 +363,7 @@ export default function TailorStorefront({ userRole }) {
             <ChevronLeft size={20} className="text-white" />
           </button>
           <div className="flex items-center gap-2.5">
-            {isOwner ? (
+            {isEditing ? (
               <button
                 onClick={() => navigate('/profile')}
                 className="h-10 px-4 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center gap-2"
@@ -378,21 +397,31 @@ export default function TailorStorefront({ userRole }) {
         <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">
           <div className="flex items-end gap-4">
             <div className="relative flex-shrink-0">
-              {displayImage ? (
-                <img src={tailor.avatar_url || displayImage} alt={tailor.name} className="w-18 h-18 md:w-22 md:h-22 rounded-2xl object-cover ring-3 ring-white shadow-lg" style={{ width: '4.5rem', height: '4.5rem' }} />
+              {tailor.avatar_url ? (
+                <img src={tailor.avatar_url} alt={tailor.name} className="w-18 h-18 md:w-22 md:h-22 rounded-2xl object-cover ring-3 ring-white shadow-lg" style={{ width: '4.5rem', height: '4.5rem' }} />
               ) : (
-                <div className="rounded-2xl ring-3 ring-white shadow-lg flex items-center justify-center text-white font-bold text-xl" style={{ width: '4.5rem', height: '4.5rem', backgroundColor: tailor.avatar_color || '#6366f1' }}>
+                <div
+                  className={`rounded-2xl ring-3 ring-white shadow-lg flex items-center justify-center text-white font-bold text-xl relative overflow-hidden${isEditing ? ' cursor-pointer' : ''}`}
+                  style={{ width: '4.5rem', height: '4.5rem', backgroundColor: tailor.avatar_color || '#6366f1' }}
+                  onClick={isEditing ? () => avatarInputRef.current?.click() : undefined}
+                >
                   {tailor.initials || tailor.name?.charAt(0)}
+                  {isEditing && (
+                    <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center">
+                      <Camera size={14} className="text-white" />
+                      <span className="text-[8px] text-white/90 font-medium mt-0.5">Logo</span>
+                    </div>
+                  )}
                 </div>
               )}
-              {isOwner && (
+              {isEditing && (
                 <>
                   <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                   <button
                     onClick={() => avatarInputRef.current?.click()}
                     disabled={savingAvatar}
                     className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gold-500 flex items-center justify-center ring-2 ring-white shadow-sm hover:bg-gold-600 transition"
-                    title="Change avatar"
+                    title="Upload store logo"
                   >
                     {savingAvatar ? <Loader2 size={11} className="text-white animate-spin" /> : <Camera size={11} className="text-white" />}
                   </button>
@@ -436,7 +465,7 @@ export default function TailorStorefront({ userRole }) {
 
       {/* Bio + Specialties */}
       <div className="px-5 mt-5 space-y-4">
-        {isOwner && editingBio ? (
+        {isEditing && editingBio ? (
           <div className="space-y-3">
             <textarea
               value={bio}
@@ -455,7 +484,7 @@ export default function TailorStorefront({ userRole }) {
         ) : (
           <div className="relative group">
             <p className="text-sm text-gray-600 leading-relaxed pr-8">{displayBio || 'No bio yet.'}</p>
-            {isOwner && (
+            {isEditing && (
               <button onClick={() => setEditingBio(true)} className="absolute top-0 right-0 w-7 h-7 rounded-full bg-gold-50 border border-gold-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition md:opacity-100">
                 <Edit3 size={12} className="text-gold-600" />
               </button>
@@ -481,7 +510,7 @@ export default function TailorStorefront({ userRole }) {
 
       {/* Action Buttons */}
       <div className="px-5 mt-6 flex gap-3">
-        {isOwner ? (
+        {isEditing ? (
           <>
             <button
               onClick={shareStorefront}
@@ -533,7 +562,7 @@ export default function TailorStorefront({ userRole }) {
       {/* Tabs */}
       <div className="flex gap-2.5 mt-7 px-5">
         {[
-          { id: 'portfolio', label: 'Portfolio', icon: Image },
+          { id: 'portfolio', label: 'Catalogue', icon: Image },
           { id: 'reviews', label: 'Reviews', icon: Star },
         ].map(tab => (
           <button
@@ -561,7 +590,7 @@ export default function TailorStorefront({ userRole }) {
             exit={{ opacity: 0 }}
             className="px-5 mt-5"
           >
-            {isOwner && (
+            {isEditing && (
               <div className="mb-4">
                 {!showAddWork ? (
                   <button
@@ -569,11 +598,11 @@ export default function TailorStorefront({ userRole }) {
                     className="w-full py-3.5 bg-white rounded-xl border-2 border-dashed border-gold-300 text-sm font-medium text-gold-600 hover:bg-gold-50 transition flex items-center justify-center gap-2"
                   >
                     <Plus size={16} />
-                    Add New Work
+                    Add to Catalogue
                   </button>
                 ) : (
                   <div className="bg-white rounded-xl p-4 border border-gold-200 space-y-3">
-                    <h4 className="text-sm font-heading font-semibold text-gray-800">Add Portfolio Work</h4>
+                    <h4 className="text-sm font-heading font-semibold text-gray-800">Add Catalogue Item</h4>
                     <input
                       value={newWorkTitle}
                       onChange={(e) => setNewWorkTitle(e.target.value)}
@@ -613,7 +642,7 @@ export default function TailorStorefront({ userRole }) {
                         <span className="text-[11px] font-bold">{work.rating}</span>
                       </div>
                     )}
-                    {isOwner && (
+                    {isEditing && (
                       <button
                         onClick={() => handleRemoveWork(work.id)}
                         disabled={removingId === work.id}
