@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MoreVertical, Send, Image, Check, CheckCheck, Loader2 } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Send, Image, Check, CheckCheck, Loader2, X } from 'lucide-react';
 import { conversations as convoApi, uploads as uploadsApi } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi, invalidateCache, TTL } from '../hooks/useApi';
@@ -17,6 +17,7 @@ export default function ChatDetail() {
   const { user } = useAuth();
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -36,7 +37,7 @@ export default function ChatDetail() {
   const participant = convo?.participant || null;
   const messages = (() => {
     const msgs = Array.isArray(msgRes?.data) ? msgRes.data : (msgRes?.data?.messages || []);
-    return [...msgs].reverse();
+    return msgs;
   })();
 
   useEffect(() => {
@@ -147,7 +148,14 @@ export default function ChatDetail() {
                 }`}
               >
                 {msg.image_url && (
-                  <img src={msg.image_url} alt="Shared" className="rounded-xl max-w-full mb-1.5" loading="lazy" />
+                  <img
+                    src={msg.image_url}
+                    alt="Shared"
+                    className="rounded-xl mb-1.5 cursor-pointer hover:opacity-90 transition-opacity"
+                    style={{ maxWidth: 200, maxHeight: 200, objectFit: 'cover' }}
+                    loading="lazy"
+                    onClick={() => setFullscreenImage(msg.image_url)}
+                  />
                 )}
                 {msg.text && <p>{msg.text}</p>}
                 <div className={`flex items-center justify-end gap-1 mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
@@ -193,6 +201,27 @@ export default function ChatDetail() {
           {sending ? <Loader2 size={16} className="text-white animate-spin" /> : <Send size={16} className="text-white" />}
         </motion.button>
       </form>
+
+      {/* Fullscreen Image Viewer */}
+      {fullscreenImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <button
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            onClick={() => setFullscreenImage(null)}
+          >
+            <X size={24} className="text-white" />
+          </button>
+          <img
+            src={fullscreenImage}
+            alt="Full size"
+            className="max-w-[92vw] max-h-[90vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
