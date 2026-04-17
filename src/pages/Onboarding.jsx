@@ -4,7 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Scissors, User, MapPin, ChevronRight, Check, Sparkles, Loader2, Search, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { users as usersApi } from '../lib/api';
-import { Country, State, City } from 'country-state-city';
+
+// Lazy-load geodata (~8MB) — only fetched when user reaches onboarding
+let _geoCache = null;
+const loadGeoData = () => {
+  if (_geoCache) return _geoCache;
+  _geoCache = import('country-state-city').then(m => ({
+    Country: m.Country,
+    State: m.State,
+    City: m.City,
+  }));
+  return _geoCache;
+};
 
 const tailorSpecialties = ['Agbada', 'Kaftan', 'Ankara', 'Aso Ebi', 'Lace', 'Embroidery', 'Bridal', 'Corporate Wear', 'Senator', 'Wrapper & Blouse'];
 const customerPreferences = ['Ankara Dresses', 'Agbada', 'Kaftan', 'Aso-Oke', 'Lace Styles', 'Corporate Wear', 'Casual Wear', 'Bridal', 'Event Wear', 'Evening Gowns'];
@@ -92,6 +103,10 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const totalSteps = 3;
 
+  // Lazy-loaded geo modules
+  const [geo, setGeo] = useState(null);
+  useEffect(() => { loadGeoData().then(setGeo); }, []);
+
   const [form, setForm] = useState({
     displayName: user?.name || '',
     countryCode: '',
@@ -117,20 +132,20 @@ export default function Onboarding() {
 
   // Build dropdown items
   const countryItems = useMemo(() =>
-    Country.getAllCountries().map(c => ({ value: c.isoCode, label: c.name })),
-  []);
+    geo ? geo.Country.getAllCountries().map(c => ({ value: c.isoCode, label: c.name })) : [],
+  [geo]);
 
   const stateItems = useMemo(() =>
-    form.countryCode
-      ? State.getStatesOfCountry(form.countryCode).map(s => ({ value: s.isoCode, label: s.name }))
+    geo && form.countryCode
+      ? geo.State.getStatesOfCountry(form.countryCode).map(s => ({ value: s.isoCode, label: s.name }))
       : [],
-  [form.countryCode]);
+  [geo, form.countryCode]);
 
   const cityItems = useMemo(() =>
-    form.countryCode && form.stateCode
-      ? City.getCitiesOfState(form.countryCode, form.stateCode).map(c => ({ value: c.name, label: c.name }))
+    geo && form.countryCode && form.stateCode
+      ? geo.City.getCitiesOfState(form.countryCode, form.stateCode).map(c => ({ value: c.name, label: c.name }))
       : [],
-  [form.countryCode, form.stateCode]);
+  [geo, form.countryCode, form.stateCode]);
 
   // Auto-detect country on mount using timezone
   useEffect(() => {
@@ -164,8 +179,8 @@ export default function Onboarding() {
     setSaving(true);
     setError('');
     try {
-      const country = Country.getCountryByCode(form.countryCode);
-      const state = State.getStateByCodeAndCountry(form.stateCode, form.countryCode);
+      const country = geo?.Country.getCountryByCode(form.countryCode);
+      const state = geo?.State.getStateByCodeAndCountry(form.stateCode, form.countryCode);
       const body = {
         name: form.displayName.trim(),
         location_city: form.cityName,
@@ -433,7 +448,7 @@ export default function Onboarding() {
           onClick={async () => {
             setSaving(true);
             try {
-              const state = form.stateCode ? State.getStateByCodeAndCountry(form.stateCode, form.countryCode) : null;
+              const state = form.stateCode && geo ? geo.State.getStateByCodeAndCountry(form.stateCode, form.countryCode) : null;
               await usersApi.completeOnboarding({
                 name: form.displayName.trim() || user?.name || 'User',
                 location_city: form.cityName || 'Not set',

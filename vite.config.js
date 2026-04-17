@@ -10,6 +10,7 @@ export default defineConfig({
   build: {
     target: 'es2020',
     cssCodeSplit: true,
+    chunkSizeWarningLimit: 10000, // country-state-city is ~8.7MB, lazy-loaded only on onboarding
     rollupOptions: {
       output: {
         manualChunks: {
@@ -19,8 +20,7 @@ export default defineConfig({
           'vendor-motion': ['framer-motion'],
           // Icons — tree-shaken per-page but shared chunk avoids duplication
           'vendor-icons': ['lucide-react'],
-          // Location data — large dataset, only needed on onboarding
-          'vendor-geodata': ['country-state-city'],
+          // country-state-city is lazy-loaded via dynamic import in Onboarding.jsx
         },
       },
     },

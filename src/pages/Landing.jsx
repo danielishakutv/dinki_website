@@ -8,6 +8,7 @@ import {
 import Logo from '../components/layout/Logo';
 import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
 import { useAuth } from '../contexts/AuthContext';
+import { auth as authApi } from '../lib/api';
 
 /* ─────────────────────────────────────────────
    AUTH OVERLAY — full-screen, split-panel design
@@ -118,7 +119,6 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
     setLoading(true);
     setError('');
     try {
-      const { auth: authApi } = await import('../lib/api');
       await authApi.forgotPassword(formData.email);
       setResetSent(true);
     } catch (err) {
