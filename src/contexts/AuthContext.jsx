@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auth as authApi, users as usersApi, setToken, clearToken } from '../lib/api';
 import { clearCache } from '../hooks/useApi';
+import { connectSocket, disconnectSocket } from '../lib/socket';
 
 const AuthContext = createContext(null);
 
@@ -26,6 +27,16 @@ export function AuthProvider({ children }) {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Connect socket when user is authenticated
+  useEffect(() => {
+    if (user) {
+      connectSocket();
+    } else {
+      disconnectSocket();
+    }
+    return () => disconnectSocket();
+  }, [user]);
 
   const signup = useCallback(async ({ email, password, name, role }) => {
     const res = await authApi.signup({ email, password, name, role });

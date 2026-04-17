@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, Pin, PinOff, Check, CheckCheck, MessageSquare, Loader2 } from 'lucide-react';
 import { conversations as convoApi } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi, invalidateCache, TTL } from '../hooks/useApi';
+import { getSocket } from '../lib/socket';
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -23,10 +24,24 @@ export default function Messages() {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
 
-  const { data: convoRes, loading } = useApi(
+  const { data: convoRes, loading, refresh: refreshConversations } = useApi(
     'conversations', () => convoApi.list(), { ttl: TTL.short }
   );
   const chats = convoRes?.data && Array.isArray(convoRes.data) ? convoRes.data : [];
+
+  // Refresh conversation list when a new message arrives
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleNewMessage = () => {
+      invalidateCache('conversations');
+      refreshConversations();
+    };
+
+    socket.on('message:new', handleNewMessage);
+    return () => { socket.off('message:new', handleNewMessage); };
+  }, [refreshConversations]);
 
   const togglePin = async (id, e) => {
     e.stopPropagation();

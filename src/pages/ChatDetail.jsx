@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, MoreVertical, Send, Image, Check, CheckCheck, Loader2, X } from 'lucide-react';
 import { conversations as convoApi, uploads as uploadsApi } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi, invalidateCache, TTL } from '../hooks/useApi';
+import { getSocket } from '../lib/socket';
 
 function formatTime(dateStr) {
   const d = new Date(dateStr);
@@ -18,32 +19,109 @@ export default function ChatDetail() {
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [localMessages, setLocalMessages] = useState([]);
+  const [typingIndicator, setTypingIndicator] = useState(false);
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const initialLoadDone = useRef(false);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (instant) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: instant ? 'instant' : 'smooth' });
   };
 
   const { data: convoRes } = useApi(
     'conversations', () => convoApi.list(), { ttl: TTL.short }
   );
-  const { data: msgRes, loading, refresh: refreshMessages } = useApi(
-    `chat-messages-${id}`, () => convoApi.getMessages(id, { limit: 50 }), { ttl: TTL.short }
+  const { data: msgRes, loading } = useApi(
+    `chat-messages-${id}`, () => convoApi.getMessages(id, { limit: 50 }), { ttl: TTL.long }
   );
 
   const convos = Array.isArray(convoRes?.data) ? convoRes.data : [];
   const convo = convos.find((c) => c.id === id);
   const participant = convo?.participant || null;
-  const messages = (() => {
-    const msgs = Array.isArray(msgRes?.data) ? msgRes.data : (msgRes?.data?.messages || []);
-    return msgs;
-  })();
 
+  // Seed local messages from API response
+  useEffect(() => {
+    if (!msgRes) return;
+    const msgs = Array.isArray(msgRes?.data) ? msgRes.data : (msgRes?.data?.messages || []);
+    setLocalMessages(msgs);
+    initialLoadDone.current = true;
+  }, [msgRes]);
+
+  // Scroll on message count change
+  useEffect(() => {
+    if (localMessages.length > 0) {
+      scrollToBottom(!initialLoadDone.current);
+    }
+  }, [localMessages.length]);
+
+  // Mark as read on load
   useEffect(() => {
     if (!loading && id) convoApi.markRead(id).catch(() => {});
   }, [id, loading]);
-  useEffect(() => { scrollToBottom(); }, [messages.length]);
+
+  // Socket.IO real-time listeners
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleNewMessage = ({ message }) => {
+      if (message.conversation_id !== id) return;
+      setLocalMessages((prev) => {
+        // Deduplicate — avoid adding if already present (by id or optimistic match)
+        if (prev.some((m) => m.id === message.id)) return prev;
+        // Remove optimistic placeholder that matches
+        const withoutOptimistic = prev.filter((m) => !m._optimistic || m.text !== message.text);
+        return [...withoutOptimistic, message];
+      });
+      // Mark as read since we're looking at this conversation
+      convoApi.markRead(id).catch(() => {});
+      setTypingIndicator(false);
+    };
+
+    const handleDelivered = ({ messageId }) => {
+      // Replace optimistic message with confirmed
+      setLocalMessages((prev) => prev.map((m) => m._optimistic && !m.id ? { ...m, id: messageId, _optimistic: false } : m));
+    };
+
+    const handleTyping = ({ conversationId, typing }) => {
+      if (conversationId !== id) return;
+      setTypingIndicator(typing);
+    };
+
+    const handleRead = ({ conversationId }) => {
+      if (conversationId !== id) return;
+      // Mark all our messages as read
+      setLocalMessages((prev) => prev.map((m) => m.sender_id === user?.id ? { ...m, is_read: true } : m));
+    };
+
+    socket.on('message:new', handleNewMessage);
+    socket.on('message:delivered', handleDelivered);
+    socket.on('typing', handleTyping);
+    socket.on('message:read', handleRead);
+
+    return () => {
+      socket.off('message:new', handleNewMessage);
+      socket.off('message:delivered', handleDelivered);
+      socket.off('typing', handleTyping);
+      socket.off('message:read', handleRead);
+    };
+  }, [id, user?.id]);
+
+  // Send typing indicator via socket
+  const emitTyping = useCallback((isTyping) => {
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emit(isTyping ? 'typing:start' : 'typing:stop', { conversationId: id });
+  }, [id]);
+
+  const handleTypingInput = (value) => {
+    setNewMessage(value);
+    emitTyping(true);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => emitTyping(false), 2000);
+  };
 
   const handleImagePick = async (e) => {
     const file = e.target.files?.[0];
@@ -63,9 +141,18 @@ export default function ChatDetail() {
       const uploadRes = await uploadsApi.image(file);
       const imageUrl = uploadRes.data?.url;
       if (imageUrl) {
+        // Optimistic image message
+        const optimistic = {
+          _optimistic: true,
+          sender_id: user?.id,
+          image_url: imageUrl,
+          text: null,
+          created_at: new Date().toISOString(),
+        };
+        setLocalMessages((prev) => [...prev, optimistic]);
+
         await convoApi.sendMessage(id, { image_url: imageUrl });
-        invalidateCache(`chat-messages-${id}`, 'conversations');
-        refreshMessages();
+        invalidateCache('conversations');
       }
     } catch (err) {
       console.error('Failed to send image:', err);
@@ -79,13 +166,26 @@ export default function ChatDetail() {
     const text = newMessage.trim();
     if (!text || sending) return;
     setNewMessage('');
+    emitTyping(false);
+
+    // Optimistic message
+    const optimistic = {
+      _optimistic: true,
+      sender_id: user?.id,
+      text,
+      image_url: null,
+      created_at: new Date().toISOString(),
+    };
+    setLocalMessages((prev) => [...prev, optimistic]);
+
     setSending(true);
     try {
       await convoApi.sendMessage(id, { text });
-      invalidateCache(`chat-messages-${id}`, 'conversations');
-      refreshMessages();
+      invalidateCache('conversations');
     } catch (err) {
       console.error('Failed to send message:', err);
+      // Remove optimistic on failure
+      setLocalMessages((prev) => prev.filter((m) => m !== optimistic));
       setNewMessage(text);
     } finally {
       setSending(false);
@@ -128,48 +228,62 @@ export default function ChatDetail() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-cloud">
-        {messages.length === 0 && (
+        {localMessages.length === 0 && (
           <p className="text-center text-sm text-gray-400 py-8">No messages yet. Say hello!</p>
         )}
-        {messages.map((msg) => {
-          const isMine = msg.sender_id === user?.id;
-          return (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                  isMine
-                    ? 'bg-gold-500 text-white rounded-br-md'
-                    : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md shadow-sm'
-                }`}
+        <AnimatePresence initial={false}>
+          {localMessages.map((msg, idx) => {
+            const isMine = msg.sender_id === user?.id;
+            return (
+              <motion.div
+                key={msg.id || `opt-${idx}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: msg._optimistic ? 0.7 : 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
               >
-                {msg.image_url && (
-                  <img
-                    src={msg.image_url}
-                    alt="Shared"
-                    className="rounded-xl mb-1.5 cursor-pointer hover:opacity-90 transition-opacity"
-                    style={{ maxWidth: 200, maxHeight: 200, objectFit: 'cover' }}
-                    loading="lazy"
-                    onClick={() => setFullscreenImage(msg.image_url)}
-                  />
-                )}
-                {msg.text && <p>{msg.text}</p>}
-                <div className={`flex items-center justify-end gap-1 mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
-                  <span className="text-[10px]">{formatTime(msg.created_at)}</span>
-                  {isMine && (
-                    msg.is_read
-                      ? <CheckCheck size={12} className="text-white/80" />
-                      : <Check size={12} />
+                <div
+                  className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                    isMine
+                      ? 'bg-gold-500 text-white rounded-br-md'
+                      : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md shadow-sm'
+                  }`}
+                >
+                  {msg.image_url && (
+                    <img
+                      src={msg.image_url}
+                      alt="Shared"
+                      className="rounded-xl mb-1.5 cursor-pointer hover:opacity-90 transition-opacity"
+                      style={{ maxWidth: 200, maxHeight: 200, objectFit: 'cover' }}
+                      loading="lazy"
+                      onClick={() => setFullscreenImage(msg.image_url)}
+                    />
                   )}
+                  {msg.text && <p>{msg.text}</p>}
+                  <div className={`flex items-center justify-end gap-1 mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
+                    <span className="text-[10px]">{formatTime(msg.created_at)}</span>
+                    {isMine && (
+                      msg.is_read
+                        ? <CheckCheck size={12} className="text-white/80" />
+                        : <Check size={12} />
+                    )}
+                  </div>
                 </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+        {typingIndicator && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+            <div className="px-4 py-2.5 rounded-2xl rounded-bl-md bg-white border border-gray-100 shadow-sm">
+              <div className="flex gap-1 items-center h-4">
+                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-            </motion.div>
-          );
-        })}
+            </div>
+          </motion.div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -188,7 +302,7 @@ export default function ChatDetail() {
         <input
           type="text"
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={(e) => handleTypingInput(e.target.value)}
           placeholder="Type a message..."
           className="flex-1 px-4 py-2.5 rounded-2xl bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
         />
