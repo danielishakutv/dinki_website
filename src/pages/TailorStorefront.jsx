@@ -233,10 +233,15 @@ export default function TailorStorefront({ userRole }) {
   };
 
   const shareStorefront = async () => {
-    const url = `${window.location.origin}/${slug}`;
+    const url = `${window.location.origin}/t/${slug}`;
+    const specialties = (tailor?.specialties || []).slice(0, 2).join(', ');
+    const location = [tailor?.location_city, tailor?.location_state].filter(Boolean).join(', ');
+    const profileLine = [specialties, location].filter(Boolean).join(' • ');
     const shareData = {
       title: tailor ? `${tailor.name} — Dinki Africa` : 'Dinki Africa',
-      text: tailor ? `Check out ${tailor.name} on Dinki Africa` : 'Check out this tailor on Dinki Africa',
+      text: tailor
+        ? `Check out ${tailor.name} on Dinki Africa${profileLine ? ` (${profileLine})` : ''}`
+        : 'Check out this tailor on Dinki Africa',
       url,
     };
     if (navigator.share) {
@@ -251,6 +256,30 @@ export default function TailorStorefront({ userRole }) {
   const formatPrice = (kobo) => {
     if (!kobo) return '—';
     return new Intl.NumberFormat('en-NG').format(kobo / 100);
+  };
+
+  const authRedirectPath = (mode, nextPath) => {
+    const params = new URLSearchParams({ auth: mode });
+    if (nextPath) params.set('next', nextPath);
+    return `/?${params.toString()}`;
+  };
+
+  const handlePlaceOrder = () => {
+    const target = `/order/new?tailor=${tailor.tailor_id}&slug=${slug}`;
+    if (isGuest) {
+      navigate(authRedirectPath('signup', target));
+      return;
+    }
+    navigate(target);
+  };
+
+  const handleChat = () => {
+    const target = `/messages/${tailor.tailor_id}`;
+    if (isGuest) {
+      navigate(authRedirectPath('login', target));
+      return;
+    }
+    navigate(target);
   };
 
   // Wizard completion handler
@@ -586,36 +615,31 @@ export default function TailorStorefront({ userRole }) {
         ) : isGuest ? (
           <>
             <button
-              onClick={() => navigate('/onboarding')}
-              className="flex-1 py-3.5 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition shadow-sm shadow-gold-500/20 flex items-center justify-center gap-2"
-            >
-              <UserPlus size={16} />
-              Sign Up to Order
-            </button>
-            <button
-              onClick={shareStorefront}
-              className="px-5 py-3.5 bg-white text-gray-700 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 transition flex items-center gap-2 relative"
-            >
-              <Share2 size={16} />
-              <span className="hidden sm:inline">Share</span>
-              {showCopied && (
-                <span className="absolute -top-9 right-0 text-[10px] bg-black/80 text-white px-2.5 py-1 rounded-lg whitespace-nowrap">
-                  Link copied!
-                </span>
-              )}
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={() => navigate(`/order/new?tailor=${tailor.tailor_id}&slug=${slug}`)}
+              onClick={handlePlaceOrder}
               className="flex-1 py-3.5 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition shadow-sm shadow-gold-500/20 flex items-center justify-center gap-2"
             >
               <ShoppingBag size={16} />
               Place Order
             </button>
             <button
-              onClick={() => navigate(`/messages/${tailor.tailor_id}`)}
+              onClick={handleChat}
+              className="px-5 py-3.5 bg-white text-gray-700 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 transition flex items-center gap-2 relative"
+            >
+              <MessageCircle size={16} />
+              Chat
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={handlePlaceOrder}
+              className="flex-1 py-3.5 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition shadow-sm shadow-gold-500/20 flex items-center justify-center gap-2"
+            >
+              <ShoppingBag size={16} />
+              Place Order
+            </button>
+            <button
+              onClick={handleChat}
               className="px-5 py-3.5 bg-white text-gray-700 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 transition flex items-center gap-2"
             >
               <MessageCircle size={16} />
@@ -624,6 +648,14 @@ export default function TailorStorefront({ userRole }) {
           </>
         )}
       </div>
+
+      {isGuest && !previewMode && (
+        <div className="px-5 mt-2">
+          <p className="text-xs text-gray-500">
+            Free signup. No card required. Create your account when you place an order or start chat.
+          </p>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2.5 mt-7 px-5">
@@ -862,7 +894,7 @@ export default function TailorStorefront({ userRole }) {
 
                 {/* CTA */}
                 <button
-                  onClick={() => navigate('/onboarding')}
+                  onClick={() => navigate(authRedirectPath('signup', `/t/${slug}`))}
                   className="w-full py-3.5 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition shadow-sm shadow-gold-500/20 flex items-center justify-center gap-2"
                 >
                   <UserPlus size={16} />
@@ -871,7 +903,7 @@ export default function TailorStorefront({ userRole }) {
 
                 <p className="text-xs text-gray-400 mt-3">
                   Already have an account?
-                  <button onClick={() => navigate('/onboarding')} className="text-gold-600 font-medium ml-1 hover:underline">
+                  <button onClick={() => navigate(authRedirectPath('login', `/t/${slug}`))} className="text-gold-600 font-medium ml-1 hover:underline">
                     Sign in
                   </button>
                 </p>

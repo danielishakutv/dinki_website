@@ -62,6 +62,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={user ? <Navigate to={user.onboarding_completed === false ? '/onboarding' : '/dashboard'} replace /> : <Landing />} />
       <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
+      <Route path="/t/:handle" element={<Suspense fallback={<PageLoader />}><TailorStorefront userRole={null} /></Suspense>} />
       <Route path="/onboarding" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Onboarding /></Suspense></ProtectedRoute>} />
       <Route
         path="/*"

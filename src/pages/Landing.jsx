@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronRight, Star, Zap, ShoppingBag, Eye, EyeOff,
@@ -605,11 +605,13 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
    ───────────────────────────────────────────── */
 export default function Landing() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showAuth, setShowAuth]         = useState(false);
   const [authMode, setAuthMode]         = useState('signup');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const authParamHandledRef = useRef(false);
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentSlide(prev => (prev + 1) % 4), 5000);
@@ -623,6 +625,16 @@ export default function Landing() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Support deep-link auth prompts: /?auth=signup|login&next=/target/path
+  useEffect(() => {
+    if (authParamHandledRef.current || user) return;
+    const mode = searchParams.get('auth');
+    if (mode !== 'signup' && mode !== 'login') return;
+    setAuthMode(mode);
+    setShowAuth(true);
+    authParamHandledRef.current = true;
+  }, [searchParams, user]);
+
   const openAuth = (mode = 'signup') => {
     setAuthMode(mode);
     setShowAuth(true);
@@ -631,6 +643,11 @@ export default function Landing() {
   const closeAuth = () => setShowAuth(false);
   const handleAuthSuccess = () => {
     setShowAuth(false);
+    const next = searchParams.get('next');
+    if (next && next.startsWith('/')) {
+      navigate(next, { replace: true });
+      return;
+    }
     navigate('/dashboard');
   };
 
