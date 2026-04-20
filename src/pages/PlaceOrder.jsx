@@ -8,12 +8,12 @@ import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
 const recentTailorIds = ['1', '3']; // Tailors the user has interacted with recently
 
 const tailorOptions = [
-  { id: '1', name: 'Aunty Zainab', username: '@auntyzainab', specialty: 'Traditional Ankara', image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?w=100&h=100&fit=crop', verified: true, completedOrders: 580 },
-  { id: '2', name: 'Master Chukwu', username: '@masterchukwu', specialty: 'Agbada Expert', image: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?w=100&h=100&fit=crop', verified: true, completedOrders: 430 },
-  { id: '3', name: 'Mama Amara', username: '@mamaamara', specialty: 'Luxury Aso Ebi', image: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?w=100&h=100&fit=crop', verified: true, completedOrders: 720 },
-  { id: '4', name: 'Sister Blessing', username: '@sisterblessing', specialty: 'Modern Trends', image: 'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?w=100&h=100&fit=crop', verified: false, completedOrders: 85 },
-  { id: '5', name: 'Baba Tunde', username: '@babatunde', specialty: 'Kaftan & Senator', image: 'https://images.pexels.com/photos/3622709/pexels-photo-3622709.jpeg?w=100&h=100&fit=crop', verified: true, completedOrders: 310 },
-  { id: '6', name: 'Dinki Atelier', username: '@dinkiatelier', specialty: 'Bespoke Design', image: 'https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=100&h=100&fit=crop', verified: true, completedOrders: 1050 },
+  { id: '1', name: 'Aunty Zainab', username: '@auntyzainab', specialty: 'Traditional Ankara', image: '/images/tailor-female.webp', verified: true, completedOrders: 580 },
+  { id: '2', name: 'Master Chukwu', username: '@masterchukwu', specialty: 'Agbada Expert', image: '/images/tailor-male1.webp', verified: true, completedOrders: 430 },
+  { id: '3', name: 'Mama Amara', username: '@mamaamara', specialty: 'Luxury Aso Ebi', image: '/images/tailor-female2.webp', verified: true, completedOrders: 720 },
+  { id: '4', name: 'Sister Blessing', username: '@sisterblessing', specialty: 'Modern Trends', image: '/images/tailor-female3.webp', verified: false, completedOrders: 85 },
+  { id: '5', name: 'Baba Tunde', username: '@babatunde', specialty: 'Kaftan & Senator', image: '/images/tailor-male2.webp', verified: true, completedOrders: 310 },
+  { id: '6', name: 'Dinki Atelier', username: '@dinkiatelier', specialty: 'Bespoke Design', image: '/images/tailor-male4.webp', verified: true, completedOrders: 1050 },
 ];
 
 export default function PlaceOrder() {

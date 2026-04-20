@@ -34,7 +34,7 @@ export default function TailorDashboard() {
       amount: '₦12,000',
       status: 'In Progress',
       progress: 65,
-      image: 'https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=200&h=200&fit=crop',
+      image: '/images/agbada-2.webp',
     },
     {
       id: 2,
@@ -44,7 +44,7 @@ export default function TailorDashboard() {
       amount: '₦8,500',
       status: 'In Progress',
       progress: 40,
-      image: 'https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?w=200&h=200&fit=crop',
+      image: '/images/suit-3.webp',
     },
     {
       id: 3,
@@ -54,7 +54,7 @@ export default function TailorDashboard() {
       amount: '₦18,000',
       status: 'Pending',
       progress: 5,
-      image: 'https://images.pexels.com/photos/3622710/pexels-photo-3622710.jpeg?w=200&h=200&fit=crop',
+      image: '/images/agbada-3.webp',
     },
   ];
 
@@ -68,18 +68,18 @@ export default function TailorDashboard() {
 
   // Customers
   const customers = [
-    { id: 1, name: 'Adeola Okafor', orders: 3, totalSpent: '₦32,500', rating: 5, image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?w=100&h=100&fit=crop' },
-    { id: 2, name: 'Ngozi Obi', orders: 2, totalSpent: '₦21,000', rating: 4.8, image: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?w=100&h=100&fit=crop' },
-    { id: 3, name: 'Chioma Nwankwo', orders: 1, totalSpent: '₦8,500', rating: 5, image: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?w=100&h=100&fit=crop' },
-    { id: 4, name: 'Blessing Adeyemi', orders: 4, totalSpent: '₦45,200', rating: 4.9, image: 'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?w=100&h=100&fit=crop' },
+    { id: 1, name: 'Adeola Okafor', orders: 3, totalSpent: '₦32,500', rating: 5, image: '/images/tailor-female.webp' },
+    { id: 2, name: 'Ngozi Obi', orders: 2, totalSpent: '₦21,000', rating: 4.8, image: '/images/tailor-female2.webp' },
+    { id: 3, name: 'Chioma Nwankwo', orders: 1, totalSpent: '₦8,500', rating: 5, image: '/images/tailor-male1.webp' },
+    { id: 4, name: 'Blessing Adeyemi', orders: 4, totalSpent: '₦45,200', rating: 4.9, image: '/images/tailor-female3.webp' },
   ];
 
   // Portfolio samples
   const portfolioSamples = [
-    { id: 1, design: 'Ankara Dress', image: 'https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=400&h=400&fit=crop', rating: 4.9 },
-    { id: 2, design: 'Traditional Agbada', image: 'https://images.pexels.com/photos/3622709/pexels-photo-3622709.jpeg?w=400&h=400&fit=crop', rating: 4.8 },
-    { id: 3, design: 'Luxury Wrapper Set', image: 'https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?w=400&h=400&fit=crop', rating: 4.9 },
-    { id: 4, design: 'Aso Ebi Premium', image: 'https://images.pexels.com/photos/3622710/pexels-photo-3622710.jpeg?w=400&h=400&fit=crop', rating: 5.0 },
+    { id: 1, design: 'Ankara Dress', image: '/images/agbada-2.webp', rating: 4.9 },
+    { id: 2, design: 'Traditional Agbada', image: '/images/agbada-1.webp', rating: 4.8 },
+    { id: 3, design: 'Luxury Wrapper Set', image: '/images/suit-3.webp', rating: 4.9 },
+    { id: 4, design: 'Aso Ebi Premium', image: '/images/agbada-3.webp', rating: 5.0 },
   ];
 
   const handleSignOut = () => {
@@ -408,7 +408,7 @@ export default function TailorDashboard() {
                 onClick={() => {
                   const title = prompt('Enter design name:');
                   if (title) {
-                    setPortfolio(prev => [{ id: Date.now(), design: title, image: 'https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=400&h=400&fit=crop', rating: 0 }, ...prev]);
+                    setPortfolio(prev => [{ id: Date.now(), design: title, image: '/images/agbada-2.webp', rating: 0 }, ...prev]);
                   }
                 }}
                 className="px-4 py-2 bg-gold-500 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-gold-600 transition flex-shrink-0"

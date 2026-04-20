@@ -12,7 +12,7 @@ const articles = [
     category: 'Business',
     readTime: '5 min read',
     date: 'Jan 15, 2025',
-    image: 'https://images.pexels.com/photos/3731857/pexels-photo-3731857.jpeg?w=600&h=400&fit=crop',
+    image: '/images/hero-3.webp',
     featured: true,
   },
   {
@@ -22,7 +22,7 @@ const articles = [
     category: 'Trends',
     readTime: '4 min read',
     date: 'Jan 12, 2025',
-    image: 'https://images.pexels.com/photos/3622710/pexels-photo-3622710.jpeg?w=600&h=400&fit=crop',
+    image: '/images/agbada-3.webp',
     featured: false,
   },
   {
@@ -32,7 +32,7 @@ const articles = [
     category: 'Tips & Tricks',
     readTime: '6 min read',
     date: 'Jan 10, 2025',
-    image: 'https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=600&h=400&fit=crop',
+    image: '/images/agbada-2.webp',
     featured: false,
   },
   {
@@ -42,7 +42,7 @@ const articles = [
     category: 'Business',
     readTime: '7 min read',
     date: 'Jan 8, 2025',
-    image: 'https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?w=600&h=400&fit=crop',
+    image: '/images/suit-3.webp',
     featured: false,
   },
   {
@@ -52,7 +52,7 @@ const articles = [
     category: 'Industry',
     readTime: '5 min read',
     date: 'Jan 5, 2025',
-    image: 'https://images.pexels.com/photos/3570179/pexels-photo-3570179.jpeg?w=600&h=400&fit=crop',
+    image: '/images/f8bc3df3f02d51d3e095cd4a68c8e470.webp',
     featured: false,
   },
   {
@@ -62,7 +62,7 @@ const articles = [
     category: 'Tips & Tricks',
     readTime: '4 min read',
     date: 'Jan 3, 2025',
-    image: 'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?w=600&h=400&fit=crop',
+    image: '/images/hero-2.webp',
     featured: false,
   },
   {
@@ -72,7 +72,7 @@ const articles = [
     category: 'Tips & Tricks',
     readTime: '8 min read',
     date: 'Dec 28, 2024',
-    image: 'https://images.pexels.com/photos/3731897/pexels-photo-3731897.jpeg?w=600&h=400&fit=crop',
+    image: '/images/hero-1.webp',
     featured: false,
   },
   {
@@ -82,7 +82,7 @@ const articles = [
     category: 'Trends',
     readTime: '5 min read',
     date: 'Dec 25, 2024',
-    image: 'https://images.pexels.com/photos/3622709/pexels-photo-3622709.jpeg?w=600&h=400&fit=crop',
+    image: '/images/agbada-1.webp',
     featured: false,
   },
 ];

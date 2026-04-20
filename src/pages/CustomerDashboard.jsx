@@ -14,10 +14,10 @@ export default function CustomerDashboard({ tab = 'home' }) {
   };
 
   const nearbyTailors = [
-    { id: 1, name: 'Aunty Zainab', specialty: 'Traditional Ankara', rating: 4.9, reviews: 324, distance: '0.8 km', image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?w=200&h=200&fit=crop', price: '₦5,000+', responseTime: '2 hours', verified: true, completedOrders: 580 },
-    { id: 2, name: 'Master Chukwu', specialty: 'Agbada Expert', rating: 4.8, reviews: 287, distance: '1.2 km', image: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?w=200&h=200&fit=crop', price: '₦4,500+', responseTime: '1 hour', verified: true, completedOrders: 430 },
-    { id: 3, name: 'Mama Amara', specialty: 'Luxury Aso Ebi', rating: 4.95, reviews: 412, distance: '2.1 km', image: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?w=200&h=200&fit=crop', price: '₦8,000+', responseTime: '3 hours', verified: true, completedOrders: 720 },
-    { id: 4, name: 'Sister Blessing', specialty: 'Modern Trends', rating: 4.7, reviews: 198, distance: '1.5 km', image: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?w=200&h=200&fit=crop', price: '₦3,500+', responseTime: '1 hour', verified: false, completedOrders: 85 },
+    { id: 1, name: 'Aunty Zainab', specialty: 'Traditional Ankara', rating: 4.9, reviews: 324, distance: '0.8 km', image: '/images/tailor-female.webp', price: '₦5,000+', responseTime: '2 hours', verified: true, completedOrders: 580 },
+    { id: 2, name: 'Master Chukwu', specialty: 'Agbada Expert', rating: 4.8, reviews: 287, distance: '1.2 km', image: '/images/tailor-male1.webp', price: '₦4,500+', responseTime: '1 hour', verified: true, completedOrders: 430 },
+    { id: 3, name: 'Mama Amara', specialty: 'Luxury Aso Ebi', rating: 4.95, reviews: 412, distance: '2.1 km', image: '/images/tailor-female2.webp', price: '₦8,000+', responseTime: '3 hours', verified: true, completedOrders: 720 },
+    { id: 4, name: 'Sister Blessing', specialty: 'Modern Trends', rating: 4.7, reviews: 198, distance: '1.5 km', image: '/images/tailor-female3.webp', price: '₦3,500+', responseTime: '1 hour', verified: false, completedOrders: 85 },
   ];
 
   const orders = [
@@ -27,10 +27,10 @@ export default function CustomerDashboard({ tab = 'home' }) {
   ];
 
   const featuredStyles = [
-    { id: 1, name: 'Ankara Dress', image: 'https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=400&h=400&fit=crop', price: '₦8,000+' },
-    { id: 2, name: 'Agbada Suit', image: 'https://images.pexels.com/photos/3622709/pexels-photo-3622709.jpeg?w=400&h=400&fit=crop', price: '₦15,000+' },
-    { id: 3, name: 'Wrapper & Blouse', image: 'https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?w=400&h=400&fit=crop', price: '₦6,500+' },
-    { id: 4, name: 'Aso Ebi Luxury', image: 'https://images.pexels.com/photos/3622710/pexels-photo-3622710.jpeg?w=400&h=400&fit=crop', price: '₦20,000+' },
+    { id: 1, name: 'Ankara Dress', image: '/images/agbada-2.webp', price: '₦8,000+' },
+    { id: 2, name: 'Agbada Suit', image: '/images/agbada-1.webp', price: '₦15,000+' },
+    { id: 3, name: 'Wrapper & Blouse', image: '/images/suit-3.webp', price: '₦6,500+' },
+    { id: 4, name: 'Aso Ebi Luxury', image: '/images/agbada-3.webp', price: '₦20,000+' },
   ];
 
   const toggleSaveTailor = (id) => setSavedTailors(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);

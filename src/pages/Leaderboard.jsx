@@ -5,14 +5,14 @@ import { Star, MapPin, ChevronRight, Trophy, Medal, Award } from 'lucide-react';
 import { VerifiedBadge, LevelBadge, getTailorLevel } from '../components/TailorBadges';
 
 const allTailors = [
-  { id: '3', name: 'Mama Amara', specialty: 'Luxury Aso Ebi', location: 'Ikeja, Lagos', rating: 4.95, reviews: 412, completedOrders: 1050, verified: true, image: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?w=200&h=200&fit=crop' },
-  { id: '4', name: 'Baba Couture', specialty: 'Modern Fusion', location: 'Surulere, Lagos', rating: 4.7, reviews: 198, completedOrders: 720, verified: true, image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?w=200&h=200&fit=crop' },
-  { id: '1', name: 'Aunty Zainab', specialty: 'Traditional Ankara', location: 'Ikoyi, Lagos', rating: 4.9, reviews: 324, completedOrders: 580, verified: true, image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?w=200&h=200&fit=crop' },
-  { id: '2', name: 'Master Chukwu', specialty: 'Agbada Expert', location: 'Victoria Island, Lagos', rating: 4.8, reviews: 287, completedOrders: 430, verified: true, image: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?w=200&h=200&fit=crop' },
-  { id: '5', name: 'Sister Adaeze', specialty: 'Igbo Traditional', location: 'Lekki, Lagos', rating: 4.6, reviews: 156, completedOrders: 310, verified: true, image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?w=200&h=200&fit=crop' },
-  { id: '6', name: 'Tailor Kwame', specialty: 'Kente Specialist', location: 'Accra, Ghana', rating: 4.5, reviews: 89, completedOrders: 180, verified: false, image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?w=200&h=200&fit=crop' },
-  { id: '7', name: 'Iya Shade', specialty: 'Adire & Batik', location: 'Abeokuta, Ogun', rating: 4.4, reviews: 72, completedOrders: 120, verified: true, image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?w=200&h=200&fit=crop' },
-  { id: '8', name: 'Olumide Stitch', specialty: 'Corporate Wear', location: 'Abuja, FCT', rating: 4.3, reviews: 45, completedOrders: 85, verified: false, image: 'https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?w=200&h=200&fit=crop' },
+  { id: '3', name: 'Mama Amara', specialty: 'Luxury Aso Ebi', location: 'Ikeja, Lagos', rating: 4.95, reviews: 412, completedOrders: 1050, verified: true, image: '/images/tailor-female2.webp' },
+  { id: '4', name: 'Baba Couture', specialty: 'Modern Fusion', location: 'Surulere, Lagos', rating: 4.7, reviews: 198, completedOrders: 720, verified: true, image: '/images/tailor-male2.webp' },
+  { id: '1', name: 'Aunty Zainab', specialty: 'Traditional Ankara', location: 'Ikoyi, Lagos', rating: 4.9, reviews: 324, completedOrders: 580, verified: true, image: '/images/tailor-female.webp' },
+  { id: '2', name: 'Master Chukwu', specialty: 'Agbada Expert', location: 'Victoria Island, Lagos', rating: 4.8, reviews: 287, completedOrders: 430, verified: true, image: '/images/tailor-male1.webp' },
+  { id: '5', name: 'Sister Adaeze', specialty: 'Igbo Traditional', location: 'Lekki, Lagos', rating: 4.6, reviews: 156, completedOrders: 310, verified: true, image: '/images/tailor-female3.webp' },
+  { id: '6', name: 'Tailor Kwame', specialty: 'Kente Specialist', location: 'Accra, Ghana', rating: 4.5, reviews: 89, completedOrders: 180, verified: false, image: '/images/tailor-male4.webp' },
+  { id: '7', name: 'Iya Shade', specialty: 'Adire & Batik', location: 'Abeokuta, Ogun', rating: 4.4, reviews: 72, completedOrders: 120, verified: true, image: '/images/f8bc3df3f02d51d3e095cd4a68c8e470.webp' },
+  { id: '8', name: 'Olumide Stitch', specialty: 'Corporate Wear', location: 'Abuja, FCT', rating: 4.3, reviews: 45, completedOrders: 85, verified: false, image: '/images/f94558a9aedeb192af20e590daa759aa.webp' },
 ];
 
 const filters = ['All', 'Couturier', 'Grand Tailor', 'Master Cutter', 'Seamster'];

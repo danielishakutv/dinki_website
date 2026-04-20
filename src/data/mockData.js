@@ -169,7 +169,7 @@ export const marketplaceStyles = [
     designer: 'Dinki Atelier',
     price: 150000,
     category: 'Men',
-    image: 'https://images.unsplash.com/photo-1590735213920-68192a487bc2?w=400&h=500&fit=crop',
+    image: '/images/agbada-1.webp',
     colors: ['Gold', 'White'],
   },
   {
@@ -178,7 +178,7 @@ export const marketplaceStyles = [
     designer: 'Nkechi Couture',
     price: 55000,
     category: 'Women',
-    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=500&fit=crop',
+    image: '/images/suit-3.webp',
     colors: ['Multi', 'Blue'],
   },
   {
@@ -187,7 +187,7 @@ export const marketplaceStyles = [
     designer: 'Dakar Styles',
     price: 85000,
     category: 'Men',
-    image: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&h=500&fit=crop',
+    image: '/images/agbada-3.webp',
     colors: ['Indigo', 'Gold'],
   },
   {
@@ -196,7 +196,7 @@ export const marketplaceStyles = [
     designer: 'Accra Thread',
     price: 32000,
     category: 'Women',
-    image: 'https://images.unsplash.com/photo-1590735213408-9d0dceab5b73?w=400&h=500&fit=crop',
+    image: '/images/agbada-2.webp',
     colors: ['Multi', 'Yellow'],
   },
   {
@@ -205,7 +205,7 @@ export const marketplaceStyles = [
     designer: 'Dinki Atelier',
     price: 28000,
     category: 'Men',
-    image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&h=500&fit=crop',
+    image: '/images/suit-1.webp',
     colors: ['Green', 'Gold'],
   },
   {
@@ -214,7 +214,7 @@ export const marketplaceStyles = [
     designer: 'Lagos Bridal Co.',
     price: 250000,
     category: 'Women',
-    image: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=400&h=500&fit=crop',
+    image: '/images/suit-2.webp',
     colors: ['White', 'Gold'],
   },
 ];

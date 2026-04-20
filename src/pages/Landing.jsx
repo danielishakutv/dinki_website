@@ -14,8 +14,8 @@ import { auth as authApi } from '../lib/api';
    AUTH OVERLAY — full-screen, split-panel design
    ───────────────────────────────────────────── */
 const BG_IMAGES = {
-  signup: 'https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?w=1200&h=1600&fit=crop',
-  login:  'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?w=1200&h=1600&fit=crop',
+  signup: '/images/cc1092f5c6cf791aa0170769398442db.webp',
+  login:  '/images/85423fceb9d23ecafaa9c3e1a931f4e8.webp',
 };
 
 function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
@@ -635,35 +635,35 @@ export default function Landing() {
   };
 
   const sliderImages = [
-    { id: 1, title: 'Ankara Designs',    image: 'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?w=800&h=600&fit=crop' },
-    { id: 2, title: 'Agbada & Kaftan',   image: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?w=800&h=600&fit=crop' },
-    { id: 3, title: 'Lace & Embroidery', image: 'https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?w=800&h=600&fit=crop' },
-    { id: 4, title: 'Casual Tailored',   image: 'https://images.pexels.com/photos/3622622/pexels-photo-3622622.jpeg?w=800&h=600&fit=crop' },
+    { id: 1, title: 'Ankara Designs',    image: '/images/hero-1.webp' },
+    { id: 2, title: 'Agbada & Kaftan',   image: '/images/hero-2.webp' },
+    { id: 3, title: 'Lace & Embroidery', image: '/images/hero-3.webp' },
+    { id: 4, title: 'Casual Tailored',   image: '/images/hero-4.webp' },
   ];
 
   const trendingStyles = [
-    { id: 1, name: 'Ankara Dress',     image: 'https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=500&h=500&fit=crop' },
-    { id: 2, name: 'Agbada Suit',      image: 'https://images.pexels.com/photos/3622709/pexels-photo-3622709.jpeg?w=500&h=500&fit=crop' },
-    { id: 3, name: 'Wrapper & Blouse', image: 'https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?w=500&h=500&fit=crop' },
-    { id: 4, name: 'Aso Ebi Luxury',   image: 'https://images.pexels.com/photos/3622710/pexels-photo-3622710.jpeg?w=500&h=500&fit=crop' },
+    { id: 1, name: 'Ankara Dress',     image: '/images/agbada-2.webp' },
+    { id: 2, name: 'Agbada Suit',      image: '/images/agbada-1.webp' },
+    { id: 3, name: 'Wrapper & Blouse', image: '/images/suit-3.webp' },
+    { id: 4, name: 'Aso Ebi Luxury',   image: '/images/agbada-3.webp' },
   ];
 
   const topTailors = [
-    { id: 1, name: 'Aunty Zainab',  rating: 4.9,  reviews: 324, specialty: 'Traditional Ankara', image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?w=200&h=200&fit=crop', verified: true,  completedOrders: 580 },
-    { id: 2, name: 'Master Chukwu', rating: 4.8,  reviews: 287, specialty: 'Agbada Expert',       image: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?w=200&h=200&fit=crop', verified: true,  completedOrders: 430 },
-    { id: 3, name: 'Mama Amara',    rating: 4.95, reviews: 412, specialty: 'Luxury Aso Ebi',      image: 'https://images.pexels.com/photos/1933900/pexels-photo-1933900.jpeg?w=200&h=200&fit=crop', verified: true,  completedOrders: 1050 },
+    { id: 1, name: 'Aunty Zainab',  rating: 4.9,  reviews: 324, specialty: 'Traditional Ankara', image: '/images/tailor-female.webp', verified: true,  completedOrders: 580 },
+    { id: 2, name: 'Master Chukwu', rating: 4.8,  reviews: 287, specialty: 'Agbada Expert',       image: '/images/tailor-male1.webp', verified: true,  completedOrders: 430 },
+    { id: 3, name: 'Mama Amara',    rating: 4.95, reviews: 412, specialty: 'Luxury Aso Ebi',      image: '/images/tailor-female2.webp', verified: true,  completedOrders: 1050 },
   ];
 
   const materials = [
-    { name: 'Ankara Fabric',    desc: 'Premium wax print',  image: 'https://images.pexels.com/photos/3731857/pexels-photo-3731857.jpeg?w=300&h=300&fit=crop' },
-    { name: 'Lace & Damask',    desc: 'Elegant embroidery', image: 'https://images.pexels.com/photos/3570179/pexels-photo-3570179.jpeg?w=300&h=300&fit=crop' },
-    { name: 'Designer Fabrics', desc: 'Imported quality',   image: 'https://images.pexels.com/photos/3731897/pexels-photo-3731897.jpeg?w=300&h=300&fit=crop' },
+    { name: 'Ankara Fabric',    desc: 'Premium wax print',  image: '/images/hero-3.webp' },
+    { name: 'Lace & Damask',    desc: 'Elegant embroidery', image: '/images/f8bc3df3f02d51d3e095cd4a68c8e470.webp' },
+    { name: 'Designer Fabrics', desc: 'Imported quality',   image: '/images/hero-1.webp' },
   ];
 
   const accessories = [
-    { name: 'Handbags',           desc: 'Matching designs',   image: 'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?w=300&h=300&fit=crop' },
-    { name: 'Footwear',           desc: 'Custom tailored',    image: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?w=300&h=300&fit=crop' },
-    { name: 'Beads & Adornments', desc: 'Traditional styles', image: 'https://images.pexels.com/photos/3731857/pexels-photo-3731857.jpeg?w=300&h=300&fit=crop' },
+    { name: 'Footwear',           desc: 'Custom tailored',    image: '/images/sho-1.webp' },
+    { name: 'Footwear',           desc: 'Bespoke leather',    image: '/images/shoe-2.webp' },
+    { name: 'Footwear',           desc: 'Handcrafted styles', image: '/images/shoe-3.webp' },
   ];
 
   return (
@@ -830,15 +830,29 @@ export default function Landing() {
           </button>
         </div>
 
-        {/* mobile hamburger */}
-        <button
-          className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg transition"
-          style={{ background: mobileMenuOpen ? '#f0ede9' : 'transparent', border: 'none', cursor: 'pointer' }}
-          onClick={() => setMobileMenuOpen(p => !p)}
-          aria-label="Toggle menu"
-        >
-          <Menu size={20} style={{ color: '#1a0a00' }} />
-        </button>
+        {/* mobile: sign in + hamburger */}
+        <div className="md:hidden flex items-center gap-2">
+          <button
+            onClick={() => openAuth('login')}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold transition"
+            style={{
+              border: '1.5px solid #e8a020',
+              background: 'transparent',
+              color: '#e8a020',
+              cursor: 'pointer',
+            }}
+          >
+            Sign In
+          </button>
+          <button
+            className="w-9 h-9 flex items-center justify-center rounded-lg transition"
+            style={{ background: mobileMenuOpen ? '#f0ede9' : 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={() => setMobileMenuOpen(p => !p)}
+            aria-label="Toggle menu"
+          >
+            <Menu size={20} style={{ color: '#1a0a00' }} />
+          </button>
+        </div>
       </nav>
 
       {/* ── HERO ── */}
@@ -873,10 +887,13 @@ export default function Landing() {
                   onClick={() => openAuth('signup')}
                   className="px-8 py-3 bg-gold-500 text-white rounded-lg hover:bg-gold-600 transition font-heading font-semibold flex items-center justify-center gap-2 group"
                 >
-                  Find a Tailor <ArrowRight size={18} className="group-hover:translate-x-1 transition" />
+                  Get Started <ArrowRight size={18} className="group-hover:translate-x-1 transition" />
                 </button>
-                <button className="px-8 py-3 border-2 border-white text-white rounded-lg hover:bg-white/10 transition font-heading font-semibold">
-                  Browse Styles
+                <button
+                  onClick={() => openAuth('login')}
+                  className="px-8 py-3 border-2 border-white text-white rounded-lg hover:bg-white/10 transition font-heading font-semibold"
+                >
+                  Find a Tailor
                 </button>
               </motion.div>
               <motion.div className="flex gap-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4, duration: 0.6 }}>
@@ -1045,7 +1062,7 @@ export default function Landing() {
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="grid md:grid-cols-2 gap-8 items-center">
             <div className="order-2 md:order-1">
               <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }} className="rounded-xl overflow-hidden shadow-lg">
-                <img src="https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?w=600&h=600&fit=crop" alt="Dinki Africa Tailoring" className="w-full h-full object-cover" />
+                <img src="/images/tailor-female3.webp" alt="Dinki Africa Tailoring" className="w-full h-full object-cover" />
               </motion.div>
             </div>
             <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="order-1 md:order-2">
@@ -1082,7 +1099,7 @@ export default function Landing() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-white text-gray-800 pt-16 pb-8 px-4 md:px-8 border-t border-gray-200">
+      <footer className="bg-white text-gray-800 pt-16 pb-20 md:pb-8 px-4 md:px-8 border-t border-gray-200">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-12">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }}>
@@ -1114,6 +1131,34 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      {/* ── STICKY MOBILE CTA BAR ── */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-gray-200/60 px-4 py-3 flex items-center gap-3">
+        <button
+          onClick={() => openAuth('signup')}
+          className="flex-1 py-2.5 rounded-lg text-sm font-bold text-white transition"
+          style={{
+            background: 'linear-gradient(135deg, #e8a020 0%, #c87d10 100%)',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 2px 10px rgba(232,160,32,0.3)',
+          }}
+        >
+          Get Started Free
+        </button>
+        <button
+          onClick={() => openAuth('login')}
+          className="py-2.5 px-5 rounded-lg text-sm font-bold transition"
+          style={{
+            border: '1.5px solid #e0d0c0',
+            background: 'transparent',
+            color: '#5a4a3a',
+            cursor: 'pointer',
+          }}
+        >
+          Log In
+        </button>
+      </div>
     </div>
   );
 }
