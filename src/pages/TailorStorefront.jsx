@@ -233,7 +233,8 @@ export default function TailorStorefront({ userRole }) {
   };
 
   const shareStorefront = async () => {
-    const url = `${window.location.origin}/t/${slug}`;
+    const backendBase = (import.meta.env.VITE_API_URL || 'https://be.dinki.africa/v1').replace(/\/v1$/, '');
+    const url = `${backendBase}/t/${slug}`;
     const specialties = (tailor?.specialties || []).slice(0, 2).join(', ');
     const location = [tailor?.location_city, tailor?.location_state].filter(Boolean).join(', ');
     const profileLine = [specialties, location].filter(Boolean).join(' • ');
