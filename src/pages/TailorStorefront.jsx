@@ -61,6 +61,10 @@ export default function TailorStorefront({ userRole, editable = false }) {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const joinTimerRef = useRef(null);
 
+  // Catalogue detail view
+  const [selectedWork, setSelectedWork] = useState(null);
+  const detailScrollRef = useRef(null);
+
   // Load storefront data
   const loadStorefront = useCallback(async () => {
     try {
@@ -106,6 +110,21 @@ export default function TailorStorefront({ userRole, editable = false }) {
     if (activeTab === 'portfolio' && tailor) loadPortfolio();
     if (activeTab === 'reviews' && tailor) loadReviews();
   }, [activeTab, tailor, loadPortfolio, loadReviews]);
+
+  // Scroll detail overlay to top whenever the viewed item changes
+  useEffect(() => {
+    if (selectedWork && detailScrollRef.current) {
+      detailScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [selectedWork?.id]);
+
+  // Lock body scroll while detail overlay is open
+  useEffect(() => {
+    if (!selectedWork) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [selectedWork]);
 
   // Owner actions
   const handleSaveBio = async () => {
@@ -724,11 +743,16 @@ export default function TailorStorefront({ userRole, editable = false }) {
                 )}
               </div>
             )}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="columns-2 md:columns-3 lg:columns-4 gap-3 [column-fill:_balance]">
               {portfolio.map(work => (
-                <div key={work.id} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm group relative">
-                  <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden">
-                    <img src={work.image_url} alt={work.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                <button
+                  key={work.id}
+                  type="button"
+                  onClick={() => setSelectedWork(work)}
+                  className="block w-full text-left bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm group relative mb-3 break-inside-avoid cursor-pointer hover:shadow-md transition-shadow"
+                >
+                  <div className="relative bg-gray-100 overflow-hidden">
+                    <img src={work.image_url} alt={work.title} className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-300" loading="lazy" />
                     {work.rating > 0 && (
                       <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-white/90 backdrop-blur px-2 py-0.5 rounded-lg">
                         <Star size={10} className="text-yellow-400" fill="currentColor" />
@@ -737,7 +761,8 @@ export default function TailorStorefront({ userRole, editable = false }) {
                     )}
                     {isEditing && (
                       <button
-                        onClick={() => handleRemoveWork(work.id)}
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleRemoveWork(work.id); }}
                         disabled={removingId === work.id}
                         className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 md:opacity-100 transition"
                       >
@@ -748,7 +773,7 @@ export default function TailorStorefront({ userRole, editable = false }) {
                   <div className="p-3">
                     <p className="text-sm font-semibold text-gray-800 truncate">{work.title}</p>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </motion.div>
@@ -819,6 +844,127 @@ export default function TailorStorefront({ userRole, editable = false }) {
                 <p className="text-sm text-gray-600 leading-relaxed">{review.text}</p>
               </div>
             ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Catalogue Detail Overlay — Pinterest-style */}
+      <AnimatePresence>
+        {selectedWork && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-black/95"
+          >
+            <div
+              ref={detailScrollRef}
+              className="absolute inset-0 overflow-y-auto overscroll-contain"
+            >
+              {/* Top nav */}
+              <div className="sticky top-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/70 to-transparent">
+                <button
+                  onClick={() => setSelectedWork(null)}
+                  className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center"
+                  aria-label="Close"
+                >
+                  <ChevronLeft size={20} className="text-white" />
+                </button>
+                <button
+                  onClick={shareStorefront}
+                  className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center"
+                  aria-label="Share"
+                >
+                  <Share2 size={18} className="text-white" />
+                </button>
+              </div>
+
+              {/* Image — big and well viewable */}
+              <motion.div
+                key={selectedWork.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                className="-mt-14 flex items-center justify-center px-0 md:px-4"
+              >
+                <img
+                  src={selectedWork.image_url}
+                  alt={selectedWork.title}
+                  className="w-full max-w-3xl h-auto max-h-[85vh] object-contain"
+                />
+              </motion.div>
+
+              {/* Details sheet */}
+              <div className="bg-white max-w-3xl mx-auto mt-4 md:rounded-t-3xl md:shadow-xl pt-5 px-5 pb-28">
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <h2 className="text-xl md:text-2xl font-heading font-bold text-gray-900">{selectedWork.title}</h2>
+                  {selectedWork.rating > 0 && (
+                    <div className="flex items-center gap-1 bg-gold-50 border border-gold-100 px-2.5 py-1 rounded-lg flex-shrink-0">
+                      <Star size={12} className="text-yellow-400" fill="currentColor" />
+                      <span className="text-xs font-bold text-gray-800">{selectedWork.rating}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tailor row + quick actions */}
+                <div className="flex items-center gap-3 mb-5 pb-5 border-b border-gray-100">
+                  {tailor.avatar_url ? (
+                    <img src={tailor.avatar_url} alt={tailor.name} className="w-11 h-11 rounded-xl object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ backgroundColor: tailor.avatar_color || '#6366f1' }}>
+                      {tailor.initials || tailor.name?.charAt(0)}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-semibold text-gray-800 truncate">{tailor.name}</p>
+                      {tailor.verified && <VerifiedBadge size={13} />}
+                    </div>
+                    <p className="text-xs text-gray-400 truncate">{(tailor.specialties || []).slice(0, 2).join(' · ')}</p>
+                  </div>
+                  {!isEditing && !previewMode && (
+                    <button
+                      onClick={handlePlaceOrder}
+                      className="px-4 py-2 bg-gold-500 text-white rounded-lg text-xs font-semibold hover:bg-gold-600 transition flex items-center gap-1.5 flex-shrink-0"
+                    >
+                      <ShoppingBag size={13} />
+                      Order
+                    </button>
+                  )}
+                </div>
+
+                {/* Suggestions */}
+                {portfolio.filter(p => p.id !== selectedWork.id).length > 0 && (
+                  <>
+                    <h3 className="text-sm font-heading font-semibold text-gray-800 mb-3">More from {tailor.name}</h3>
+                    <div className="columns-2 md:columns-3 gap-2.5 [column-fill:_balance]">
+                      {portfolio.filter(p => p.id !== selectedWork.id).map(work => (
+                        <button
+                          key={work.id}
+                          type="button"
+                          onClick={() => setSelectedWork(work)}
+                          className="block w-full text-left bg-white rounded-xl overflow-hidden border border-gray-100 mb-2.5 break-inside-avoid cursor-pointer hover:shadow-md transition-shadow"
+                        >
+                          <div className="relative bg-gray-100 overflow-hidden">
+                            <img src={work.image_url} alt={work.title} className="w-full h-auto object-cover" loading="lazy" />
+                            {work.rating > 0 && (
+                              <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 bg-white/90 backdrop-blur px-1.5 py-0.5 rounded-md">
+                                <Star size={9} className="text-yellow-400" fill="currentColor" />
+                                <span className="text-[10px] font-bold">{work.rating}</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="px-2.5 py-2">
+                            <p className="text-xs font-medium text-gray-700 truncate">{work.title}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

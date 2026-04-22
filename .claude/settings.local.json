@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(npm run *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\USER\\Desktop\\Dinki Africa\\dinki_africa_be\\src"
+    ]
+  }
+}
