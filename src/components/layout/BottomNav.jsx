@@ -10,7 +10,7 @@ const tailorLeft = [
 ];
 
 const getTailorRight = (storefrontSlug) => [
-  { to: storefrontSlug ? `/${storefrontSlug}` : '/dashboard', icon: Store, label: 'Store' },
+  { to: storefrontSlug ? `/t/${storefrontSlug}` : '/dashboard', icon: Store, label: 'Store' },
   { to: '/marketplace', icon: ShoppingBag, label: 'Market' },
 ];
 

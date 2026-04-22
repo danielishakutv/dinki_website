@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, MapPin, MessageCircle, Heart, ChevronLeft, Share2, Image, ShoppingBag, Edit3, Plus, Trash2, Settings, Eye, Loader2, Camera, Move, Check, X, UserPlus, Sparkles, Shield, Clock, Users } from 'lucide-react';
 import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { storefronts as storefrontsApi, uploads as uploadsApi, users as usersApi } from '../lib/api';
 import StorefrontSetupWizard from '../components/StorefrontSetupWizard';
 
-export default function TailorStorefront({ userRole }) {
+export default function TailorStorefront({ userRole, editable = false }) {
   const { handle } = useParams();
   const slug = handle;
   const navigate = useNavigate();
@@ -19,12 +19,13 @@ export default function TailorStorefront({ userRole }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [searchParams] = useSearchParams();
   const userSlug = user?.storefront_slug || user?.tailor_profile?.storefront_slug;
   const isOwnSlug = user?.role === 'tailor' && slug === userSlug;
   const isOwner = isOwnSlug && !!tailor;
-  const previewMode = isOwner && searchParams.get('preview') === 'customer';
-  const isEditing = isOwner && !previewMode;
+  // /t/:handle renders with editable=true → owner gets edit controls.
+  // /:handle renders with editable=false → owner viewing own page sees preview banner.
+  const isEditing = isOwner && editable;
+  const previewMode = isOwner && !editable;
   const isGuest = !user;
 
   const [activeTab, setActiveTab] = useState('portfolio');
@@ -233,8 +234,7 @@ export default function TailorStorefront({ userRole }) {
   };
 
   const shareStorefront = async () => {
-    const backendBase = (import.meta.env.VITE_API_URL || 'https://be.dinki.africa/v1').replace(/\/v1$/, '');
-    const url = `${backendBase}/${slug}`;
+    const url = `${window.location.origin}/${slug}`;
     const specialties = (tailor?.specialties || []).slice(0, 2).join(', ');
     const location = [tailor?.location_city, tailor?.location_state].filter(Boolean).join(', ');
     const profileLine = [specialties, location].filter(Boolean).join(' • ');
@@ -283,10 +283,11 @@ export default function TailorStorefront({ userRole }) {
     navigate(target);
   };
 
-  // Wizard completion handler
+  // Wizard completion handler — keep the user on whichever view they opened it from.
   const handleSetupComplete = (newSlug) => {
     if (newSlug && newSlug !== slug) {
-      navigate(`/${newSlug}`, { replace: true });
+      const prefix = editable ? '/t/' : '/';
+      navigate(`${prefix}${newSlug}`, { replace: true });
     } else {
       loadStorefront();
     }
@@ -322,7 +323,7 @@ export default function TailorStorefront({ userRole }) {
 
   return (
     <div className="max-w-4xl mx-auto pb-24 md:pb-8">
-      {/* Preview Mode Banner */}
+      {/* Preview Mode Banner — owner viewing their own public URL */}
       {previewMode && (
         <div className="sticky top-0 z-40 bg-indigo-600 text-white px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm">
@@ -330,10 +331,10 @@ export default function TailorStorefront({ userRole }) {
             <span className="font-medium">Viewing as customer</span>
           </div>
           <button
-            onClick={() => navigate(`/${slug}`)}
+            onClick={() => navigate(`/t/${slug}`)}
             className="text-sm font-medium bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition"
           >
-            Exit Preview
+            Back to Dashboard
           </button>
         </div>
       )}
@@ -582,14 +583,7 @@ export default function TailorStorefront({ userRole }) {
               )}
             </button>
             <button
-              onClick={() => {
-                const params = new URLSearchParams(window.location.search);
-                if (params.get('preview') === 'customer') {
-                  navigate(`/${slug}`);
-                } else {
-                  navigate(`/${slug}?preview=customer`);
-                }
-              }}
+              onClick={() => navigate(`/${slug}`)}
               className="px-5 py-3.5 bg-white text-gray-700 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 transition flex items-center gap-2"
             >
               <Eye size={16} />

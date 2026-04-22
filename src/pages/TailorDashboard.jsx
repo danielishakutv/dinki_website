@@ -103,7 +103,7 @@ export default function TailorDashboard() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={() => { const s = user?.storefront_slug || user?.tailor_profile?.storefront_slug; navigate(s ? `/${s}` : '/dashboard'); }}
+              onClick={() => { const s = user?.storefront_slug || user?.tailor_profile?.storefront_slug; navigate(s ? `/t/${s}` : '/dashboard'); }}
               className="flex items-center gap-1.5 px-3 py-2 sm:py-2.5 bg-gold-500 text-white rounded-lg sm:rounded-xl transition hover:bg-gold-600 text-xs sm:text-sm font-medium shadow-sm shadow-gold-500/15"
               title="View My Storefront"
             >

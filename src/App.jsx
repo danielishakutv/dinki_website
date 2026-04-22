@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
 
@@ -50,6 +50,18 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+function ProtectedAppLayout({ userRole }) {
+  return (
+    <ProtectedRoute>
+      <Layout userRole={userRole}>
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
+      </Layout>
+    </ProtectedRoute>
+  );
+}
+
 export default function App() {
   const { user, loading } = useAuth();
   const userRole = user?.role || null;
@@ -62,55 +74,40 @@ export default function App() {
     <Routes>
       <Route path="/" element={user ? <Navigate to={user.onboarding_completed === false ? '/onboarding' : '/dashboard'} replace /> : <Landing />} />
       <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
-      <Route path="/:handle" element={<Suspense fallback={<PageLoader />}><TailorStorefront userRole={null} /></Suspense>} />
       <Route path="/onboarding" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Onboarding /></Suspense></ProtectedRoute>} />
-      <Route
-        path="/*"
-        element={
-          <ProtectedRoute>
-            <Layout userRole={userRole}>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                <Route
-                  path="dashboard"
-                  element={
-                    userRole === 'customer' ? (
-                      <CustomerDashboard tab="home" />
-                    ) : (
-                      <Dashboard />
-                    )
-                  }
-                />
-                {/* Customer routes */}
-                <Route path="home" element={<CustomerDashboard tab="home" />} />
-                <Route path="orders" element={<CustomerDashboard tab="orders" />} />
-                <Route path="near-me" element={<CustomerDashboard tab="near-me" />} />
-                <Route path="/customers" element={<Customers />} />
-                <Route path="/customers/:id" element={<CustomerDetail />} />
-                <Route path="/jobs" element={<Jobs />} />
-                <Route path="/jobs/new" element={<NewJobPage />} />
-                <Route path="/jobs/:id" element={<JobDetailPage />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/profile" element={<Profile userRole={userRole} />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/messages/:id" element={<ChatDetail />} />
-                <Route path="/favourites" element={<Favourites />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/notifications/:id" element={<NotificationDetail />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/help" element={<HelpSupport />} />
-                <Route path="/leaderboard" element={<Leaderboard />} />
-                <Route path="/news" element={<News />} />
-                <Route path="/marketplace/style/:id" element={<StyleDetail />} />
-                <Route path="/order/new" element={<PlaceOrder />} />
-                <Route path="/referral" element={<Referral />} />
-                <Route path="t/:handle" element={<TailorStorefront userRole={userRole} />} />
-              </Routes>
-              </Suspense>
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
+
+      {/* Protected app shell. Static paths here out-rank /:handle below in React Router's ranking,
+          so e.g. /dashboard matches Dashboard, not the public storefront. */}
+      <Route element={<ProtectedAppLayout userRole={userRole} />}>
+        <Route path="/dashboard" element={userRole === 'customer' ? <CustomerDashboard tab="home" /> : <Dashboard />} />
+        <Route path="/home" element={<CustomerDashboard tab="home" />} />
+        <Route path="/orders" element={<CustomerDashboard tab="orders" />} />
+        <Route path="/near-me" element={<CustomerDashboard tab="near-me" />} />
+        <Route path="/customers" element={<Customers />} />
+        <Route path="/customers/:id" element={<CustomerDetail />} />
+        <Route path="/jobs" element={<Jobs />} />
+        <Route path="/jobs/new" element={<NewJobPage />} />
+        <Route path="/jobs/:id" element={<JobDetailPage />} />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/marketplace/style/:id" element={<StyleDetail />} />
+        <Route path="/profile" element={<Profile userRole={userRole} />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/messages/:id" element={<ChatDetail />} />
+        <Route path="/favourites" element={<Favourites />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/notifications/:id" element={<NotificationDetail />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/help" element={<HelpSupport />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/news" element={<News />} />
+        <Route path="/order/new" element={<PlaceOrder />} />
+        <Route path="/referral" element={<Referral />} />
+        {/* Owner dashboard/editor view — /t/:handle is reachable only when authenticated */}
+        <Route path="/t/:handle" element={<TailorStorefront userRole={userRole} editable />} />
+      </Route>
+
+      {/* Public storefront — guest-viewable. Ranks below the static routes above. */}
+      <Route path="/:handle" element={<Suspense fallback={<PageLoader />}><TailorStorefront userRole={null} /></Suspense>} />
     </Routes>
   );
 }
