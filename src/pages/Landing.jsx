@@ -30,6 +30,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
   const [otpStep, setOtpStep]           = useState(false);
   const [otp, setOtp]                   = useState('');
   const [activationFlow, setActivationFlow] = useState(null); // { user_id, name }
+  const [customerGated, setCustomerGated] = useState(false); // customer signup/login is coming soon
 
   const isSignup  = mode === 'signup';
 
@@ -80,12 +81,14 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
         }
         setOtpStep(true);
       } else {
-        await login({ email: formData.email, password: formData.password });
+        await login({ email: formData.email, password: formData.password, rejectRoles: ['customer'] });
         onSuccess();
       }
     } catch (err) {
       if (err.code === 'EMAIL_NOT_VERIFIED') {
         setOtpStep(true);
+      } else if (err.code === 'ROLE_NOT_PERMITTED') {
+        setCustomerGated(true);
       } else {
         setError(err.message || 'Something went wrong. Please try again.');
       }
@@ -138,6 +141,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
     setOtpStep(false);
     setOtp('');
     setActivationFlow(null);
+    setCustomerGated(false);
   };
 
   const handleActivateSubmit = async () => {
@@ -484,6 +488,56 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
                 </div>
               )}
 
+              {(customerGated || (isSignup && formData.accountType === 'customer')) ? (
+                <div style={{
+                  padding: '28px 20px', borderRadius: 16,
+                  background: 'linear-gradient(135deg, #fff8ec 0%, #fff 100%)',
+                  border: '1.5px solid #f0d8a8', textAlign: 'center', marginBottom: 16,
+                }}>
+                  <div style={{
+                    width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px',
+                    background: 'linear-gradient(135deg, #e8a020 0%, #c87d10 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 8px 20px rgba(232,160,32,0.3)',
+                  }}>
+                    <Scissors size={24} color="#fff" strokeWidth={2.2} />
+                  </div>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1a0a00', margin: '0 0 8px' }}>
+                    Customer accounts — coming soon
+                  </h3>
+                  <p style={{ fontSize: 13, color: '#7a6a5a', lineHeight: 1.6, margin: '0 auto 20px', maxWidth: 320 }}>
+                    We're still stitching the customer side of Dinki together. It'll be ready very soon — thanks for your patience!
+                  </p>
+                  <button
+                    onClick={() => {
+                      setCustomerGated(false);
+                      setError('');
+                      if (isSignup) set('accountType', 'tailor');
+                    }}
+                    style={{
+                      width: '100%', padding: '0.8rem', borderRadius: 14, border: 'none', cursor: 'pointer',
+                      background: 'linear-gradient(135deg, #e8a020 0%, #c87d10 100%)',
+                      color: '#fff', fontSize: 14, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      boxShadow: '0 4px 20px rgba(232,160,32,0.35)',
+                    }}
+                  >
+                    <Scissors size={14} />
+                    {isSignup ? 'Continue as a Tailor' : 'Back to sign in'}
+                  </button>
+                  {!isSignup && (
+                    <p style={{ fontSize: 12, color: '#9a8a7a', marginTop: 14 }}>
+                      Are you a tailor?{' '}
+                      <button
+                        onClick={() => switchMode('signup')}
+                        style={{ background: 'none', border: 'none', color: '#e8a020', fontWeight: 700, cursor: 'pointer', fontSize: 12, padding: 0 }}
+                      >
+                        Create a tailor account
+                      </button>
+                    </p>
+                  )}
+                </div>
+              ) : (<>
               {/* fields */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 16 }}>
                 {isSignup && (
@@ -588,6 +642,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
                   <span style={{ color: '#9a8a7a', textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span>.
                 </p>
               )}
+              </>)}
               </>
               )}
             </div>

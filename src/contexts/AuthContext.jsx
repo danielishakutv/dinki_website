@@ -55,8 +55,16 @@ export function AuthProvider({ children }) {
     return res.data;
   }, []);
 
-  const login = useCallback(async ({ email, password }) => {
+  const login = useCallback(async ({ email, password, rejectRoles }) => {
     const res = await authApi.login({ email, password });
+    if (rejectRoles && rejectRoles.includes(res.data?.user?.role)) {
+      // Do not commit the session client-side. Invalidate the server-side session too.
+      try { await authApi.logout(); } catch { /* ignore */ }
+      const err = new Error('Role not permitted');
+      err.code = 'ROLE_NOT_PERMITTED';
+      err.role = res.data?.user?.role;
+      throw err;
+    }
     setToken(res.data.accessToken);
     setUser(res.data.user);
     return res.data;
