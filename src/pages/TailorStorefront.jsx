@@ -234,7 +234,7 @@ export default function TailorStorefront({ userRole }) {
 
   const shareStorefront = async () => {
     const backendBase = (import.meta.env.VITE_API_URL || 'https://be.dinki.africa/v1').replace(/\/v1$/, '');
-    const url = `${backendBase}/t/${slug}`;
+    const url = `${backendBase}/${slug}`;
     const specialties = (tailor?.specialties || []).slice(0, 2).join(', ');
     const location = [tailor?.location_city, tailor?.location_state].filter(Boolean).join(', ');
     const profileLine = [specialties, location].filter(Boolean).join(' • ');
@@ -895,7 +895,7 @@ export default function TailorStorefront({ userRole }) {
 
                 {/* CTA */}
                 <button
-                  onClick={() => navigate(authRedirectPath('signup', `/t/${slug}`))}
+                  onClick={() => navigate(authRedirectPath('signup', `/${slug}`))}
                   className="w-full py-3.5 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition shadow-sm shadow-gold-500/20 flex items-center justify-center gap-2"
                 >
                   <UserPlus size={16} />
@@ -904,7 +904,7 @@ export default function TailorStorefront({ userRole }) {
 
                 <p className="text-xs text-gray-400 mt-3">
                   Already have an account?
-                  <button onClick={() => navigate(authRedirectPath('login', `/t/${slug}`))} className="text-gold-600 font-medium ml-1 hover:underline">
+                  <button onClick={() => navigate(authRedirectPath('login', `/${slug}`))} className="text-gold-600 font-medium ml-1 hover:underline">
                     Sign in
                   </button>
                 </p>
