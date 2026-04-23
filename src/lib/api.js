@@ -288,5 +288,10 @@ export const uploads = {
   },
 };
 
+// Admin (gated server-side by role; client must also role-check before routing)
+export const admin = {
+  ping: () => request('/admin/ping'),
+};
+
 export { getToken, setToken, clearToken };
-export default { auth, users, customers, jobs, storefronts, orders, reviews, favourites, conversations, notifications, uploads };
+export default { auth, users, customers, jobs, storefronts, orders, reviews, favourites, conversations, notifications, uploads, admin };

@@ -32,6 +32,8 @@ const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const News = lazy(() => import('./pages/News'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
+const AdminHome = lazy(() => import('./pages/admin/AdminHome'));
 
 function PageLoader() {
   return (
@@ -61,6 +63,18 @@ function ProtectedAppLayout({ userRole }) {
       </Layout>
     </ProtectedRoute>
   );
+}
+
+// Only admin/superadmin accounts may render anything below /admin.
+// Anyone else lands back on their own dashboard — no leaking route
+// structure via error screens, no flashes of admin UI.
+function AdminOnlyRoute({ children }) {
+  const { user } = useAuth();
+  const role = user?.role;
+  if (role !== 'admin' && role !== 'superadmin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
 }
 
 export default function App() {
@@ -106,6 +120,12 @@ export default function App() {
         <Route path="/referral" element={<Referral />} />
         {/* Owner dashboard/editor view — /t/:handle is reachable only when authenticated */}
         <Route path="/t/:handle" element={<TailorStorefront userRole={userRole} editable />} />
+
+        {/* Admin module — gated by role. Nested <Outlet /> so each admin
+            sub-page is lazy-loaded and isolated from siblings. */}
+        <Route path="/admin" element={<AdminOnlyRoute><AdminLayout /></AdminOnlyRoute>}>
+          <Route index element={<AdminHome />} />
+        </Route>
       </Route>
 
       {/* Public storefront — guest-viewable. Ranks below the static routes above. */}

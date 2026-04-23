@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle, LogOut, MapPin, ClipboardList, User, MessageSquare, Heart, Bell, Store, Trophy, Newspaper } from 'lucide-react';
+import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle, LogOut, MapPin, ClipboardList, User, MessageSquare, Heart, Bell, Store, Trophy, Newspaper, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Logo from './Logo';
 import { useAuth } from '../../contexts/AuthContext';
@@ -66,6 +66,7 @@ export default function Sidebar({ userRole }) {
   const slug = user?.storefront_slug || user?.tailor_profile?.storefront_slug;
   const mainNav = userRole === 'customer' ? customerNav : getTailorNav(slug);
   const homeRoute = '/dashboard';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
   const profileName = user?.name || (userRole === 'tailor' ? 'Tailor' : 'Customer');
   const profileInitials = profileName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
@@ -100,6 +101,16 @@ export default function Sidebar({ userRole }) {
         {bottomNav.map((item) => (
           <SideLink key={item.to} {...item} />
         ))}
+
+        {isAdmin && (
+          <>
+            <div className="my-6 border-t border-gray-100" />
+            <p className="px-4 mb-2 text-[10px] font-semibold tracking-wider uppercase text-gray-400">
+              Staff
+            </p>
+            <SideLink to="/admin" icon={ShieldCheck} label="Admin" />
+          </>
+        )}
       </nav>
 
       {/* User Profile Mini & Logout */}

@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import Logo from './Logo';
-import { Menu, X, Bell, User, Users, Settings, HelpCircle, LogOut, MessageSquare, Heart, Store, Trophy, Newspaper } from 'lucide-react';
+import { Menu, X, Bell, User, Users, Settings, HelpCircle, LogOut, MessageSquare, Heart, Store, Trophy, Newspaper, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const pageVariants = {
@@ -44,6 +44,7 @@ export default function Layout({ children, userRole }) {
   };
 
   const isTailor = userRole === 'tailor';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
   const profileName = user?.name || (isTailor ? 'Tailor' : 'Customer');
   const profileRole = isTailor ? 'Master Tailor' : 'Customer';
   const profileInitials = profileName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
@@ -149,6 +150,23 @@ export default function Layout({ children, userRole }) {
                       <span>{label}</span>
                     </NavLink>
                   ))}
+
+                  {isAdmin && (
+                    <NavLink
+                      to="/admin"
+                      onClick={() => setDrawerOpen(false)}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 px-4 py-3 mt-2 rounded-xl text-sm font-medium border-t border-gray-100 pt-4 transition-all duration-200 ${
+                          isActive
+                            ? 'bg-gold-500/10 text-gold-600'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                        }`
+                      }
+                    >
+                      <ShieldCheck size={20} strokeWidth={1.6} />
+                      <span>Admin</span>
+                    </NavLink>
+                  )}
                 </nav>
 
                 {/* Logout */}
