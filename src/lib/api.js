@@ -291,6 +291,7 @@ export const uploads = {
 // Admin (gated server-side by role; client must also role-check before routing)
 export const admin = {
   ping: () => request('/admin/ping'),
+  stats: () => request('/admin/stats'),
 };
 
 export { getToken, setToken, clearToken };
