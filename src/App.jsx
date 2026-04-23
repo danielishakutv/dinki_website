@@ -34,6 +34,7 @@ const News = lazy(() => import('./pages/News'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
 const AdminHome = lazy(() => import('./pages/admin/AdminHome'));
+const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications'));
 
 function PageLoader() {
   return (
@@ -125,6 +126,7 @@ export default function App() {
             sub-page is lazy-loaded and isolated from siblings. */}
         <Route path="/admin" element={<AdminOnlyRoute><AdminLayout /></AdminOnlyRoute>}>
           <Route index element={<AdminHome />} />
+          <Route path="notifications" element={<AdminNotifications />} />
         </Route>
       </Route>
 

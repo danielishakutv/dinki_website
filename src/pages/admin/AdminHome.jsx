@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, Users, UserCheck, Scissors, ClipboardList, TrendingUp, ShieldCheck } from 'lucide-react';
+import { Loader2, AlertCircle, Users, UserCheck, Scissors, ClipboardList, TrendingUp, ShieldCheck, Ruler } from 'lucide-react';
 import { admin as adminApi } from '../../lib/api';
 
 /**
@@ -47,7 +47,7 @@ export default function AdminHome() {
     );
   }
 
-  const { users, jobs, orders } = state.data;
+  const { users, jobs, orders, measurements } = state.data;
 
   return (
     <div className="space-y-6">
@@ -57,6 +57,14 @@ export default function AdminHome() {
         <StatCard icon={ShieldCheck} label="Admin" value={users.admins + users.superadmins} tone="slate" />
         <StatCard icon={TrendingUp} label="New (24h)" value={users.new_24h} sub={`${fmt(users.new_7d)} in 7d`} tone="emerald" />
       </Section>
+
+      {measurements && (
+        <Section title="Measurements" subtitle={`${fmt(measurements.total)} recorded · ${fmt(measurements.new_7d)} in 7d`}>
+          <StatCard icon={Ruler} label="Total recorded" value={measurements.total} tone="gold" />
+          <StatCard icon={Users} label="Customers with measurements" value={measurements.customers_with_measurements} tone="blue" />
+          <StatCard icon={TrendingUp} label="New (7d)" value={measurements.new_7d} tone="emerald" />
+        </Section>
+      )}
 
       <Section title="Jobs" subtitle={`${fmt(jobs.total)} total · ${fmt(jobs.new_7d)} new in 7d`}>
         <StatCard icon={ClipboardList} label="Cutting" value={jobs.cutting} tone="slate" />

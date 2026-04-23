@@ -292,6 +292,8 @@ export const uploads = {
 export const admin = {
   ping: () => request('/admin/ping'),
   stats: () => request('/admin/stats'),
+  broadcastNotification: (body) =>
+    request('/admin/notifications/broadcast', { method: 'POST', body }),
 };
 
 export { getToken, setToken, clearToken };
