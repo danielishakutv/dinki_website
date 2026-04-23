@@ -99,7 +99,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-0 md:p-4"
           onClick={handleClose}
         >
           <motion.div
@@ -108,10 +108,10 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden"
+            className="bg-white rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden max-h-[90vh] md:max-h-[85vh] flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 flex-shrink-0">
               <div className="flex items-center gap-2">
                 {matchedUser ? (
                   <UserCheck size={20} className="text-blue-500" />
@@ -129,7 +129,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
 
             {/* Confirmation Dialog */}
             {matchedUser ? (
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4 flex-1 overflow-y-auto">
                 <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
                   <div className="flex items-start gap-3">
                     <AlertCircle size={18} className="text-blue-500 mt-0.5 flex-shrink-0" />
@@ -200,7 +200,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSave, onLink, onFo
               </div>
             ) : (
               /* Form */
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <form onSubmit={handleSubmit} className="p-6 space-y-4 flex-1 overflow-y-auto">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Full Name *</label>
                   <input

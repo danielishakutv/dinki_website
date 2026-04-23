@@ -360,8 +360,8 @@ export default function TailorStorefront({ userRole, editable = false }) {
 
       {/* Position Editor Modal */}
       {showPositionEditor && coverPreview && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex flex-col items-center justify-center p-4">
-          <div className="bg-white rounded-2xl overflow-hidden w-full max-w-lg shadow-xl">
+        <div className="fixed inset-0 z-50 bg-black/70 flex flex-col items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl overflow-hidden w-full max-w-lg shadow-xl max-h-[90vh] flex flex-col">
             <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
               <h3 className="text-sm font-heading font-semibold text-gray-800">Adjust Cover Position</h3>
               <p className="text-xs text-gray-400">Drag image up or down</p>
@@ -984,7 +984,7 @@ export default function TailorStorefront({ userRole, editable = false }) {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl"
+              className="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Drag handle (mobile) */}

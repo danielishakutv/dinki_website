@@ -13,7 +13,7 @@ export default function AddJobModal({ isOpen, onClose, onSave, customers, editJo
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm px-4 pt-4 pb-24 md:pb-4"
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-0 md:p-4"
           onClick={onClose}
         >
           <motion.div
@@ -22,10 +22,10 @@ export default function AddJobModal({ isOpen, onClose, onSave, customers, editJo
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden max-h-[90vh] md:max-h-[85vh] flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 flex-shrink-0 bg-white">
               <div className="flex items-center gap-2">
                 {isEdit ? <Edit3 size={20} className="text-gold-500" /> : <Scissors size={20} className="text-gold-500" />}
                 <h2 className="font-heading font-bold text-lg text-gray-900">{isEdit ? 'Edit Job' : 'New Job'}</h2>
@@ -34,7 +34,7 @@ export default function AddJobModal({ isOpen, onClose, onSave, customers, editJo
                 <X size={20} className="text-gray-400" />
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-6 flex-1 overflow-y-auto">
               <AddJobForm
                 onSave={onSave}
                 customers={customers}
