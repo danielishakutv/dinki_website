@@ -10,6 +10,7 @@ import Landing from './pages/Landing';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const CustomerDashboard = lazy(() => import('./pages/CustomerDashboard'));
 const Customers = lazy(() => import('./pages/Customers'));
+const NewCustomerPage = lazy(() => import('./pages/NewCustomerPage'));
 const CustomerDetail = lazy(() => import('./pages/CustomerDetail'));
 const Jobs = lazy(() => import('./pages/Jobs'));
 const JobDetailPage = lazy(() => import('./pages/JobDetailPage'));
@@ -84,6 +85,7 @@ export default function App() {
         <Route path="/orders" element={<CustomerDashboard tab="orders" />} />
         <Route path="/near-me" element={<CustomerDashboard tab="near-me" />} />
         <Route path="/customers" element={<Customers />} />
+        <Route path="/customers/new" element={<NewCustomerPage />} />
         <Route path="/customers/:id" element={<CustomerDetail />} />
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/jobs/new" element={<NewJobPage />} />
