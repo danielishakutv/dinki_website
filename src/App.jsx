@@ -32,6 +32,7 @@ const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const News = lazy(() => import('./pages/News'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const Invite = lazy(() => import('./pages/Invite'));
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
 const AdminHome = lazy(() => import('./pages/admin/AdminHome'));
 const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications'));
@@ -92,6 +93,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={user ? <Navigate to={user.onboarding_completed === false ? '/onboarding' : '/dashboard'} replace /> : <Landing />} />
       <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
+      <Route path="/invite/:code" element={<Suspense fallback={<PageLoader />}><Invite /></Suspense>} />
       <Route path="/onboarding" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Onboarding /></Suspense></ProtectedRoute>} />
 
       {/* Protected app shell. Static paths here out-rank /:handle below in React Router's ranking,

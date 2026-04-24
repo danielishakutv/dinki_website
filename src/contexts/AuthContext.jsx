@@ -52,8 +52,8 @@ export function AuthProvider({ children }) {
     };
   }, [user]);
 
-  const signup = useCallback(async ({ email, password, name, role }) => {
-    const res = await authApi.signup({ email, password, name, role });
+  const signup = useCallback(async ({ email, password, name, role, referralCode }) => {
+    const res = await authApi.signup({ email, password, name, role, referralCode });
     return res.data; // { message, userId } or { inactive_account, user_id, name, message }
   }, []);
 

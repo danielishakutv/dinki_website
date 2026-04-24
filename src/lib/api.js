@@ -322,5 +322,17 @@ export const support = {
   submitTicket: (body) => request('/support/ticket', { method: 'POST', body }),
 };
 
+// Referrals
+export const referrals = {
+  getMine: (params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.limit) qs.set('limit', params.limit);
+    if (params.offset) qs.set('offset', params.offset);
+    const q = qs.toString();
+    return request(`/referrals/me${q ? `?${q}` : ''}`);
+  },
+  getByCode: (code) => request(`/referrals/by-code/${encodeURIComponent(code)}`),
+};
+
 export { getToken, setToken, clearToken };
-export default { auth, users, customers, jobs, storefronts, orders, reviews, favourites, conversations, notifications, uploads, admin, support };
+export default { auth, users, customers, jobs, storefronts, orders, reviews, favourites, conversations, notifications, uploads, admin, support, referrals };

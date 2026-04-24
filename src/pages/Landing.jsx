@@ -72,7 +72,19 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
 
     try {
       if (isSignup) {
-        const result = await signup({ email: formData.email, password: formData.password, name: formData.name.trim(), role: formData.accountType });
+        // If the user landed via /invite/<code>, the code was stashed in
+        // sessionStorage. Attach it to signup so the backend can record
+        // the referral. Cleared either way so a lingering code doesn't
+        // leak into a later, unrelated signup.
+        const referralCode = sessionStorage.getItem('dinki_referral_code') || undefined;
+        const result = await signup({
+          email: formData.email,
+          password: formData.password,
+          name: formData.name.trim(),
+          role: formData.accountType,
+          referralCode,
+        });
+        if (referralCode) sessionStorage.removeItem('dinki_referral_code');
         // Backend detected an inactive account with this email
         if (result.inactive_account) {
           setActivationFlow({ user_id: result.user_id, name: result.name });
