@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auth as authApi, users as usersApi, setToken, clearToken } from '../lib/api';
-import { clearCache } from '../hooks/useApi';
-import { connectSocket, disconnectSocket } from '../lib/socket';
+import { clearCache, invalidateCache } from '../hooks/useApi';
+import { connectSocket, disconnectSocket, getSocket } from '../lib/socket';
 
 const AuthContext = createContext(null);
 
@@ -28,14 +28,28 @@ export function AuthProvider({ children }) {
     return () => { cancelled = true; };
   }, []);
 
-  // Connect socket when user is authenticated
+  // Connect socket when user is authenticated and wire the global
+  // `notification:new` listener. Any push from the server — from an order,
+  // a job update, or an admin broadcast — invalidates the notifications
+  // cache so the list and the header badge reflect the new state without a
+  // manual reload.
   useEffect(() => {
-    if (user) {
-      connectSocket();
-    } else {
+    if (!user) {
       disconnectSocket();
+      return undefined;
     }
-    return () => disconnectSocket();
+
+    connectSocket();
+    const sock = getSocket();
+    const handler = () => {
+      invalidateCache('notifications', 'notifications-unread');
+    };
+    sock?.on('notification:new', handler);
+
+    return () => {
+      sock?.off('notification:new', handler);
+      disconnectSocket();
+    };
   }, [user]);
 
   const signup = useCallback(async ({ email, password, name, role }) => {

@@ -6,6 +6,8 @@ import BottomNav from './BottomNav';
 import Logo from './Logo';
 import { Menu, X, Bell, User, Users, Settings, HelpCircle, LogOut, MessageSquare, Heart, Store, Trophy, Newspaper, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { notifications as notifApi } from '../../lib/api';
+import { useApi, TTL } from '../../hooks/useApi';
 
 const pageVariants = {
   initial: { opacity: 0, x: 20 },
@@ -37,6 +39,16 @@ export default function Layout({ children, userRole }) {
 
   const { user, logout } = useAuth();
 
+  // Unread count feeds the bell badge. Cache key `notifications-unread` is
+  // the same one AuthContext invalidates on every `notification:new` socket
+  // event — so the badge updates live without polling.
+  const { data: unreadRes } = useApi(
+    'notifications-unread',
+    () => notifApi.unreadCount(),
+    { ttl: TTL.short, enabled: !!user },
+  );
+  const unreadCount = unreadRes?.data?.count || 0;
+
   const handleLogout = async () => {
     setDrawerOpen(false);
     await logout();
@@ -60,7 +72,11 @@ export default function Layout({ children, userRole }) {
         <div className="flex items-center gap-1">
           <button onClick={() => navigate('/notifications')} className="btn-touch relative p-2 rounded-xl hover:bg-gray-100 transition-colors">
             <Bell size={20} className="text-gray-600" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-gold-500 rounded-full" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-gold-500 text-white text-[10px] font-bold flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setDrawerOpen(true)}

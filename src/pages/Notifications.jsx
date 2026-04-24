@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Bell, Scissors, CreditCard, MessageSquare, Star, Package, CheckCircle, AlertCircle, Info, Loader2 } from 'lucide-react';
@@ -39,9 +39,17 @@ function isToday(dateStr) {
 export default function Notifications() {
   const navigate = useNavigate();
 
-  const { data: notifRes, loading } = useApi(
+  const { data: notifRes, loading, refresh } = useApi(
     'notifications', () => notifApi.list(), { ttl: TTL.short }
   );
+
+  // Always pull fresh on mount — a 30s cache window was hiding in-flight
+  // broadcasts. Real-time arrivals still work via the socket listener in
+  // AuthContext; this covers the "I opened the page manually" case.
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const rawData = notifRes?.data || {};
   const notifications = Array.isArray(rawData)
