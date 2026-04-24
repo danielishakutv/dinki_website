@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Bell, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Bell, ShieldCheck, Users } from 'lucide-react';
 
 /**
  * AdminLayout — inner shell for every /admin/* page.
@@ -14,6 +14,7 @@ import { LayoutDashboard, Bell, ShieldCheck } from 'lucide-react';
 
 const tabs = [
   { to: '/admin', end: true, icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
 ];
 

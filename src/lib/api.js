@@ -294,6 +294,24 @@ export const admin = {
   stats: () => request('/admin/stats'),
   broadcastNotification: (body) =>
     request('/admin/notifications/broadcast', { method: 'POST', body }),
+
+  // User management
+  listUsers: (params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.q) qs.set('q', params.q);
+    if (params.role) qs.set('role', params.role);
+    if (params.status) qs.set('status', params.status);
+    if (params.page) qs.set('page', params.page);
+    if (params.limit) qs.set('limit', params.limit);
+    const q = qs.toString();
+    return request(`/admin/users${q ? `?${q}` : ''}`);
+  },
+  getUser: (id) => request(`/admin/users/${id}`),
+  updateUser: (id, body) => request(`/admin/users/${id}`, { method: 'PATCH', body }),
+  resetUserPassword: (id) => request(`/admin/users/${id}/reset-password`, { method: 'POST' }),
+  setUserPassword: (id, newPassword) =>
+    request(`/admin/users/${id}/set-password`, { method: 'POST', body: { newPassword } }),
+  forceLogoutUser: (id) => request(`/admin/users/${id}/force-logout`, { method: 'POST' }),
 };
 
 export { getToken, setToken, clearToken };
