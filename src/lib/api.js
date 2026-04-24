@@ -312,6 +312,9 @@ export const admin = {
   setUserPassword: (id, newPassword) =>
     request(`/admin/users/${id}/set-password`, { method: 'POST', body: { newPassword } }),
   forceLogoutUser: (id) => request(`/admin/users/${id}/force-logout`, { method: 'POST' }),
+  anonymizeUser: (id) => request(`/admin/users/${id}/anonymize`, { method: 'POST' }),
+  hardDeleteUser: (id, confirmEmail) =>
+    request(`/admin/users/${id}/hard-delete`, { method: 'POST', body: { confirmEmail } }),
 };
 
 export { getToken, setToken, clearToken };

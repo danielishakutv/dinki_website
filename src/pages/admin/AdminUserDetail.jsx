@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Loader2, AlertCircle, ArrowLeft, Save, Mail, KeyRound, LogOut, UserX, UserCheck,
-  ShieldCheck, CheckCircle2, XCircle,
+  ShieldCheck, CheckCircle2, XCircle, EyeOff, Trash2,
 } from 'lucide-react';
 import { admin as adminApi } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -119,7 +119,15 @@ export default function AdminUserDetail() {
       <ProfileCard user={u} disabled={cannotTouch} onUpdated={onUpdated} />
       <CredentialsCard user={u} me={me} disabled={cannotTouch} onUpdated={onUpdated} />
       <RoleStatusCard user={u} me={me} isSelf={isSelf} disabled={cannotTouch} onUpdated={onUpdated} />
-      <DangerCard user={u} isSelf={isSelf} disabled={cannotTouch} onUpdated={onUpdated} onReload={load} />
+      <DangerCard
+        user={u}
+        me={me}
+        isSelf={isSelf}
+        disabled={cannotTouch}
+        onUpdated={onUpdated}
+        onReload={load}
+        onDeleted={() => navigate('/admin/users', { replace: true })}
+      />
     </div>
   );
 }
@@ -405,12 +413,17 @@ function RoleStatusCard({ user, me, isSelf, disabled, onUpdated }) {
 
 /* ---------------- Danger ---------------- */
 
-function DangerCard({ user, isSelf, disabled, onReload }) {
-  const [busy, setBusy] = useState(false);
+function DangerCard({ user, me, isSelf, disabled, onReload, onDeleted }) {
+  const iAmSuperadmin = me?.role === 'superadmin';
+  const alreadyAnonymized = user.account_status === 'anonymized';
+
+  const [busy, setBusy] = useState(null); // 'logout' | 'anonymize' | 'delete' | null
   const [msg, setMsg] = useState(null);
+  const [confirmAnon, setConfirmAnon] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   async function forceLogout() {
-    setBusy(true);
+    setBusy('logout');
     setMsg(null);
     try {
       const res = await adminApi.forceLogoutUser(user.id);
@@ -419,31 +432,165 @@ function DangerCard({ user, isSelf, disabled, onReload }) {
     } catch (err) {
       setMsg({ kind: 'err', text: err.message || 'Failed to force logout' });
     } finally {
-      setBusy(false);
+      setBusy(null);
+    }
+  }
+
+  async function doAnonymize() {
+    setConfirmAnon(false);
+    setBusy('anonymize');
+    setMsg(null);
+    try {
+      await adminApi.anonymizeUser(user.id);
+      setMsg({ kind: 'ok', text: 'Account anonymized. Personal data wiped, history kept.' });
+      onReload();
+    } catch (err) {
+      setMsg({ kind: 'err', text: err.message || 'Failed to anonymize' });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function doHardDelete(confirmEmail) {
+    setBusy('delete');
+    setMsg(null);
+    try {
+      await adminApi.hardDeleteUser(user.id, confirmEmail);
+      setConfirmDelete(false);
+      onDeleted();
+    } catch (err) {
+      setMsg({ kind: 'err', text: err.message || 'Failed to delete' });
+      setBusy(null);
     }
   }
 
   return (
     <Card title="Danger zone">
+      {/* Force logout */}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-800">Force logout</p>
           <p className="text-xs text-gray-500">Invalidates every active refresh token. The user will be kicked out on their next API call.</p>
         </div>
         <button type="button" onClick={forceLogout}
-          disabled={disabled || busy || isSelf}
+          disabled={disabled || busy != null || isSelf}
           className={dangerBtn}>
-          {busy ? <Loader2 size={14} className="animate-spin" /> : <LogOut size={14} />}
+          {busy === 'logout' ? <Loader2 size={14} className="animate-spin" /> : <LogOut size={14} />}
           Force logout
         </button>
       </div>
+
+      {/* Anonymize */}
+      <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100">
+        <div className="pr-3">
+          <p className="text-sm font-medium text-gray-800">Anonymize account</p>
+          <p className="text-xs text-gray-500">
+            NDPR/GDPR-style erasure. Wipes name, email, phone, avatar, bio. Orders,
+            reviews and messages stay but show "Deleted User". Irreversible.
+          </p>
+        </div>
+        <button type="button"
+          onClick={() => setConfirmAnon(true)}
+          disabled={disabled || busy != null || isSelf || alreadyAnonymized}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-semibold text-sm shadow-sm hover:bg-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+          {busy === 'anonymize' ? <Loader2 size={14} className="animate-spin" /> : <EyeOff size={14} />}
+          Anonymize
+        </button>
+      </div>
+      {alreadyAnonymized && (
+        <p className="text-[11px] text-amber-600 -mt-1">This account is already anonymized.</p>
+      )}
+
+      {/* Hard delete — superadmin only */}
+      {iAmSuperadmin && (
+        <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100">
+          <div className="pr-3">
+            <p className="text-sm font-medium text-gray-800">Hard delete</p>
+            <p className="text-xs text-gray-500">
+              Physically removes the user and every record linked to them —
+              orders, reviews, messages, storefront. Use for test accounts or
+              spam cleanup. <span className="font-semibold">Cannot be undone.</span>
+            </p>
+          </div>
+          <button type="button"
+            onClick={() => setConfirmDelete(true)}
+            disabled={disabled || busy != null || isSelf}
+            className={dangerBtn}>
+            {busy === 'delete' ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+            Hard delete
+          </button>
+        </div>
+      )}
+
       {msg && <Msg msg={msg} />}
+
       {isSelf && (
         <p className="mt-3 text-[11px] text-amber-600">
-          This is your own account. Force-logout is disabled here — use /settings instead.
+          This is your own account. Destructive actions are disabled — use /settings instead.
         </p>
       )}
+
+      {confirmAnon && (
+        <ConfirmDialog
+          title="Anonymize this user?"
+          body={`Personal data for ${user.name} (${user.email}) will be permanently wiped. Their orders, reviews and messages will remain as "Deleted User" so other users' history stays intact. This cannot be undone.`}
+          confirmLabel="Anonymize account"
+          onCancel={() => setConfirmAnon(false)}
+          onConfirm={doAnonymize}
+        />
+      )}
+
+      {confirmDelete && (
+        <TypedConfirmDialog
+          title="Permanently delete this user?"
+          body={`This will physically remove ${user.name} (${user.email}) AND every row that references them: orders, reviews, conversations, messages, storefront, referrals on the referrer side. Other users will lose shared history too. This cannot be undone.`}
+          expectedText={user.email}
+          confirmLabel="Delete permanently"
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={doHardDelete}
+        />
+      )}
     </Card>
+  );
+}
+
+/**
+ * Confirm dialog that requires the admin to re-type the target email
+ * verbatim before the action fires. Used for hard delete — the typing
+ * friction is intentional.
+ */
+function TypedConfirmDialog({ title, body, expectedText, confirmLabel, onCancel, onConfirm }) {
+  const [typed, setTyped] = useState('');
+  const matches = typed.trim().toLowerCase() === (expectedText || '').trim().toLowerCase();
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+        <h3 className="text-base font-heading font-semibold text-gray-900 mb-2">{title}</h3>
+        <p className="text-sm text-gray-600">{body}</p>
+        <p className="text-xs text-gray-500 mt-3">
+          Type <span className="font-mono font-semibold text-gray-800">{expectedText}</span> to confirm:
+        </p>
+        <input
+          type="text"
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          className="w-full mt-2 px-3 py-2 rounded-lg border border-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+          autoFocus
+        />
+        <div className="flex items-center justify-end gap-2 mt-5">
+          <button type="button" onClick={onCancel}
+            className="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100">
+            Cancel
+          </button>
+          <button type="button"
+            disabled={!matches}
+            onClick={() => onConfirm(typed)}
+            className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-semibold shadow-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
