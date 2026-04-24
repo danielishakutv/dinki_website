@@ -317,5 +317,10 @@ export const admin = {
     request(`/admin/users/${id}/hard-delete`, { method: 'POST', body: { confirmEmail } }),
 };
 
+// Support (help & contact)
+export const support = {
+  submitTicket: (body) => request('/support/ticket', { method: 'POST', body }),
+};
+
 export { getToken, setToken, clearToken };
-export default { auth, users, customers, jobs, storefronts, orders, reviews, favourites, conversations, notifications, uploads, admin };
+export default { auth, users, customers, jobs, storefronts, orders, reviews, favourites, conversations, notifications, uploads, admin, support };

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { HelpCircle, Send, MessageCircle, ChevronDown, CheckCircle } from 'lucide-react';
+import { HelpCircle, Send, MessageCircle, ChevronDown, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { support as supportApi } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const categories = [
   'Account Issue',
@@ -11,7 +13,10 @@ const categories = [
   'Other',
 ];
 
+const WHATSAPP_CHANNEL_URL = 'https://whatsapp.com/channel/0029Vb7XvGOKmCPXymA7Q03v';
+
 export default function HelpSupport() {
+  const { user } = useAuth();
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -19,17 +24,53 @@ export default function HelpSupport() {
     subject: '',
     message: '',
   });
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(null); // null | { ticketRef }
+  const [sending, setSending] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-  const handleSubmit = (e) => {
+  // Pre-fill with the authenticated user's name/email for convenience.
+  // They can still edit these — the form accepts any contact info.
+  useEffect(() => {
+    if (user) {
+      setForm((f) => ({
+        ...f,
+        name: f.name || user.name || '',
+        email: f.email || user.email || '',
+      }));
+    }
+  }, [user]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim() || !form.category || !form.subject.trim() || !form.message.trim()) return;
-    setSubmitted(true);
+    setSending(true);
+    setErrorMsg(null);
+    try {
+      const res = await supportApi.submitTicket({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        category: form.category,
+        subject: form.subject.trim(),
+        message: form.message.trim(),
+      });
+      setSubmitted({ ticketRef: res.data.ticketRef });
+    } catch (err) {
+      setErrorMsg(err.message || 'Could not submit ticket. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   const resetForm = () => {
-    setForm({ name: '', email: '', category: '', subject: '', message: '' });
-    setSubmitted(false);
+    setForm({
+      name: user?.name || '',
+      email: user?.email || '',
+      category: '',
+      subject: '',
+      message: '',
+    });
+    setSubmitted(null);
+    setErrorMsg(null);
   };
 
   return (
@@ -43,7 +84,7 @@ export default function HelpSupport() {
 
       {/* WhatsApp Banner */}
       <a
-        href="https://chat.whatsapp.com/dinki-africa-support"
+        href={WHATSAPP_CHANNEL_URL}
         target="_blank"
         rel="noopener noreferrer"
         className="block mb-6"
@@ -72,7 +113,7 @@ export default function HelpSupport() {
       </a>
 
       {/* Support Ticket Form */}
-      {submitted ? (
+      {submitted?.ticketRef ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -84,7 +125,7 @@ export default function HelpSupport() {
           <h2 className="text-lg font-heading font-bold text-gray-900 mb-2">Ticket Submitted</h2>
           <p className="text-sm text-gray-500 mb-1">Thank you for reaching out!</p>
           <p className="text-sm text-gray-400 mb-6">We'll get back to you within 24 hours via email.</p>
-          <p className="text-xs text-gray-300 mb-6">Reference: #DINKI-{Date.now().toString().slice(-6)}</p>
+          <p className="text-xs text-gray-300 mb-6">Reference: #{submitted.ticketRef}</p>
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={resetForm}
@@ -168,13 +209,21 @@ export default function HelpSupport() {
               />
             </div>
 
+            {errorMsg && (
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm">
+                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
             <motion.button
               whileTap={{ scale: 0.98 }}
               type="submit"
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white font-semibold text-sm shadow-sm transition-colors"
+              disabled={sending}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-sm shadow-sm transition-colors"
             >
-              <Send size={16} />
-              Submit Ticket
+              {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+              {sending ? 'Sending...' : 'Submit Ticket'}
             </motion.button>
           </form>
         </div>
