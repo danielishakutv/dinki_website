@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Send, Users, Scissors, Globe, User, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { admin as adminApi, users as usersApi } from '../../lib/api';
+import { Send, Users, Scissors, Globe, User, CheckCircle2, AlertCircle, Loader2, Mail } from 'lucide-react';
+import { admin as adminApi } from '../../lib/api';
 
 /**
  * AdminNotifications — compose and send a system notification.
@@ -20,6 +20,7 @@ export default function AdminNotifications() {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [link, setLink] = useState('');
+  const [alsoEmail, setAlsoEmail] = useState(false);
 
   const [status, setStatus] = useState({ state: 'idle' });
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -47,18 +48,25 @@ export default function AdminNotifications() {
       title: title.trim(),
       message: message.trim() || undefined,
       link: link.trim() || undefined,
+      email: alsoEmail || undefined,
     };
-  }, [scope, role, targetUser, title, message, link]);
+  }, [scope, role, targetUser, title, message, link, alsoEmail]);
 
   async function doSend() {
     setConfirmOpen(false);
     setStatus({ state: 'sending' });
     try {
       const res = await adminApi.broadcastNotification(payload);
-      setStatus({ state: 'sent', sent: res.data.sent, target: res.data.target });
+      setStatus({
+        state: 'sent',
+        sent: res.data.sent,
+        emailed: res.data.emailed || 0,
+        target: res.data.target,
+      });
       setTitle('');
       setMessage('');
       setLink('');
+      setAlsoEmail(false);
     } catch (err) {
       setStatus({ state: 'error', message: err.message || 'Failed to send' });
     }
@@ -69,7 +77,7 @@ export default function AdminNotifications() {
       <header>
         <h2 className="text-sm font-heading font-semibold text-gray-800 mb-1">Send notification</h2>
         <p className="text-xs text-gray-500">
-          In-app notification delivered instantly to selected users. No email, no SMS.
+          In-app notification delivered instantly to selected users. Optionally mirror it to their inbox.
         </p>
       </header>
 
@@ -126,6 +134,24 @@ export default function AdminNotifications() {
             className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
           />
         </Field>
+
+        <label className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-white cursor-pointer hover:border-gold-300 transition">
+          <input
+            type="checkbox"
+            checked={alsoEmail}
+            onChange={(e) => setAlsoEmail(e.target.checked)}
+            className="mt-0.5 w-4 h-4 accent-gold-500"
+          />
+          <span className="flex-1">
+            <span className="flex items-center gap-1.5 text-sm font-medium text-gray-800">
+              <Mail size={14} className="text-gold-600" /> Also send as email
+            </span>
+            <span className="block text-[11px] text-gray-500 mt-0.5">
+              Mirrors the notification into each recipient's inbox using the Dinki template.
+              In-app delivery is always on; this adds email on top.
+            </span>
+          </span>
+        </label>
       </section>
 
       {/* Status banner */}
@@ -134,7 +160,10 @@ export default function AdminNotifications() {
           <CheckCircle2 size={18} className="flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-medium">Delivered to {status.sent} {status.sent === 1 ? 'user' : 'users'}</p>
-            <p className="text-emerald-600/80 text-xs mt-0.5">Target: {status.target}</p>
+            <p className="text-emerald-600/80 text-xs mt-0.5">
+              Target: {status.target}
+              {status.emailed > 0 && ` · ${status.emailed} email${status.emailed === 1 ? '' : 's'} queued`}
+            </p>
           </div>
         </div>
       )}
@@ -225,9 +254,10 @@ function Field({ label, required, hint, children }) {
 }
 
 /**
- * Two-stage user picker: search by name/email/phone, pick one.
- * Backend search endpoint `/users/search` already supports role filtering,
- * we just don't restrict by role here so admins can message anyone.
+ * Two-stage user picker: search by name/email/phone/username, pick one.
+ * Uses the admin list endpoint so we can match ANY role (the generic
+ * /users/search hard-defaults the role filter to 'customer' for
+ * non-admin callers and was hiding tailors/admins from this picker).
  */
 function UserPicker({ value, onChange }) {
   const [q, setQ] = useState('');
@@ -240,8 +270,8 @@ function UserPicker({ value, onChange }) {
     setSearching(true);
     setErr(null);
     try {
-      const res = await usersApi.search(q.trim(), '');
-      setResults(Array.isArray(res.data) ? res.data : res.data?.users || []);
+      const res = await adminApi.listUsers({ q: q.trim(), limit: 10 });
+      setResults(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       setErr(e.message || 'Search failed');
       setResults([]);
