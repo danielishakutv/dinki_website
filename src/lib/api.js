@@ -315,6 +315,16 @@ export const admin = {
   anonymizeUser: (id) => request(`/admin/users/${id}/anonymize`, { method: 'POST' }),
   hardDeleteUser: (id, confirmEmail) =>
     request(`/admin/users/${id}/hard-delete`, { method: 'POST', body: { confirmEmail } }),
+
+  // Analytics
+  analytics: {
+    overview: (days = 30) => request(`/admin/analytics/overview?days=${days}`),
+    timeseries: (days = 90) => request(`/admin/analytics/timeseries?days=${days}`),
+    cohorts: (weeks = 8) => request(`/admin/analytics/cohorts?weeks=${weeks}`),
+    funnels: (days = 30) => request(`/admin/analytics/funnels?days=${days}`),
+    marketplace: (limit = 10) => request(`/admin/analytics/marketplace?limit=${limit}`),
+    referrals: (limit = 10) => request(`/admin/analytics/referrals?limit=${limit}`),
+  },
 };
 
 // Support (help & contact)

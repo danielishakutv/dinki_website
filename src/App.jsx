@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
+import MatomoRouteTracker from './components/MatomoRouteTracker';
 
 // Critical route — loaded eagerly
 import Landing from './pages/Landing';
@@ -38,6 +39,7 @@ const AdminHome = lazy(() => import('./pages/admin/AdminHome'));
 const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminUserDetail = lazy(() => import('./pages/admin/AdminUserDetail'));
+const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
 
 function PageLoader() {
   return (
@@ -90,7 +92,9 @@ export default function App() {
   }
 
   return (
-    <Routes>
+    <>
+      <MatomoRouteTracker />
+      <Routes>
       <Route path="/" element={user ? <Navigate to={user.onboarding_completed === false ? '/onboarding' : '/dashboard'} replace /> : <Landing />} />
       <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
       <Route path="/invite/:code" element={<Suspense fallback={<PageLoader />}><Invite /></Suspense>} />
@@ -130,6 +134,7 @@ export default function App() {
             sub-page is lazy-loaded and isolated from siblings. */}
         <Route path="/admin" element={<AdminOnlyRoute><AdminLayout /></AdminOnlyRoute>}>
           <Route index element={<AdminHome />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="users/:id" element={<AdminUserDetail />} />
           <Route path="notifications" element={<AdminNotifications />} />
@@ -138,6 +143,7 @@ export default function App() {
 
       {/* Public storefront — guest-viewable. Ranks below the static routes above. */}
       <Route path="/:handle" element={<Suspense fallback={<PageLoader />}><TailorStorefront userRole={null} /></Suspense>} />
-    </Routes>
+      </Routes>
+    </>
   );
 }

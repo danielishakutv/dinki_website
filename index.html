@@ -16,6 +16,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" /></noscript>
     <title>Dinki.africa — Tailoring Management & Marketplace</title>
+    <!-- Matomo (analytics.aictig.org, site id 4) -->
+    <!--
+      SPA-aware setup. The `_paq` queue is initialised here, but page-views
+      are fired from React on every route change (see src/lib/matomo.js +
+      src/components/MatomoRouteTracker.jsx). Tracking is gated to the
+      production hostname so local dev traffic doesn't pollute the data.
+    -->
+    <script>
+      (function () {
+        var _paq = window._paq = window._paq || [];
+        _paq.push(["setCookieDomain", "*.dinki.africa"]);
+        _paq.push(['enableLinkTracking']);
+        if (!/(^|\.)dinki\.africa$/i.test(window.location.hostname)) return;
+        var u = "https://analytics.aictig.org/";
+        _paq.push(['setTrackerUrl', u + 'matomo.php']);
+        _paq.push(['setSiteId', '4']);
+        var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+        g.async = true; g.src = u + 'matomo.js'; s.parentNode.insertBefore(g, s);
+      })();
+    </script>
+    <!-- End Matomo -->
   </head>
   <body class="antialiased">
     <div id="root"></div>
