@@ -39,10 +39,24 @@ export default function MatomoRouteTracker() {
     lastUserIdRef.current = next;
   }, [user?.id]);
 
-  // Pageview tracking. rAF defers until the new screen has had a chance to
-  // update document.title — most pages set it via a useEffect on mount, so
+  // Pageview tracking.
+  //
+  // The HTML snippet in index.html already fires a trackPageView for the
+  // initial URL (so the very first hit is captured even if React hasn't
+  // mounted yet — important for fast bounces and for Matomo's installation
+  // verifier). We skip our first effect-run here to avoid double-counting
+  // that initial pageview. Every subsequent React Router navigation does
+  // need to be tracked, so from the second run onward we fire normally.
+  //
+  // rAF defers until the new screen has had a chance to update
+  // document.title — most pages set it via a useEffect on mount, so
   // tracking on the same tick would catch the OLD title.
+  const firstRunRef = useRef(true);
   useEffect(() => {
+    if (firstRunRef.current) {
+      firstRunRef.current = false;
+      return undefined;
+    }
     const url = pathname + (search || '');
     const id = window.requestAnimationFrame(() => {
       trackPageView(url, document.title);

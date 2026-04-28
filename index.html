@@ -18,15 +18,20 @@
     <title>Dinki.africa — Tailoring Management & Marketplace</title>
     <!-- Matomo (analytics.aictig.org, site id 4) -->
     <!--
-      SPA-aware setup. The `_paq` queue is initialised here, but page-views
-      are fired from React on every route change (see src/lib/matomo.js +
-      src/components/MatomoRouteTracker.jsx). Tracking is gated to the
-      production hostname so local dev traffic doesn't pollute the data.
+      SPA-aware setup. We fire an IMMEDIATE trackPageView here so the very
+      first hit is captured without waiting on React boot + auth refresh —
+      both Matomo's installation verifier and real "bounce before render"
+      visitors depend on this. React then takes over for every subsequent
+      route change (src/components/MatomoRouteTracker.jsx) and skips its
+      own first emission to avoid double-counting this initial pageview.
+      Tracking is gated to the production hostname so local dev traffic
+      doesn't pollute the data.
     -->
     <script>
       (function () {
         var _paq = window._paq = window._paq || [];
         _paq.push(["setCookieDomain", "*.dinki.africa"]);
+        _paq.push(['trackPageView']);
         _paq.push(['enableLinkTracking']);
         if (!/(^|\.)dinki\.africa$/i.test(window.location.hostname)) return;
         var u = "https://analytics.aictig.org/";
