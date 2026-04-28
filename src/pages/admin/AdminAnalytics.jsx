@@ -158,7 +158,7 @@ function Kpis({ overview }) {
         icon={UserCheck}
         label="Customer activation"
         value={`${overview.activation.customer_rate_pct}%`}
-        sub={`${overview.activation.customers_activated}/${overview.activation.customer_signups} have measurements`}
+        sub={`${overview.activation.customers_activated}/${overview.activation.customer_signups} placed first order`}
         tone="gold"
       />
       <Stat
@@ -391,8 +391,8 @@ function Funnels({ data }) {
     { label: 'Email verified',     count: data.customer.email_verified },
     { label: 'Onboarded',          count: data.customer.onboarded },
     { label: 'Sent a message',     count: data.customer.sent_message },
-    { label: 'Has measurements',   count: data.customer.has_measurements, activation: true },
-    { label: 'Placed an order',    count: data.customer.placed_order },
+    { label: 'Has measurements',   count: data.customer.has_measurements },
+    { label: 'Placed an order',    count: data.customer.placed_order, activation: true },
   ];
   const tailor = [
     { label: 'Signed up',                count: data.tailor.signed_up },
