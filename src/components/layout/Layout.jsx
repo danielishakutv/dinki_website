@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import Logo from './Logo';
-import { Menu, X, Bell, User, Users, Settings, HelpCircle, LogOut, MessageSquare, Heart, Store, Trophy, Newspaper, ShieldCheck } from 'lucide-react';
+import { Menu, X, Bell, User, Users, Settings, HelpCircle, LogOut, MessageSquare, Heart, Store, Trophy, Newspaper, ShieldCheck, Compass, Ruler } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { notifications as notifApi } from '../../lib/api';
 import { useApi, TTL } from '../../hooks/useApi';
@@ -23,6 +23,8 @@ const pageTransition = {
 
 const drawerItems = [
   { to: '/profile', icon: User, label: 'Profile' },
+  { to: '/explore', icon: Compass, label: 'Explore Styles' },
+  { to: '/measurements', icon: Ruler, label: 'My Measurements' },
   { to: '/messages', icon: MessageSquare, label: 'Messages' },
   { to: '/favourites', icon: Heart, label: 'Favourites' },
   { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' },

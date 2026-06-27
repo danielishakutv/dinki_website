@@ -206,6 +206,47 @@ export const storefronts = {
   },
 };
 
+// Styles — the public "Pinterest for fashion" feed
+export const styles = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.category) qs.set('category', params.category);
+    if (params.tag) qs.set('tag', params.tag);
+    if (params.q) qs.set('q', params.q);
+    if (params.source_type) qs.set('source_type', params.source_type);
+    if (params.sort) qs.set('sort', params.sort);
+    if (params.page) qs.set('page', params.page);
+    if (params.limit) qs.set('limit', params.limit);
+    const q = qs.toString();
+    return request(`/styles${q ? `?${q}` : ''}`);
+  },
+  categories: () => request('/styles/categories'),
+  get: (id) => request(`/styles/${id}`),
+  toggleLike: (id) => request(`/styles/${id}/like`, { method: 'POST' }),
+  listComments: (id, params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set('page', params.page);
+    if (params.limit) qs.set('limit', params.limit);
+    const q = qs.toString();
+    return request(`/styles/${id}/comments${q ? `?${q}` : ''}`);
+  },
+  addComment: (id, body) => request(`/styles/${id}/comments`, { method: 'POST', body: { body } }),
+  deleteComment: (commentId) => request(`/styles/comments/${commentId}`, { method: 'DELETE' }),
+  create: (body) => request('/styles', { method: 'POST', body }),
+  remove: (id) => request(`/styles/${id}`, { method: 'DELETE' }),
+};
+
+// Measurement share links (public Dinki links + owner analytics)
+export const measurementShares = {
+  list: () => request('/measurement-shares'),
+  get: (id) => request(`/measurement-shares/${id}`),
+  create: (body) => request('/measurement-shares', { method: 'POST', body }),
+  update: (id, body) => request(`/measurement-shares/${id}`, { method: 'PATCH', body }),
+  remove: (id) => request(`/measurement-shares/${id}`, { method: 'DELETE' }),
+  analytics: (id) => request(`/measurement-shares/${id}/analytics`),
+  viewPublic: (token) => request(`/measurement-shares/public/${encodeURIComponent(token)}`),
+};
+
 // Orders
 export const orders = {
   place: (body) => request('/orders', { method: 'POST', body }),
@@ -345,4 +386,4 @@ export const referrals = {
 };
 
 export { getToken, setToken, clearToken };
-export default { auth, users, customers, jobs, storefronts, orders, reviews, favourites, conversations, notifications, uploads, admin, support, referrals };
+export default { auth, users, customers, jobs, storefronts, styles, measurementShares, orders, reviews, favourites, conversations, notifications, uploads, admin, support, referrals };

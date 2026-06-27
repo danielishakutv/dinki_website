@@ -1,171 +1,294 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ChevronLeft, Heart, Share2, Star, ShoppingBag, Ruler, MessageCircle, Palette } from 'lucide-react';
-import { marketplaceStyles } from '../data/mockData';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import {
+  Heart, Bookmark, Share2, MessageCircle, ArrowLeft, Loader2, Send,
+  Store, ShoppingBag, Check, Eye, Trash2,
+} from 'lucide-react';
+import FeedShell from '../components/styles/FeedShell';
+import StyleCard, { formatCount } from '../components/styles/StyleCard';
+import SmartImage from '../components/SmartImage';
+import { styles as stylesApi, favourites as favouritesApi } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 
-const styleDetails = {
-  'style-1': { description: 'A majestic Royal Agbada Set crafted from premium Guinea brocade with intricate hand-embroidery in gold thread. Perfect for weddings, naming ceremonies, and special occasions.', fabric: 'Guinea Brocade', deliveryTime: '2–3 weeks', sizes: ['S', 'M', 'L', 'XL', 'XXL'], includes: ['Agbada (outer robe)', 'Dashiki (inner shirt)', 'Sokoto (trousers)', 'Fila (cap)'] },
-  'style-2': { description: 'A chic Ankara Blazer Dress combining corporate elegance with African heritage. Features a structured blazer silhouette in vibrant Ankara print with gold button accents.', fabric: 'Premium Ankara Wax', deliveryTime: '1–2 weeks', sizes: ['XS', 'S', 'M', 'L', 'XL'], includes: ['Blazer dress', 'Matching belt', 'Fabric swatch'] },
-  'style-3': { description: 'An elegant Senegalese Kaftan in rich indigo with golden embroidery. Lightweight and flowing, this kaftan is perfect for formal gatherings and cultural events.', fabric: 'Premium Cotton Bazin', deliveryTime: '2–3 weeks', sizes: ['M', 'L', 'XL', 'XXL'], includes: ['Kaftan', 'Matching trousers', 'Kufi cap'] },
-  'style-4': { description: 'A vibrant Kente Midi Skirt handwoven by skilled artisans from Accra, Ghana. Each piece features authentic Kente patterns that celebrate African heritage.', fabric: 'Handwoven Kente', deliveryTime: '3–4 weeks', sizes: ['XS', 'S', 'M', 'L'], includes: ['Midi skirt', 'Matching headwrap'] },
-  'style-5': { description: 'A premium Dashiki Shirt featuring bold African patterns with modern tailoring. Made from breathable cotton, ideal for casual outings and celebrations.', fabric: 'African Print Cotton', deliveryTime: '1 week', sizes: ['S', 'M', 'L', 'XL', 'XXL'], includes: ['Dashiki shirt'] },
-  'style-6': { description: 'A breathtaking Aso-Oke Bridal Gown that blends traditional Nigerian weaving techniques with modern bridal elegance. Hand-adorned with Swarovski crystals and seed pearls.', fabric: 'Hand-woven Aso-Oke & Organza', deliveryTime: '4–6 weeks', sizes: ['Custom only'], includes: ['Bridal gown', 'Matching gele (headtie)', 'Ipele (shawl)', 'Dress bag'] },
-};
+function timeAgo(date) {
+  const s = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+  if (s < 60) return 'just now';
+  const m = Math.floor(s / 60); if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60); if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24); if (d < 7) return `${d}d`;
+  return new Date(date).toLocaleDateString();
+}
+
+function Avatar({ name, url, color, initials, size = 36 }) {
+  const fallback = initials || (name ? name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() : '?');
+  if (url) return <img src={url} alt={name} className="rounded-full object-cover flex-shrink-0" style={{ width: size, height: size }} />;
+  return (
+    <div className="rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+      style={{ width: size, height: size, background: color || '#0D9488' }}>
+      {fallback}
+    </div>
+  );
+}
 
 export default function StyleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [saved, setSaved] = useState(false);
-  const [selectedSize, setSelectedSize] = useState('');
+  const location = useLocation();
+  const { user } = useAuth();
 
-  const style = marketplaceStyles.find(s => s.id === id);
-  const details = styleDetails[id];
+  const [style, setStyle] = useState(null);
+  const [similar, setSimilar] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
 
-  if (!style) {
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
+  const [posting, setPosting] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await stylesApi.get(id);
+      setStyle(res.data);
+      setSimilar(res.data.similar || []);
+      setError('');
+    } catch (err) {
+      setError(err.message || 'Style not found');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [id]);
+
+  useEffect(() => {
+    stylesApi.listComments(id, { limit: 50 })
+      .then((r) => setComments(r.data?.comments || []))
+      .catch(() => {});
+  }, [id]);
+
+  const requireAuth = () => {
+    if (user) return true;
+    navigate(`/?auth=signup&next=${encodeURIComponent(location.pathname)}`);
+    return false;
+  };
+
+  const toggleLike = async () => {
+    if (!requireAuth()) return;
+    setStyle((s) => ({ ...s, liked: !s.liked, like_count: s.like_count + (s.liked ? -1 : 1) }));
+    try {
+      const res = await stylesApi.toggleLike(id);
+      setStyle((s) => ({ ...s, liked: res.data.liked, like_count: res.data.like_count }));
+    } catch {
+      load();
+    }
+  };
+
+  const toggleSave = async () => {
+    if (!requireAuth()) return;
+    setStyle((s) => ({ ...s, saved: !s.saved, save_count: s.save_count + (s.saved ? -1 : 1) }));
+    try {
+      await favouritesApi.toggle('style', id);
+    } catch {
+      load();
+    }
+  };
+
+  const share = async () => {
+    const url = `${window.location.origin}/style/${id}`;
+    const data = { title: style?.title, text: `Check out "${style?.title}" on Dinki Africa`, url };
+    if (navigator.share) { try { await navigator.share(data); } catch { /* cancelled */ } return; }
+    try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* ignore */ }
+  };
+
+  const postComment = async () => {
+    if (!requireAuth()) return;
+    const body = commentText.trim();
+    if (!body) return;
+    setPosting(true);
+    try {
+      const res = await stylesApi.addComment(id, body);
+      setComments((prev) => [res.data, ...prev]);
+      setStyle((s) => ({ ...s, comment_count: (s.comment_count || 0) + 1 }));
+      setCommentText('');
+    } catch { /* ignore */ }
+    setPosting(false);
+  };
+
+  const deleteComment = async (commentId) => {
+    try {
+      await stylesApi.deleteComment(commentId);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      setStyle((s) => ({ ...s, comment_count: Math.max(0, (s.comment_count || 1) - 1) }));
+    } catch { /* ignore */ }
+  };
+
+  const contactTailor = () => {
+    if (!requireAuth()) return;
+    if (style.tailor_id && style.tailor_slug) {
+      navigate(`/order/new?tailor=${style.tailor_id}&slug=${style.tailor_slug}&style=${style.id}`);
+    } else {
+      navigate('/leaderboard'); // browse tailors who can make a similar look
+    }
+  };
+
+  // --- similar-tile interactions (kept in local `similar` state) ---
+  const likeSimilar = async (s) => {
+    if (!requireAuth()) return;
+    setSimilar((prev) => prev.map((x) => x.id === s.id ? { ...x, liked: !x.liked, like_count: x.like_count + (x.liked ? -1 : 1) } : x));
+    try { const r = await stylesApi.toggleLike(s.id); setSimilar((prev) => prev.map((x) => x.id === s.id ? { ...x, liked: r.data.liked, like_count: r.data.like_count } : x)); } catch { /* ignore */ }
+  };
+  const saveSimilar = async (s) => {
+    if (!requireAuth()) return;
+    setSimilar((prev) => prev.map((x) => x.id === s.id ? { ...x, saved: !x.saved } : x));
+    try { await favouritesApi.toggle('style', s.id); } catch { /* ignore */ }
+  };
+
+  if (loading) {
+    return <FeedShell><div className="flex justify-center py-24"><Loader2 size={28} className="animate-spin text-gold-500" /></div></FeedShell>;
+  }
+  if (error || !style) {
     return (
-      <div className="p-8 text-center">
-        <p className="text-gray-500">Style not found.</p>
-        <button onClick={() => navigate(-1)} className="mt-3 text-gold-600 font-medium text-sm">Go back</button>
-      </div>
+      <FeedShell>
+        <div className="text-center py-24">
+          <p className="text-gray-500">{error || 'Style not found.'}</p>
+          <Link to="/explore" className="mt-3 inline-block text-gold-600 font-medium text-sm">Back to Explore</Link>
+        </div>
+      </FeedShell>
     );
   }
 
-  const info = details || {
-    description: `A beautiful ${style.title} crafted by ${style.designer}. Premium quality with attention to detail.`,
-    fabric: 'Premium Fabric',
-    deliveryTime: '2–3 weeks',
-    sizes: ['S', 'M', 'L', 'XL'],
-    includes: [style.title],
-  };
+  const orderable = style.tailor_id && style.tailor_slug;
 
   return (
-    <div className="max-w-4xl mx-auto pb-8">
-      {/* Image */}
-      <div className="relative aspect-[3/4] md:aspect-[16/10] bg-gray-100 overflow-hidden">
-        <img src={style.image} alt={style.title} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+    <FeedShell>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4">
+        <ArrowLeft size={16} /> Back
+      </button>
 
-        {/* Top nav */}
-        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
-            <ChevronLeft size={18} className="text-white" />
-          </button>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSaved(!saved)}
-              className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center"
-            >
-              <Heart size={16} className={saved ? 'text-red-400 fill-red-400' : 'text-white'} />
-            </button>
-            <button className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
-              <Share2 size={16} className="text-white" />
-            </button>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
+        {/* Image */}
+        <div>
+          <SmartImage src={style.image_url} fallbackSrc={style.thumb_url} alt={style.title} rounded="rounded-3xl" eager />
         </div>
 
-        {/* Category badge */}
-        <span className="absolute top-4 left-16 px-3 py-1 rounded-full text-xs font-semibold bg-white/80 backdrop-blur-sm text-gray-700">
-          {style.category}
-        </span>
-      </div>
+        {/* Info + actions */}
+        <div>
+          {style.category && (
+            <span className="inline-block px-3 py-1 rounded-full bg-gold-50 text-gold-700 text-xs font-semibold capitalize mb-3">
+              {style.category.replace(/-/g, ' ')}
+            </span>
+          )}
+          <h1 className="text-2xl sm:text-3xl font-heading font-bold text-gray-900">{style.title}</h1>
 
-      {/* Content */}
-      <div className="px-4 md:px-6 -mt-6 relative z-10 space-y-5">
-        {/* Title card */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <div className="flex items-start justify-between gap-3 mb-2">
+          {/* attribution */}
+          <div className="mt-3 flex items-center gap-3">
+            <Avatar name={style.tailor_name || style.source_name || 'Dinki'} url={style.tailor_avatar} color={style.tailor_avatar_color} initials={style.tailor_initials} />
             <div className="min-w-0">
-              <h1 className="text-lg md:text-xl font-heading font-bold text-gray-900">{style.title}</h1>
-              <p className="text-sm text-gray-500">by {style.designer}</p>
+              {style.tailor_name ? (
+                <Link to={`/${style.tailor_slug}`} className="text-sm font-semibold text-gray-900 hover:text-gold-600">{style.tailor_name}</Link>
+              ) : (
+                <p className="text-sm font-semibold text-gray-900">{style.source_name || 'Dinki Curated'}</p>
+              )}
+              <p className="text-xs text-gray-400">
+                {style.tailor_name ? 'Tailor on Dinki' : style.source_type === 'external' ? 'Inspiration' : 'Curated style'}
+                {' · '}<Eye size={11} className="inline -mt-0.5" /> {formatCount(style.view_count)} views
+              </p>
             </div>
-            <p className="text-xl md:text-2xl font-heading font-bold text-gold-600 flex-shrink-0">
-              ₦{style.price.toLocaleString()}
-            </p>
           </div>
 
-          {/* Colors */}
-          <div className="flex items-center gap-2 mt-3">
-            <Palette size={14} className="text-gray-400" />
-            <div className="flex gap-1.5">
-              {style.colors.map(color => (
-                <span key={color} className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">{color}</span>
+          {style.description && <p className="mt-4 text-sm text-gray-600 leading-relaxed">{style.description}</p>}
+
+          {style.tags?.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {style.tags.map((t) => (
+                <Link key={t} to={`/explore?tag=${encodeURIComponent(t)}`} className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 text-xs hover:bg-gray-200 transition">#{t}</Link>
               ))}
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Description */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <h3 className="font-heading font-semibold text-gray-800 mb-2">About this Style</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">{info.description}</p>
-        </div>
-
-        {/* Details */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-3">
-          <h3 className="font-heading font-semibold text-gray-800">Details</h3>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p className="text-xs text-gray-400 mb-0.5">Fabric</p>
-              <p className="text-gray-700 font-medium">{info.fabric}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400 mb-0.5">Delivery Time</p>
-              <p className="text-gray-700 font-medium">{info.deliveryTime}</p>
-            </div>
+          {/* engagement actions */}
+          <div className="mt-6 flex items-center gap-2">
+            <button onClick={toggleLike} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition ${style.liked ? 'bg-rose-500 text-white border-rose-500' : 'bg-white text-gray-700 border-gray-200 hover:border-rose-300'}`}>
+              <Heart size={16} className={style.liked ? 'fill-current' : ''} /> {formatCount(style.like_count)}
+            </button>
+            <button onClick={toggleSave} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition ${style.saved ? 'bg-gold-500 text-white border-gold-500' : 'bg-white text-gray-700 border-gray-200 hover:border-gold-300'}`}>
+              <Bookmark size={16} className={style.saved ? 'fill-current' : ''} /> {style.saved ? 'Saved' : 'Save'}
+            </button>
+            <button onClick={share} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border bg-white text-gray-700 border-gray-200 hover:border-gray-300 transition">
+              {copied ? <Check size={16} className="text-green-600" /> : <Share2 size={16} />} {copied ? 'Copied' : 'Share'}
+            </button>
           </div>
 
-          {info.includes.length > 1 && (
-            <div>
-              <p className="text-xs text-gray-400 mb-1.5">This set includes</p>
-              <div className="flex flex-wrap gap-1.5">
-                {info.includes.map(item => (
-                  <span key={item} className="text-xs px-2.5 py-1 rounded-lg bg-gold-50 text-gold-700 border border-gold-100 font-medium">
-                    {item}
-                  </span>
-                ))}
+          {/* contact / order */}
+          <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
+            <button onClick={contactTailor} className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gold-500 text-white text-sm font-semibold hover:bg-gold-600 shadow-sm shadow-gold-500/20 transition">
+              <ShoppingBag size={16} /> {orderable ? 'Order this style' : 'Find a tailor to make this'}
+            </button>
+            {orderable && (
+              <Link to={`/${style.tailor_slug}`} className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-gray-700 text-sm font-semibold border border-gray-200 hover:border-gray-300 transition">
+                <Store size={16} /> View storefront
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Comments */}
+      <div className="mt-10 max-w-2xl">
+        <h2 className="flex items-center gap-2 text-lg font-heading font-bold text-gray-900 mb-4">
+          <MessageCircle size={18} className="text-gold-500" /> Comments
+          <span className="text-sm font-normal text-gray-400">({formatCount(style.comment_count)})</span>
+        </h2>
+
+        <div className="flex items-start gap-2.5 mb-5">
+          <input
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && postComment()}
+            placeholder={user ? 'Add a comment…' : 'Log in to comment…'}
+            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20"
+          />
+          <button onClick={postComment} disabled={posting || !commentText.trim()} className="px-4 py-2.5 rounded-xl bg-gold-500 text-white disabled:opacity-50 hover:bg-gold-600 transition">
+            {posting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {comments.length === 0 && <p className="text-sm text-gray-400">Be the first to comment.</p>}
+          {comments.map((c) => (
+            <div key={c.id} className="flex items-start gap-3 group">
+              <Avatar name={c.author_name} url={c.author_avatar} color={c.author_avatar_color} initials={c.author_initials} size={32} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-900">{c.author_name}</span>
+                  <span className="text-xs text-gray-400">{timeAgo(c.created_at)}</span>
+                  {user?.id === c.user_id && (
+                    <button onClick={() => deleteComment(c.id)} className="ml-auto opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">{c.body}</p>
               </div>
             </div>
-          )}
+          ))}
         </div>
+      </div>
 
-        {/* Size Selection */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <h3 className="font-heading font-semibold text-gray-800 mb-3">Select Size</h3>
-          <div className="flex flex-wrap gap-2">
-            {info.sizes.map(size => (
-              <button
-                key={size}
-                onClick={() => setSelectedSize(size)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition border min-w-[48px] ${
-                  selectedSize === size
-                    ? 'bg-gold-500 text-white border-gold-500 shadow-sm'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gold-300'
-                }`}
-              >
-                {size}
-              </button>
+      {/* More like this */}
+      {similar.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-lg font-heading font-bold text-gray-900 mb-4">More like this</h2>
+          <div className="columns-2 md:columns-3 lg:columns-4 gap-3 sm:gap-4">
+            {similar.map((s) => (
+              <StyleCard key={s.id} style={s} onLike={likeSimilar} onSave={saveSimilar} />
             ))}
           </div>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3 pb-4">
-          <button
-            onClick={() => navigate(`/order/new?style=${style.id}`)}
-            className="flex-1 py-3.5 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition shadow-sm shadow-gold-500/20 flex items-center justify-center gap-2"
-          >
-            <ShoppingBag size={16} />
-            Order This Style
-          </button>
-          <button
-            onClick={() => navigate('/messages/1')}
-            className="px-5 py-3.5 bg-white text-gray-700 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 transition flex items-center gap-2"
-          >
-            <MessageCircle size={16} />
-          </button>
-        </div>
-      </div>
-    </div>
+      )}
+    </FeedShell>
   );
 }

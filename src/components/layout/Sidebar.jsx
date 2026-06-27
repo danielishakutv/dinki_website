@@ -1,12 +1,13 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle, LogOut, MapPin, ClipboardList, User, MessageSquare, Heart, Bell, Store, Trophy, Newspaper, ShieldCheck } from 'lucide-react';
+import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle, LogOut, MapPin, ClipboardList, User, MessageSquare, Heart, Bell, Store, Trophy, Newspaper, ShieldCheck, Compass, Ruler } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Logo from './Logo';
 import { useAuth } from '../../contexts/AuthContext';
 
 const getTailorNav = (storefrontSlug) => [
   { to: '/dashboard', icon: Home, label: 'Dashboard' },
+  { to: '/explore', icon: Compass, label: 'Explore Styles' },
   { to: storefrontSlug ? `/t/${storefrontSlug}` : '/dashboard', icon: Store, label: 'My Storefront' },
   { to: '/jobs', icon: Scissors, label: 'Jobs & Orders' },
   { to: '/customers', icon: Users, label: 'Customers' },
@@ -17,7 +18,9 @@ const getTailorNav = (storefrontSlug) => [
 
 const customerNav = [
   { to: '/dashboard', icon: Home, label: 'Home' },
+  { to: '/explore', icon: Compass, label: 'Explore Styles' },
   { to: '/orders', icon: ClipboardList, label: 'Orders' },
+  { to: '/measurements', icon: Ruler, label: 'My Measurements' },
   { to: '/near-me', icon: MapPin, label: 'Near Me' },
   { to: '/marketplace', icon: ShoppingBag, label: 'Marketplace' },
   { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' },

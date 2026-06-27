@@ -26,6 +26,9 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const HelpSupport = lazy(() => import('./pages/HelpSupport'));
 const TailorStorefront = lazy(() => import('./pages/TailorStorefront'));
 const StyleDetail = lazy(() => import('./pages/StyleDetail'));
+const Explore = lazy(() => import('./pages/Explore'));
+const MyMeasurements = lazy(() => import('./pages/MyMeasurements'));
+const PublicMeasurement = lazy(() => import('./pages/PublicMeasurement'));
 const PlaceOrder = lazy(() => import('./pages/PlaceOrder'));
 const NewJobPage = lazy(() => import('./pages/NewJobPage'));
 const Referral = lazy(() => import('./pages/Referral'));
@@ -100,6 +103,13 @@ export default function App() {
       <Route path="/invite/:code" element={<Suspense fallback={<PageLoader />}><Invite /></Suspense>} />
       <Route path="/onboarding" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Onboarding /></Suspense></ProtectedRoute>} />
 
+      {/* Public discovery — browsable by guests and members alike. FeedShell inside
+          each renders the right chrome (app nav when logged in, public header when not). */}
+      <Route path="/explore" element={<Suspense fallback={<PageLoader />}><Explore /></Suspense>} />
+      <Route path="/style/:id" element={<Suspense fallback={<PageLoader />}><StyleDetail /></Suspense>} />
+      {/* Public, no-auth measurement share page */}
+      <Route path="/m/:token" element={<Suspense fallback={<PageLoader />}><PublicMeasurement /></Suspense>} />
+
       {/* Protected app shell. Static paths here out-rank /:handle below in React Router's ranking,
           so e.g. /dashboard matches Dashboard, not the public storefront. */}
       <Route element={<ProtectedAppLayout userRole={userRole} />}>
@@ -107,6 +117,7 @@ export default function App() {
         <Route path="/home" element={<CustomerDashboard tab="home" />} />
         <Route path="/orders" element={<CustomerDashboard tab="orders" />} />
         <Route path="/near-me" element={<CustomerDashboard tab="near-me" />} />
+        <Route path="/measurements" element={<MyMeasurements />} />
         <Route path="/customers" element={<Customers />} />
         <Route path="/customers/new" element={<NewCustomerPage />} />
         <Route path="/customers/:id" element={<CustomerDetail />} />

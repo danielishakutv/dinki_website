@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Scissors, ShoppingBag, MapPin, ClipboardList, Plus, Ruler, Store } from 'lucide-react';
+import { Home, Scissors, ShoppingBag, MapPin, ClipboardList, Plus, Ruler, Store, Compass } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -11,14 +11,14 @@ const tailorLeft = [
 
 const getTailorRight = (storefrontSlug) => [
   { to: storefrontSlug ? `/t/${storefrontSlug}` : '/dashboard', icon: Store, label: 'Store' },
-  { to: '/marketplace', icon: ShoppingBag, label: 'Market' },
+  { to: '/explore', icon: Compass, label: 'Explore' },
 ];
 
 const customerItems = [
   { to: '/dashboard', icon: Home, label: 'Home' },
+  { to: '/explore', icon: Compass, label: 'Explore' },
   { to: '/orders', icon: ClipboardList, label: 'Orders' },
   { to: '/near-me', icon: MapPin, label: 'Near Me' },
-  { to: '/marketplace', icon: ShoppingBag, label: 'Market' },
 ];
 
 function NavItem({ to, icon: Icon, label, end, onNavClick }) {

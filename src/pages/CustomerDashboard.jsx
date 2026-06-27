@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingBag, MapPin, Star, Heart, MessageCircle, Sparkles, Clock, Store, ChevronRight, Search, Shirt, Gift } from 'lucide-react';
 import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
+import ExploreBanner from '../components/styles/ExploreBanner';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function CustomerDashboard({ tab = 'home' }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [savedTailors, setSavedTailors] = useState([]);
 
   const customerData = {
@@ -45,10 +48,12 @@ export default function CustomerDashboard({ tab = 'home' }) {
               {/* Greeting */}
               <div>
                 <h1 className="text-2xl md:text-3xl font-heading font-bold text-gray-900">
-                  Hello, {customerData.name.split(' ')[0]}
+                  Hello, {(user?.name || customerData.name).split(' ')[0]}
                 </h1>
                 <p className="text-sm text-gray-400 mt-1">Find tailors, track orders, and explore styles.</p>
               </div>
+
+              <ExploreBanner />
 
               {/* Quick Actions */}
               <div className="grid grid-cols-3 md:grid-cols-4 gap-2.5">

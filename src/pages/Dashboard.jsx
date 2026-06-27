@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, Lightbulb, Plus, MessageCircle, UserPlus, Share2, Loader2 } from 'lucide-react';
 import SummaryCards from '../components/dashboard/SummaryCards';
 import RecentActivity from '../components/dashboard/RecentActivity';
+import ExploreBanner from '../components/styles/ExploreBanner';
 import { jobs as jobsApi, customers as customersApi } from '../lib/api';
 import { useApi, TTL } from '../hooks/useApi';
 import { useAuth } from '../contexts/AuthContext';
@@ -68,6 +69,8 @@ export default function Dashboard() {
 
       {/* Summary Cards */}
       <SummaryCards jobs={jobs} customers={customers} />
+
+      <ExploreBanner />
 
       {/* Quick Actions */}
       <motion.div

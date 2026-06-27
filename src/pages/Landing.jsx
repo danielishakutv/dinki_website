@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import Logo from '../components/layout/Logo';
 import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
+import LandingTrending from '../components/styles/LandingTrending';
 import { useAuth } from '../contexts/AuthContext';
 import { auth as authApi } from '../lib/api';
 
@@ -93,7 +94,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
         }
         setOtpStep(true);
       } else {
-        await login({ email: formData.email, password: formData.password, rejectRoles: ['customer'] });
+        await login({ email: formData.email, password: formData.password });
         onSuccess();
       }
     } catch (err) {
@@ -500,7 +501,7 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
                 </div>
               )}
 
-              {(customerGated || (isSignup && formData.accountType === 'customer')) ? (
+              {customerGated ? (
                 <div style={{
                   padding: '28px 20px', borderRadius: 16,
                   background: 'linear-gradient(135deg, #fff8ec 0%, #fff 100%)',
@@ -1016,27 +1017,11 @@ export default function Landing() {
               </h2>
               <p className="text-gray-600 mt-2 font-body">What's hot right now in African fashion</p>
             </div>
-            <button className="hidden md:flex items-center gap-2 px-6 py-2 text-gold-500 hover:text-gold-600 transition font-heading font-semibold group">
+            <a href="/explore" className="hidden md:flex items-center gap-2 px-6 py-2 text-gold-500 hover:text-gold-600 transition font-heading font-semibold group">
               View More <ChevronRight size={20} className="group-hover:translate-x-1 transition" />
-            </button>
+            </a>
           </motion.div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {trendingStyles.map((style, index) => (
-              <motion.div key={style.id} className="group cursor-pointer" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: index * 0.1 }} viewport={{ once: true }}>
-                <div className="relative h-48 md:h-56 rounded-lg mb-3 overflow-hidden shadow-md group-hover:shadow-xl transition">
-                  <img src={style.image} alt={style.name} className="w-full h-full object-cover group-hover:scale-110 transition duration-300" />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition" />
-                </div>
-                <h3 className="font-heading font-bold text-gray-800 group-hover:text-gold-500 transition">{style.name}</h3>
-                <p className="text-teal-600 font-body text-sm">Custom Tailored</p>
-              </motion.div>
-            ))}
-          </div>
-          <motion.div className="flex md:hidden mt-8" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.6 }} viewport={{ once: true }}>
-            <button className="w-full py-3 border-2 border-gold-500 text-gold-500 rounded-lg hover:bg-gold-50 transition font-heading font-semibold flex items-center justify-center gap-2">
-              View More Styles <ChevronRight size={20} />
-            </button>
-          </motion.div>
+          <LandingTrending />
         </div>
       </section>
 
