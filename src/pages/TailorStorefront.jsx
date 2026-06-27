@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, MapPin, MessageCircle, Heart, ChevronLeft, Share2, Image, ShoppingBag, Edit3, Plus, Trash2, Settings, Eye, Loader2, Camera, Move, Check, X, UserPlus, Sparkles, Shield, Clock, Users } from 'lucide-react';
 import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
@@ -11,7 +11,7 @@ export default function TailorStorefront({ userRole, editable = false }) {
   const { handle } = useParams();
   const slug = handle;
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
 
   const [tailor, setTailor] = useState(null);
   const [portfolio, setPortfolio] = useState([]);
@@ -303,7 +303,12 @@ export default function TailorStorefront({ userRole, editable = false }) {
   };
 
   // Wizard completion handler — keep the user on whichever view they opened it from.
-  const handleSetupComplete = (newSlug) => {
+  const handleSetupComplete = async (newSlug) => {
+    // Sync the auth profile FIRST so user.storefront_slug and the setup flag
+    // reflect what we just saved. Without this the nav links and isOwnSlug keep
+    // pointing at the OLD slug; clicking "My Storefront" then 404s the renamed
+    // slug, which flips needsSetup back on and restarts the wizard from scratch.
+    await refreshProfile();
     if (newSlug && newSlug !== slug) {
       const prefix = editable ? '/t/' : '/';
       navigate(`${prefix}${newSlug}`, { replace: true });
@@ -320,10 +325,22 @@ export default function TailorStorefront({ userRole, editable = false }) {
     );
   }
 
-  // Owner needs setup: API error on own slug OR storefront not set up yet
-  const needsSetup = isOwnSlug && (!tailor || !tailor.storefront_setup_completed);
+  // Owner needs setup ONLY when we've positively loaded their storefront and it
+  // isn't set up yet. A failed/empty load (null tailor — e.g. a transient error
+  // or a stale 404 slug) must NOT force the wizard, or it restarts setup that
+  // was already saved. The signup flow always creates the tailor_profile row, so
+  // a genuine first-time owner's slug resolves; only the not-set-up flag gates.
+  const needsSetup = isOwnSlug && !!tailor && !tailor.storefront_setup_completed;
   if (needsSetup) {
     return <StorefrontSetupWizard user={user} slug={slug} onComplete={handleSetupComplete} />;
+  }
+
+  // Owner editor (/t/:handle) landed on a slug that 404s while the profile knows
+  // a different, current slug — the link is stale (slug was renamed). Reconcile to
+  // the real slug instead of a dead-end "not found" or a wrongful setup restart.
+  // Safe from loops: after redirect slug === userSlug, so this condition is false.
+  if (editable && error && !tailor && userSlug && userSlug !== slug) {
+    return <Navigate to={`/t/${userSlug}`} replace />;
   }
 
   if (error || !tailor) {
