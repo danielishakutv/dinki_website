@@ -27,6 +27,7 @@ const HelpSupport = lazy(() => import('./pages/HelpSupport'));
 const TailorStorefront = lazy(() => import('./pages/TailorStorefront'));
 const StyleDetail = lazy(() => import('./pages/StyleDetail'));
 const Explore = lazy(() => import('./pages/Explore'));
+const AddStyle = lazy(() => import('./pages/AddStyle'));
 const MyMeasurements = lazy(() => import('./pages/MyMeasurements'));
 const PublicMeasurement = lazy(() => import('./pages/PublicMeasurement'));
 const PlaceOrder = lazy(() => import('./pages/PlaceOrder'));
@@ -118,6 +119,7 @@ export default function App() {
         <Route path="/orders" element={<CustomerDashboard tab="orders" />} />
         <Route path="/near-me" element={<CustomerDashboard tab="near-me" />} />
         <Route path="/measurements" element={<MyMeasurements />} />
+        <Route path="/styles/new" element={<AddStyle />} />
         <Route path="/customers" element={<Customers />} />
         <Route path="/customers/new" element={<NewCustomerPage />} />
         <Route path="/customers/:id" element={<CustomerDetail />} />

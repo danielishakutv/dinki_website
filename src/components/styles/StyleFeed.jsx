@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, TrendingUp, Clock, Loader2, Sparkles } from 'lucide-react';
+import { Search, TrendingUp, Clock, Loader2, Sparkles, Plus } from 'lucide-react';
 import { styles as stylesApi, favourites as favouritesApi } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import StyleCard from './StyleCard';
@@ -120,14 +120,24 @@ export default function StyleFeed({ heading = 'Explore Styles', subheading, defa
   return (
     <div>
       {/* Header */}
-      <div className="mb-5">
-        {heading && (
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles size={20} className="text-gold-500" />
-            <h1 className="text-xl sm:text-2xl font-heading font-bold text-gray-900">{heading}</h1>
-          </div>
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div>
+          {heading && (
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles size={20} className="text-gold-500" />
+              <h1 className="text-xl sm:text-2xl font-heading font-bold text-gray-900">{heading}</h1>
+            </div>
+          )}
+          {subheading && <p className="text-sm text-gray-500">{subheading}</p>}
+        </div>
+        {(user?.role === 'tailor' || user?.role === 'admin' || user?.role === 'superadmin') && (
+          <button
+            onClick={() => navigate('/styles/new')}
+            className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gold-500 text-white text-sm font-semibold hover:bg-gold-600 shadow-sm shadow-gold-500/20 transition"
+          >
+            <Plus size={16} /> <span className="hidden sm:inline">Add Style</span>
+          </button>
         )}
-        {subheading && <p className="text-sm text-gray-500">{subheading}</p>}
       </div>
 
       {/* Controls */}

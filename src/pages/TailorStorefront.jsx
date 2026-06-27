@@ -147,7 +147,9 @@ export default function TailorStorefront({ userRole, editable = false }) {
     try {
       const uploadRes = await uploadsApi.image(newWorkFile);
       const imageUrl = uploadRes.data.url;
-      await storefrontsApi.addPortfolio({ title: newWorkTitle.trim(), image_url: imageUrl });
+      // thumb_url keeps the mirrored feed tile light; this also surfaces on the
+      // public Explore feed automatically (source_type='tailor').
+      await storefrontsApi.addPortfolio({ title: newWorkTitle.trim(), image_url: imageUrl, thumb_url: uploadRes.data.thumbnail });
       setShowAddWork(false);
       setNewWorkTitle('');
       setNewWorkFile(null);
