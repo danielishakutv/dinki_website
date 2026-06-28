@@ -49,6 +49,27 @@ async function refreshAccessToken() {
   return refreshPromise;
 }
 
+// fetch() that aborts after `ms` and turns transport failures (offline, CORS,
+// dropped connection, timeout) into a clear, retryable error instead of the
+// opaque "Failed to fetch".
+async function fetchWithTimeout(url, opts, ms = 20000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...opts, signal: controller.signal });
+  } catch (err) {
+    const e = new Error(
+      err && err.name === 'AbortError'
+        ? 'The request timed out. Please check your connection and try again.'
+        : 'Network error — please check your connection and try again.'
+    );
+    e.code = 'NETWORK_ERROR';
+    throw e;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
 async function request(endpoint, options = {}) {
   const { body, method = 'GET', headers: customHeaders = {}, raw = false } = options;
 
@@ -62,30 +83,40 @@ async function request(endpoint, options = {}) {
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
-  let res = await fetch(`${API_URL}${endpoint}`, {
+  const fetchOpts = {
     method,
     headers,
     credentials: 'include',
     body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
-  });
+  };
+
+  let res = await fetchWithTimeout(`${API_URL}${endpoint}`, fetchOpts);
 
   // If 401 and we have a token, try refresh once
   if (res.status === 401 && accessToken) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
-      res = await fetch(`${API_URL}${endpoint}`, {
-        method,
-        headers,
-        credentials: 'include',
-        body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
-      });
+      res = await fetchWithTimeout(`${API_URL}${endpoint}`, { ...fetchOpts, headers });
     }
   }
 
   if (raw) return res;
 
-  const data = await res.json();
+  // A proxy 502/504 (or any non-JSON body) must not surface as a confusing
+  // JSON parse error — map it to a clear server-error message.
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    if (!res.ok) {
+      const e = new Error(`The server had a problem (${res.status}). Please try again in a moment.`);
+      e.code = 'SERVER_ERROR';
+      e.status = res.status;
+      throw e;
+    }
+    data = {};
+  }
 
   if (!res.ok) {
     const err = new Error(data.error?.message || 'Request failed');

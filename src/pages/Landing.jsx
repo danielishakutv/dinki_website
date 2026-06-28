@@ -102,6 +102,8 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
         setOtpStep(true);
       } else if (err.code === 'ROLE_NOT_PERMITTED') {
         setCustomerGated(true);
+      } else if (err.code === 'EMAIL_EXISTS') {
+        setError('This email already has an account. Try logging in instead — or use "Forgot password" if you can\'t remember it.');
       } else {
         setError(err.message || 'Something went wrong. Please try again.');
       }
