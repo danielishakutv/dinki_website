@@ -716,7 +716,9 @@ export default function Landing() {
       navigate(next, { replace: true });
       return;
     }
-    navigate('/dashboard');
+    // Send through "/" so the role-aware redirect runs (admins → /admin,
+    // tailors/customers → /dashboard or /onboarding).
+    navigate('/', { replace: true });
   };
 
   const sliderImages = [

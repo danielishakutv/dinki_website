@@ -27,6 +27,15 @@ const customerNav = [
   { to: '/news', icon: Newspaper, label: 'News & Articles' },
 ];
 
+// Admins are not tailors/customers — their main nav is the admin console + Explore.
+const adminNav = [
+  { to: '/admin', icon: ShieldCheck, label: 'Admin Dashboard', end: true },
+  { to: '/admin/users', icon: Users, label: 'Users' },
+  { to: '/admin/analytics', icon: Trophy, label: 'Analytics' },
+  { to: '/admin/notifications', icon: Bell, label: 'Broadcast' },
+  { to: '/explore', icon: Compass, label: 'Explore Styles' },
+];
+
 const bottomNav = [
   { to: '/messages', icon: MessageSquare, label: 'Messages' },
   { to: '/favourites', icon: Heart, label: 'Favourites' },
@@ -67,13 +76,13 @@ export default function Sidebar({ userRole }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const slug = user?.storefront_slug || user?.tailor_profile?.storefront_slug;
-  const mainNav = userRole === 'customer' ? customerNav : getTailorNav(slug);
-  const homeRoute = '/dashboard';
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  const mainNav = isAdmin ? adminNav : userRole === 'customer' ? customerNav : getTailorNav(slug);
+  const homeRoute = isAdmin ? '/admin' : '/dashboard';
 
-  const profileName = user?.name || (userRole === 'tailor' ? 'Tailor' : 'Customer');
+  const profileName = user?.name || (isAdmin ? 'Admin' : userRole === 'tailor' ? 'Tailor' : 'Customer');
   const profileInitials = profileName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-  const profileRole = userRole === 'customer' ? 'Customer' : 'Master Tailor';
+  const profileRole = isAdmin ? 'Administrator' : userRole === 'customer' ? 'Customer' : 'Master Tailor';
 
   const handleLogout = async () => {
     await logout();
@@ -104,16 +113,6 @@ export default function Sidebar({ userRole }) {
         {bottomNav.map((item) => (
           <SideLink key={item.to} {...item} />
         ))}
-
-        {isAdmin && (
-          <>
-            <div className="my-6 border-t border-gray-100" />
-            <p className="px-4 mb-2 text-[10px] font-semibold tracking-wider uppercase text-gray-400">
-              Staff
-            </p>
-            <SideLink to="/admin" icon={ShieldCheck} label="Admin" />
-          </>
-        )}
       </nav>
 
       {/* User Profile Mini & Logout */}

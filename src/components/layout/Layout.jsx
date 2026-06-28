@@ -59,8 +59,8 @@ export default function Layout({ children, userRole }) {
 
   const isTailor = userRole === 'tailor';
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
-  const profileName = user?.name || (isTailor ? 'Tailor' : 'Customer');
-  const profileRole = isTailor ? 'Master Tailor' : 'Customer';
+  const profileName = user?.name || (isAdmin ? 'Admin' : isTailor ? 'Tailor' : 'Customer');
+  const profileRole = isAdmin ? 'Administrator' : isTailor ? 'Master Tailor' : 'Customer';
   const profileInitials = profileName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   return (

@@ -53,11 +53,21 @@ function PageLoader() {
   );
 }
 
+const isAdminRole = (user) => user?.role === 'admin' || user?.role === 'superadmin';
+
+// Where a logged-in user belongs by default. Admins are NOT tailors/customers —
+// they go straight to the admin dashboard and never see the onboarding wizard.
+const homePath = (user) => {
+  if (isAdminRole(user)) return '/admin';
+  return user?.onboarding_completed === false ? '/onboarding' : '/dashboard';
+};
+
 function ProtectedRoute({ children }) {
   const { user, isAuthenticated, loading } = useAuth();
   if (loading) return <div className="flex h-screen items-center justify-center"><div className="w-8 h-8 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /></div>;
   if (!isAuthenticated) return <Navigate to="/" replace />;
-  if (user && !user.onboarding_completed && window.location.pathname !== '/onboarding') {
+  // Admins skip onboarding entirely; everyone else must finish it first.
+  if (user && !isAdminRole(user) && !user.onboarding_completed && window.location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
   return children;
@@ -99,7 +109,7 @@ export default function App() {
     <>
       <MatomoRouteTracker />
       <Routes>
-      <Route path="/" element={user ? <Navigate to={user.onboarding_completed === false ? '/onboarding' : '/dashboard'} replace /> : <Landing />} />
+      <Route path="/" element={user ? <Navigate to={homePath(user)} replace /> : <Landing />} />
       <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
       <Route path="/invite/:code" element={<Suspense fallback={<PageLoader />}><Invite /></Suspense>} />
       <Route path="/onboarding" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Onboarding /></Suspense></ProtectedRoute>} />
@@ -114,7 +124,7 @@ export default function App() {
       {/* Protected app shell. Static paths here out-rank /:handle below in React Router's ranking,
           so e.g. /dashboard matches Dashboard, not the public storefront. */}
       <Route element={<ProtectedAppLayout userRole={userRole} />}>
-        <Route path="/dashboard" element={userRole === 'customer' ? <CustomerDashboard tab="home" /> : <Dashboard />} />
+        <Route path="/dashboard" element={isAdminRole(user) ? <Navigate to="/admin" replace /> : userRole === 'customer' ? <CustomerDashboard tab="home" /> : <Dashboard />} />
         <Route path="/home" element={<CustomerDashboard tab="home" />} />
         <Route path="/orders" element={<CustomerDashboard tab="orders" />} />
         <Route path="/near-me" element={<CustomerDashboard tab="near-me" />} />

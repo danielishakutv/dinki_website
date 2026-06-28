@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Scissors, ShoppingBag, MapPin, ClipboardList, Plus, Ruler, Store, Compass } from 'lucide-react';
+import { Home, Scissors, ShoppingBag, MapPin, ClipboardList, Plus, Ruler, Store, Compass, ShieldCheck, Bell, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -19,6 +19,13 @@ const customerItems = [
   { to: '/explore', icon: Compass, label: 'Explore' },
   { to: '/orders', icon: ClipboardList, label: 'Orders' },
   { to: '/near-me', icon: MapPin, label: 'Near Me' },
+];
+
+const adminItems = [
+  { to: '/admin', icon: ShieldCheck, label: 'Admin' },
+  { to: '/explore', icon: Compass, label: 'Explore' },
+  { to: '/notifications', icon: Bell, label: 'Alerts' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 function NavItem({ to, icon: Icon, label, end, onNavClick }) {
@@ -75,6 +82,7 @@ const fabActions = [
 export default function BottomNav({ userRole, onRecordMeasurement, onNavClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const isTailor = userRole === 'tailor';
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
   const homeRoute = '/dashboard';
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -86,6 +94,18 @@ export default function BottomNav({ userRole, onRecordMeasurement, onNavClick })
     if (key === 'addJob') navigate('/jobs/new');
     if (key === 'recordMeasurement') onRecordMeasurement?.();
   };
+
+  if (isAdmin) {
+    return (
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-gray-200/60 safe-bottom md:hidden">
+        <div className="flex items-center justify-around h-20 px-2 max-w-lg mx-auto">
+          {adminItems.map(({ to, icon, label }) => (
+            <NavItem key={to} to={to} icon={icon} label={label} end={to === '/admin'} onNavClick={onNavClick} />
+          ))}
+        </div>
+      </nav>
+    );
+  }
 
   if (isTailor) {
     return (
