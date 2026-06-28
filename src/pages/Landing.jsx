@@ -32,6 +32,32 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
   const [otp, setOtp]                   = useState('');
   const [activationFlow, setActivationFlow] = useState(null); // { user_id, name }
   const [customerGated, setCustomerGated] = useState(false); // customer signup/login is coming soon
+  const [resending, setResending]       = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMsg, setResendMsg]       = useState('');
+
+  // Tick down the resend cooldown so the button re-enables after 30s.
+  useEffect(() => {
+    if (resendCooldown <= 0) return undefined;
+    const t = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  const handleResendOtp = async () => {
+    if (resending || resendCooldown > 0 || !formData.email) return;
+    setResending(true);
+    setError('');
+    setResendMsg('');
+    try {
+      await authApi.resendOtp(formData.email);
+      setResendMsg('A new code is on its way. Check your inbox (and spam).');
+      setResendCooldown(30);
+    } catch (err) {
+      setError(err.message || 'Could not resend the code. Please try again.');
+    } finally {
+      setResending(false);
+    }
+  };
 
   const isSignup  = mode === 'signup';
 
@@ -453,12 +479,23 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
                   >
                     {loading ? <Loader2 size={16} className="animate-spin" /> : <>Verify & Continue <ArrowRight size={16} /></>}
                   </motion.button>
-                  <p style={{ textAlign: 'center', fontSize: 12, color: '#9a8a7a', marginTop: 16, lineHeight: 1.6 }}>
-                    Didn't receive a code? Check your spam folder or{' '}
-                    <button onClick={() => { setOtpStep(false); setOtp(''); setError(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e8a020', fontWeight: 700, fontSize: 12 }}>
-                      go back
-                    </button>
-                  </p>
+                  <div style={{ textAlign: 'center', marginTop: 16 }}>
+                    {resendMsg && <p style={{ fontSize: 12, color: '#1a7a3a', marginBottom: 8 }}>{resendMsg}</p>}
+                    <p style={{ fontSize: 12, color: '#9a8a7a', lineHeight: 1.6 }}>
+                      Didn't receive a code?{' '}
+                      <button
+                        onClick={handleResendOtp}
+                        disabled={resending || resendCooldown > 0}
+                        style={{ background: 'none', border: 'none', cursor: (resending || resendCooldown > 0) ? 'default' : 'pointer', color: (resending || resendCooldown > 0) ? '#b0a090' : '#e8a020', fontWeight: 700, fontSize: 12 }}
+                      >
+                        {resending ? 'Sending…' : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                      </button>
+                      {' · '}
+                      <button onClick={() => { setOtpStep(false); setOtp(''); setError(''); setResendMsg(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e8a020', fontWeight: 700, fontSize: 12 }}>
+                        go back
+                      </button>
+                    </p>
+                  </div>
                 </div>
               ) : (
               <>

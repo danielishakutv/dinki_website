@@ -134,6 +134,7 @@ export const auth = {
   signup: (body) => request('/auth/signup', { method: 'POST', body }),
   activate: (body) => request('/auth/activate', { method: 'POST', body }),
   verifyEmail: (body) => request('/auth/verify-email', { method: 'POST', body }),
+  resendOtp: (email) => request('/auth/resend-otp', { method: 'POST', body: { email } }),
   login: (body) => request('/auth/login', { method: 'POST', body }),
   refresh: () => refreshAccessToken(),
   logout: () => request('/auth/logout', { method: 'POST' }),
