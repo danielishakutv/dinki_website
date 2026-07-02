@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Loader2, Search, User, UserPlus, AlertCircle, UserCheck } from 'lucide-react';
+import { ChevronDown, Loader2, Search, User, UserPlus, AlertCircle, UserCheck, Ruler } from 'lucide-react';
 import { users as usersApi, customers as customersApi } from '../../lib/api';
 
 const statusOptions = [
@@ -10,12 +10,23 @@ const statusOptions = [
   { value: 'delivered', label: 'Delivered' },
 ];
 
+// Compact set captured inline at job creation; the full vault is available later
+// on the customer record.
+const MEASUREMENT_FIELDS = [
+  ['neck', 'Neck'], ['shoulder', 'Shoulder'], ['chest', 'Chest'], ['waist', 'Waist'],
+  ['hip', 'Hip'], ['sleeve', 'Sleeve'], ['arm', 'Arm'], ['thigh', 'Thigh'],
+  ['inseam', 'Inseam'], ['full_length', 'Full Length'],
+];
+
 const emptyForm = { customerId: '', userId: '', title: '', description: '', status: 'cutting', dueDate: '', price: '' };
 
 export default function AddJobForm({ onSave, customers = [], editJob, onCancel, onSuccess }) {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const isEdit = !!editJob;
+  const [showMeasurements, setShowMeasurements] = useState(false);
+  const [measurements, setMeasurements] = useState({});
+  const [measurementNotes, setMeasurementNotes] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -207,10 +218,29 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
         payload.status = form.status;
       }
 
+      // Save inline measurements to the (already-resolved) customer first, so the
+      // one form creates customer + measurements + job together. Best-effort — a
+      // measurement hiccup never blocks the job (they're editable later).
+      if (!isEdit && form.customerId) {
+        const vals = Object.fromEntries(
+          Object.entries(measurements).filter(([, v]) => v !== '' && v != null)
+        );
+        if (Object.keys(vals).length > 0 || measurementNotes.trim()) {
+          try {
+            await customersApi.updateMeasurements(form.customerId, { ...vals, notes: measurementNotes.trim() || undefined });
+          } catch (err) {
+            console.error('Failed to save measurements:', err);
+          }
+        }
+      }
+
       await onSave(payload, editJob?.id);
       setForm(emptyForm);
       setSelectedCustomer(null);
       setSearchQuery('');
+      setMeasurements({});
+      setMeasurementNotes('');
+      setShowMeasurements(false);
       onSuccess?.();
     } catch (err) {
       console.error(isEdit ? 'Failed to update job:' : 'Failed to create job:', err);
@@ -518,6 +548,50 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
           className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
         />
       </div>
+
+      {/* Inline measurements — only for a resolved local customer. Lets the tailor
+          create the customer, their measurements and the job all on one form. */}
+      {!isEdit && form.customerId && (
+        <div className="border border-gray-100 rounded-xl overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowMeasurements((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition"
+          >
+            <span className="flex items-center gap-2 text-sm font-medium text-gray-600">
+              <Ruler size={16} className="text-gold-500" /> Add measurements <span className="text-gray-400 font-normal">(optional)</span>
+            </span>
+            <ChevronDown size={16} className={`text-gray-400 transition-transform ${showMeasurements ? 'rotate-180' : ''}`} />
+          </button>
+          {showMeasurements && (
+            <div className="p-4 space-y-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {MEASUREMENT_FIELDS.map(([key, label]) => (
+                  <div key={key}>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={measurements[key] ?? ''}
+                      onChange={(e) => setMeasurements((m) => ({ ...m, [key]: e.target.value }))}
+                      placeholder={label}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500"
+                    />
+                    <span className="block mt-0.5 text-[10px] text-gray-400 px-1">{label}</span>
+                  </div>
+                ))}
+              </div>
+              <textarea
+                value={measurementNotes}
+                onChange={(e) => setMeasurementNotes(e.target.value)}
+                rows={2}
+                placeholder="Measurement notes (e.g. prefers loose sleeves)"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold-500/20 focus:border-gold-500"
+              />
+              <p className="text-[11px] text-gray-400">Saved to this customer — you can view and edit them later.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
         {onCancel && (

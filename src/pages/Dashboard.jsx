@@ -5,6 +5,8 @@ import { Sparkles, Lightbulb, Plus, MessageCircle, UserPlus, Share2, Loader2 } f
 import SummaryCards from '../components/dashboard/SummaryCards';
 import RecentActivity from '../components/dashboard/RecentActivity';
 import ExploreBanner from '../components/styles/ExploreBanner';
+import PendingTasksBanner from '../components/PendingTasksBanner';
+import OnboardingTour from '../components/OnboardingTour';
 import { jobs as jobsApi, customers as customersApi } from '../lib/api';
 import { useApi, TTL } from '../hooks/useApi';
 import { useAuth } from '../contexts/AuthContext';
@@ -34,6 +36,8 @@ export default function Dashboard() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+      <OnboardingTour role="tailor" />
+      <PendingTasksBanner />
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 size={28} className="animate-spin text-gold-500" />

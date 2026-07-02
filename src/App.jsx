@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
 import MatomoRouteTracker from './components/MatomoRouteTracker';
+import VerifyGate, { mustVerify } from './components/VerifyGate';
 
 // Critical route — loaded eagerly
 import Landing from './pages/Landing';
@@ -28,6 +29,7 @@ const TailorStorefront = lazy(() => import('./pages/TailorStorefront'));
 const StyleDetail = lazy(() => import('./pages/StyleDetail'));
 const Explore = lazy(() => import('./pages/Explore'));
 const AddStyle = lazy(() => import('./pages/AddStyle'));
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const MyMeasurements = lazy(() => import('./pages/MyMeasurements'));
 const PublicMeasurement = lazy(() => import('./pages/PublicMeasurement'));
 const PlaceOrder = lazy(() => import('./pages/PlaceOrder'));
@@ -74,6 +76,9 @@ function ProtectedRoute({ children }) {
 }
 
 function ProtectedAppLayout({ userRole }) {
+  const { user } = useAuth();
+  // 7-day grace expired and still unverified → hard gate the whole app shell.
+  if (mustVerify(user)) return <VerifyGate />;
   return (
     <ProtectedRoute>
       <Layout userRole={userRole}>
@@ -120,6 +125,8 @@ export default function App() {
       <Route path="/style/:id" element={<Suspense fallback={<PageLoader />}><StyleDetail /></Suspense>} />
       {/* Public, no-auth measurement share page */}
       <Route path="/m/:token" element={<Suspense fallback={<PageLoader />}><PublicMeasurement /></Suspense>} />
+      {/* Email verification link target (works logged-in or out) */}
+      <Route path="/verify-email" element={<Suspense fallback={<PageLoader />}><VerifyEmail /></Suspense>} />
 
       {/* Protected app shell. Static paths here out-rank /:handle below in React Router's ranking,
           so e.g. /dashboard matches Dashboard, not the public storefront. */}

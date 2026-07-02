@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { auth as authApi, users as usersApi, setToken, clearToken } from '../lib/api';
+import { auth as authApi, users as usersApi, setToken, clearToken, getToken } from '../lib/api';
 import { clearCache, invalidateCache } from '../hooks/useApi';
 import { connectSocket, disconnectSocket, getSocket } from '../lib/socket';
 
@@ -52,33 +52,42 @@ export function AuthProvider({ children }) {
     };
   }, [user]);
 
-  const signup = useCallback(async ({ email, password, name, role, referralCode }) => {
-    const res = await authApi.signup({ email, password, name, role, referralCode });
-    return res.data; // { message, userId } or { inactive_account, user_id, name, message }
-  }, []);
-
-  const activate = useCallback(async ({ user_id, email, password, name }) => {
-    const res = await authApi.activate({ user_id, email, password, name });
-    return res.data; // { message, userId }
-  }, []);
-
-  const verifyEmail = useCallback(async ({ email, otp }) => {
-    const res = await authApi.verifyEmail({ email, otp });
-    setToken(res.data.accessToken);
-    setUser(res.data.user);
+  // Signup now auto-logs-in (no OTP). Returns { accessToken, user } on success, or
+  // { inactive_account, ... } when the email/phone belongs to a tailor-created
+  // placeholder that must be activated instead.
+  const signup = useCallback(async ({ email, phone, password, name, role, referralCode }) => {
+    const res = await authApi.signup({ email, phone, password, name, role, referralCode });
+    if (res.data?.accessToken) {
+      setToken(res.data.accessToken);
+      setUser(res.data.user);
+    }
     return res.data;
   }, []);
 
-  const login = useCallback(async ({ email, password, rejectRoles }) => {
-    const res = await authApi.login({ email, password });
-    if (rejectRoles && rejectRoles.includes(res.data?.user?.role)) {
-      // Do not commit the session client-side. Invalidate the server-side session too.
-      try { await authApi.logout(); } catch { /* ignore */ }
-      const err = new Error('Role not permitted');
-      err.code = 'ROLE_NOT_PERMITTED';
-      err.role = res.data?.user?.role;
-      throw err;
+  const activate = useCallback(async ({ user_id, email, phone, password, name }) => {
+    const res = await authApi.activate({ user_id, email, phone, password, name });
+    if (res.data?.accessToken) {
+      setToken(res.data.accessToken);
+      setUser(res.data.user);
     }
+    return res.data;
+  }, []);
+
+  // Verify via the emailed link token. The user is already logged in; this just
+  // refreshes their user object (email_verified flips true).
+  const verifyEmail = useCallback(async (token) => {
+    const res = await authApi.verifyEmail(token);
+    // Only adopt the returned user when there's a live session (verifying via the
+    // link on an already-logged-in device). A logged-out verifier stays logged out.
+    if (getToken() && res.data?.user) setUser(res.data.user);
+    return res.data;
+  }, []);
+
+  const resendVerification = useCallback(() => authApi.resendVerification(), []);
+
+  // Login by email OR phone (identifier).
+  const login = useCallback(async ({ identifier, email, password }) => {
+    const res = await authApi.login({ identifier, email, password });
     setToken(res.data.accessToken);
     setUser(res.data.user);
     return res.data;
@@ -88,6 +97,7 @@ export function AuthProvider({ children }) {
     try { await authApi.logout(); } catch { /* ignore */ }
     clearToken();
     clearCache();
+    try { sessionStorage.removeItem('dinki_pending_dismissed'); } catch { /* ignore */ }
     setUser(null);
   }, []);
 
@@ -105,6 +115,7 @@ export function AuthProvider({ children }) {
     signup,
     activate,
     verifyEmail,
+    resendVerification,
     login,
     logout,
     refreshProfile,

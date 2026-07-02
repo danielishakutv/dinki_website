@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { ShoppingBag, MapPin, Star, Heart, MessageCircle, Sparkles, Clock, Store, ChevronRight, Search, Shirt, Gift } from 'lucide-react';
 import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
 import ExploreBanner from '../components/styles/ExploreBanner';
+import PendingTasksBanner from '../components/PendingTasksBanner';
+import OnboardingTour from '../components/OnboardingTour';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function CustomerDashboard({ tab = 'home' }) {
@@ -40,6 +42,8 @@ export default function CustomerDashboard({ tab = 'home' }) {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
+          <OnboardingTour role="customer" />
+          <div className="mb-4"><PendingTasksBanner /></div>
 
           {/* HOME TAB */}
           {tab === 'home' && (

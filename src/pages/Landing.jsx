@@ -62,10 +62,13 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
   const isSignup  = mode === 'signup';
 
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isEmailIdentifier = (v) => String(v).includes('@');
+  const isValidPhone = (v) => { const d = String(v).replace(/\D/g, '').length; return d >= 10 && d <= 14; };
+  const isValidIdentifier = (v) => (isEmailIdentifier(v) ? isValidEmail(v) : isValidPhone(v));
 
   const canSubmit = isSignup
-    ? formData.email && isValidEmail(formData.email) && formData.password.length >= 8 && formData.accountType && formData.name.trim().length >= 2
-    : formData.email && isValidEmail(formData.email) && formData.password;
+    ? formData.email && isValidIdentifier(formData.email) && formData.password.length >= 8 && formData.accountType && formData.name.trim().length >= 2
+    : formData.email && formData.password;
 
   const set = (k, v) => {
     setFormData(p => ({ ...p, [k]: v }));
@@ -73,8 +76,13 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
   };
 
   const handleSubmit = async () => {
-    if (!formData.email || !isValidEmail(formData.email)) {
-      setError('Please enter a valid email address.');
+    const identifier = formData.email.trim();
+    if (!identifier) {
+      setError('Enter your email or phone number.');
+      return;
+    }
+    if (!isValidIdentifier(identifier)) {
+      setError('Enter a valid email or Nigerian phone number.');
       return;
     }
     if (!formData.password) {
@@ -99,37 +107,30 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
 
     try {
       if (isSignup) {
-        // If the user landed via /invite/<code>, the code was stashed in
-        // sessionStorage. Attach it to signup so the backend can record
-        // the referral. Cleared either way so a lingering code doesn't
-        // leak into a later, unrelated signup.
+        // Referral code (stashed by /invite/<code>) — attach then clear so it
+        // never leaks into a later, unrelated signup.
         const referralCode = sessionStorage.getItem('dinki_referral_code') || undefined;
-        const result = await signup({
-          email: formData.email,
-          password: formData.password,
-          name: formData.name.trim(),
-          role: formData.accountType,
-          referralCode,
-        });
+        const payload = { password: formData.password, name: formData.name.trim(), role: formData.accountType, referralCode };
+        if (isEmailIdentifier(identifier)) payload.email = identifier;
+        else payload.phone = identifier;
+
+        const result = await signup(payload);
         if (referralCode) sessionStorage.removeItem('dinki_referral_code');
-        // Backend detected an inactive account with this email
+        // Tailor-created placeholder → switch to the activation flow.
         if (result.inactive_account) {
           setActivationFlow({ user_id: result.user_id, name: result.name });
           setError('');
           return;
         }
-        setOtpStep(true);
+        // Signup auto-logs-in (no OTP) — go straight in.
+        onSuccess();
       } else {
-        await login({ email: formData.email, password: formData.password });
+        await login({ identifier, password: formData.password });
         onSuccess();
       }
     } catch (err) {
-      if (err.code === 'EMAIL_NOT_VERIFIED') {
-        setOtpStep(true);
-      } else if (err.code === 'ROLE_NOT_PERMITTED') {
-        setCustomerGated(true);
-      } else if (err.code === 'EMAIL_EXISTS') {
-        setError('This email already has an account. Try logging in instead — or use "Forgot password" if you can\'t remember it.');
+      if (err.code === 'EMAIL_EXISTS') {
+        setError('This email or phone already has an account. Try logging in instead — or use "Forgot password".');
       } else {
         setError(err.message || 'Something went wrong. Please try again.');
       }
@@ -608,12 +609,12 @@ function AuthOverlay({ mode: initialMode, onClose, onSuccess }) {
                   </div>
                 )}
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#5a4a3a', marginBottom: 6, letterSpacing: '0.02em' }}>Email address</label>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#5a4a3a', marginBottom: 6, letterSpacing: '0.02em' }}>Email or phone number</label>
                   <input
-                    type="email"
+                    type="text"
                     value={formData.email}
                     onChange={e => set('email', e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder="you@example.com or 08012345678"
                     onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                     style={{ width: '100%', boxSizing: 'border-box', padding: '0.7rem 1rem', borderRadius: 12, border: '1.5px solid #e0d8d0', background: '#fff', fontSize: 14, color: '#1a0a00', outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }}
                     onFocus={e => { e.target.style.borderColor = '#e8a020'; e.target.style.boxShadow = '0 0 0 3px rgba(232,160,32,0.12)'; }}
