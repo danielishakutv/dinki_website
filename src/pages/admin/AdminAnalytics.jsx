@@ -26,6 +26,7 @@ const RANGE_OPTIONS = [
 export default function AdminAnalytics() {
   const [days, setDays] = useState(30);
   const [state, setState] = useState({ status: 'loading' });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,7 +63,7 @@ export default function AdminAnalytics() {
     })();
 
     return () => { cancelled = true; };
-  }, [days]);
+  }, [days, attempt]);
 
   if (state.status === 'loading') {
     return (
@@ -76,10 +77,13 @@ export default function AdminAnalytics() {
     return (
       <div className="p-4 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-sm flex items-start gap-2">
         <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
-        <div>
+        <div className="flex-1">
           <p className="font-medium">Could not load analytics</p>
           <p className="text-red-600/80 mt-0.5">{state.message}</p>
         </div>
+        <button onClick={() => setAttempt((a) => a + 1)} className="text-xs font-semibold text-red-700 underline flex-shrink-0">
+          Retry
+        </button>
       </div>
     );
   }
@@ -570,7 +574,10 @@ function MarketplaceTop({ data }) {
                 <li key={s.id} className="flex items-center justify-between text-xs">
                   <div className="min-w-0">
                     <p className="text-gray-700 font-medium truncate">{s.title}</p>
-                    <p className="text-gray-400 truncate">{s.tailor_name || '—'} · ₦{fmtMoney(s.price)}</p>
+                    <p className="text-gray-400 truncate">
+                      {s.tailor_name || (s.source_type === 'external' ? 'Inspiration' : 'Dinki')}
+                      {s.price ? ` · ₦${fmtMoney(s.price / 100)}` : ''}
+                    </p>
                   </div>
                   <div className="text-right text-gray-500 whitespace-nowrap pl-3">
                     <span className="inline-flex items-center gap-1"><Heart size={11} /> {s.favourite_count}</span>

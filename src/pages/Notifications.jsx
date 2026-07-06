@@ -39,7 +39,7 @@ function isToday(dateStr) {
 export default function Notifications() {
   const navigate = useNavigate();
 
-  const { data: notifRes, loading, refresh } = useApi(
+  const { data: notifRes, loading, error, refresh } = useApi(
     'notifications', () => notifApi.list(), { ttl: TTL.short }
   );
 
@@ -103,10 +103,17 @@ export default function Notifications() {
       </div>
 
       {notifications.length === 0 && (
-        <div className="text-center py-12">
-          <Bell size={40} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-sm text-gray-400">No notifications yet</p>
-        </div>
+        error ? (
+          <div className="text-center py-12">
+            <p className="text-sm text-gray-500 mb-3">We couldn't load your notifications.</p>
+            <button onClick={refresh} className="text-sm text-gold-600 font-medium hover:underline">Try again</button>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Bell size={40} className="mx-auto text-gray-300 mb-3" />
+            <p className="text-sm text-gray-400">No notifications yet</p>
+          </div>
+        )
       )}
 
       {/* Today */}

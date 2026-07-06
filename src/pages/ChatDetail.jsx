@@ -33,7 +33,7 @@ export default function ChatDetail() {
   const { data: convoRes } = useApi(
     'conversations', () => convoApi.list(), { ttl: TTL.short }
   );
-  const { data: msgRes, loading } = useApi(
+  const { data: msgRes, loading, error: msgError, refresh: refreshMessages } = useApi(
     `chat-messages-${id}`, () => convoApi.getMessages(id, { limit: 50 }), { ttl: TTL.long }
   );
 
@@ -198,6 +198,42 @@ export default function ChatDetail() {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 size={28} className="animate-spin text-gold-500" />
+      </div>
+    );
+  }
+
+  // The message load failed — without this branch the page rendered a phantom
+  // empty chat ("No messages yet") for bad ids and dropped connections alike.
+  if (msgError && localMessages.length === 0) {
+    const notFound = msgError.status === 404 || msgError.status === 400;
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-6">
+        <div className="text-center max-w-sm">
+          <h2 className="text-lg font-heading font-bold text-gray-900 mb-1.5">
+            {notFound ? 'Conversation not found' : "Couldn't open this chat"}
+          </h2>
+          <p className="text-sm text-gray-500 mb-6">
+            {notFound
+              ? "This conversation doesn't exist or may have been removed."
+              : 'Please check your internet connection and try again.'}
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            {!notFound && (
+              <button
+                onClick={refreshMessages}
+                className="px-5 py-3 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition"
+              >
+                Try Again
+              </button>
+            )}
+            <button
+              onClick={() => navigate('/messages')}
+              className="px-5 py-3 bg-white text-gray-600 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 transition"
+            >
+              Back to Messages
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

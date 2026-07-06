@@ -131,7 +131,12 @@ function ShareEditor({ initial, onCancel, onSaved }) {
 
 function Analytics({ shareId }) {
   const [data, setData] = useState(null);
-  useEffect(() => { sharesApi.analytics(shareId).then((r) => setData(r.data)).catch(() => {}); }, [shareId]);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+    sharesApi.analytics(shareId).then((r) => setData(r.data)).catch(() => setFailed(true));
+  }, [shareId]);
+  if (failed) return <p className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">Analytics unavailable right now — try again shortly.</p>;
   if (!data) return <div className="py-4 flex justify-center"><Loader2 size={18} className="animate-spin text-gold-400" /></div>;
   const max = Math.max(1, ...data.timeseries.map((d) => d.views));
   return (
@@ -203,11 +208,20 @@ function ShareRow({ share, onEdit, onDelete, onToggle }) {
 export default function MyMeasurements() {
   const [shares, setShares] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [editing, setEditing] = useState(null); // share being edited, or 'new', or null
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { const res = await sharesApi.list(); setShares(res.data || []); } catch { /* ignore */ }
+    setLoadError('');
+    try {
+      const res = await sharesApi.list();
+      setShares(res.data || []);
+    } catch (err) {
+      // A failed load must not masquerade as "no links yet" — users would
+      // recreate duplicates of links that still exist.
+      setLoadError(err.message || 'Could not load your measurement links.');
+    }
     setLoading(false);
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -253,6 +267,11 @@ export default function MyMeasurements() {
 
           {loading ? (
             <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-gold-500" /></div>
+          ) : loadError ? (
+            <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+              <p className="text-sm text-gray-500 mb-3">{loadError}</p>
+              <button onClick={load} className="text-sm text-gold-600 font-medium hover:underline">Try again</button>
+            </div>
           ) : shares.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
               <Ruler size={28} className="mx-auto text-gray-300 mb-2" />

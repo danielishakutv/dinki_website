@@ -211,15 +211,15 @@ export const jobs = {
 // Storefronts
 export const storefronts = {
   getBySlug: (slug) => request(`/storefronts/${slug}`),
+  // Public tailor directory — backed by GET /v1/storefronts.
   search: (params = {}) => {
     const qs = new URLSearchParams();
     if (params.q) qs.set('q', params.q);
-    if (params.location) qs.set('location', params.location);
     if (params.page) qs.set('page', params.page);
+    if (params.limit) qs.set('limit', params.limit);
     const q = qs.toString();
     return request(`/storefronts${q ? `?${q}` : ''}`);
   },
-  getFeatured: () => request('/storefronts/featured'),
   getMine: () => request('/storefronts/me'),
   update: (body) => request('/storefronts/me', { method: 'PATCH', body }),
   addPortfolio: (body) => request('/storefronts/me/portfolio', { method: 'POST', body }),
@@ -284,12 +284,14 @@ export const measurementShares = {
 // Orders
 export const orders = {
   place: (body) => request('/orders', { method: 'POST', body }),
+  // Customer's own orders live at GET /orders ("/orders/mine" doesn't exist —
+  // it was swallowed by the /:id route and 400'd).
   listMine: (params = {}) => {
     const qs = new URLSearchParams();
     if (params.status) qs.set('status', params.status);
     if (params.page) qs.set('page', params.page);
     const q = qs.toString();
-    return request(`/orders/mine${q ? `?${q}` : ''}`);
+    return request(`/orders${q ? `?${q}` : ''}`);
   },
   listIncoming: (params = {}) => {
     const qs = new URLSearchParams();
@@ -301,8 +303,10 @@ export const orders = {
   get: (id) => request(`/orders/${id}`),
   accept: (id) => request(`/orders/${id}/accept`, { method: 'PATCH' }),
   decline: (id, reason) => request(`/orders/${id}/decline`, { method: 'PATCH', body: { reason } }),
-  updateStatus: (id, status) => request(`/orders/${id}/status`, { method: 'PATCH', body: { status } }),
+  // Order status advances via the linked job (jobs.updateStatus syncs it);
+  // there is deliberately no direct order-status endpoint.
   cancel: (id) => request(`/orders/${id}/cancel`, { method: 'PATCH' }),
+  addImages: (id, images) => request(`/orders/${id}/images`, { method: 'POST', body: { images } }),
 };
 
 // Reviews
@@ -319,7 +323,9 @@ export const reviews = {
 // Favourites
 export const favourites = {
   list: (type) => request(`/favourites${type ? `?type=${type}` : ''}`),
-  toggle: (itemType, itemId) => request('/favourites', { method: 'POST', body: { itemType, itemId } }),
+  // Backend route is POST /favourites/toggle with snake_case keys — the old
+  // path/casing 404'd every save tap on the styles feed.
+  toggle: (itemType, itemId) => request('/favourites/toggle', { method: 'POST', body: { item_type: itemType, item_id: itemId } }),
   check: (items) => request('/favourites/check', { method: 'POST', body: { items } }),
 };
 

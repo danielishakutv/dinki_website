@@ -172,7 +172,8 @@ export default function Profile({ userRole }) {
   if (!profile) {
     return (
       <div className="text-center py-20">
-        <p className="text-sm text-gray-400">Could not load profile.</p>
+        <p className="text-sm text-gray-500 mb-3">Could not load your profile. Please check your connection.</p>
+        <button onClick={refreshProfile} className="text-sm text-gold-600 font-medium hover:underline">Try again</button>
       </div>
     );
   }

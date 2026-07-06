@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sparkles, Lightbulb, Plus, MessageCircle, UserPlus, Share2, Loader2 } from 'lucide-react';
+import { Sparkles, Lightbulb, Plus, MessageCircle, UserPlus, Share2, Loader2, Gift, ChevronRight } from 'lucide-react';
 import SummaryCards from '../components/dashboard/SummaryCards';
 import RecentActivity from '../components/dashboard/RecentActivity';
 import ExploreBanner from '../components/styles/ExploreBanner';
 import PendingTasksBanner from '../components/PendingTasksBanner';
 import OnboardingTour from '../components/OnboardingTour';
-import { jobs as jobsApi, customers as customersApi } from '../lib/api';
+import { jobs as jobsApi, customers as customersApi, referrals as referralsApi } from '../lib/api';
 import { useApi, TTL } from '../hooks/useApi';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -21,6 +21,12 @@ export default function Dashboard() {
   const { data: custRes, loading: custLoading } = useApi(
     'customers-list', () => customersApi.list({ limit: 50 }), { ttl: TTL.medium }
   );
+  const { data: refRes } = useApi(
+    // Key includes the limit — /referral fetches limit=20 under its own key.
+    'referrals-me-3', () => referralsApi.getMine({ limit: 3 }), { ttl: TTL.long }
+  );
+  const referralStats = refRes?.data?.stats;
+  const referralRecent = refRes?.data?.referees || [];
 
   const jobs = jobsRes?.data && Array.isArray(jobsRes.data) ? jobsRes.data : [];
   const rawCust = custRes?.data;
@@ -113,6 +119,11 @@ export default function Dashboard() {
         <button
           onClick={() => {
             const s = user?.storefront_slug || user?.tailor_profile?.storefront_slug || '';
+            if (!s) {
+              // No slug yet → nothing shareable; take them to set up instead.
+              navigate('/my-storefront');
+              return;
+            }
             const url = `${window.location.origin}/${s}`;
             if (navigator.share) {
               navigator.share({ title: 'Dinki Africa', text: 'Check out my storefront on Dinki Africa', url }).catch(() => {});
@@ -159,6 +170,49 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+          </motion.div>
+
+          {/* Referrals — your invite record lives on the dashboard */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 cursor-pointer hover:border-gold-200 hover:shadow-md transition"
+            onClick={() => navigate('/referral')}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-heading font-semibold text-gray-800 flex items-center gap-2">
+                <Gift size={15} className="text-gold-500" /> Referrals
+              </h3>
+              <ChevronRight size={15} className="text-gray-300" />
+            </div>
+            <div className="flex items-center gap-4 mb-3">
+              <div>
+                <p className="text-2xl font-heading font-bold text-gray-900">{referralStats?.joined ?? 0}</p>
+                <p className="text-[10px] text-gray-400 font-medium">Joined via you</p>
+              </div>
+              <div>
+                <p className="text-2xl font-heading font-bold text-gray-900">{referralStats?.total ?? 0}</p>
+                <p className="text-[10px] text-gray-400 font-medium">Total invites</p>
+              </div>
+            </div>
+            {referralRecent.length > 0 ? (
+              <div className="space-y-2">
+                {referralRecent.slice(0, 3).map((r) => (
+                  <div key={r.id} className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full avatar-gradient flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                      {r.initials || (r.user_name || r.referee_email || '??').slice(0, 2).toUpperCase()}
+                    </div>
+                    <p className="text-xs text-gray-600 truncate flex-1">{r.user_name || r.referee_email}</p>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                      {r.status === 'rewarded' ? 'Rewarded' : r.status === 'joined' ? 'Joined' : 'Invited'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400">Invite friends and colleagues — everyone who joins through your link shows here.</p>
+            )}
           </motion.div>
 
           {/* Tip Card */}

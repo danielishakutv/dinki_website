@@ -24,7 +24,7 @@ export default function Messages() {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
 
-  const { data: convoRes, loading, refresh: refreshConversations } = useApi(
+  const { data: convoRes, loading, error, refresh: refreshConversations } = useApi(
     'conversations', () => convoApi.list(), { ttl: TTL.short }
   );
   const chats = convoRes?.data && Array.isArray(convoRes.data) ? convoRes.data : [];
@@ -102,10 +102,17 @@ export default function Messages() {
       </div>
 
       {chats.length === 0 && (
-        <div className="text-center py-12">
-          <MessageSquare size={40} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-sm text-gray-400">No conversations yet</p>
-        </div>
+        error ? (
+          <div className="text-center py-12">
+            <p className="text-sm text-gray-500 mb-3">We couldn't load your conversations.</p>
+            <button onClick={refreshConversations} className="text-sm text-gold-600 font-medium hover:underline">Try again</button>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <MessageSquare size={40} className="mx-auto text-gray-300 mb-3" />
+            <p className="text-sm text-gray-400">No conversations yet</p>
+          </div>
+        )
       )}
 
       {/* Pinned Section */}

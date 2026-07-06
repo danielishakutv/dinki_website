@@ -13,7 +13,9 @@ export default function Referral() {
   const [copied, setCopied] = useState(false);
 
   const { data: res, loading, error, refresh } = useApi(
-    'referrals-me',
+    // Key includes the limit — the dashboards fetch smaller pages under their
+    // own keys; sharing one key would serve their truncated referee list here.
+    'referrals-me-20',
     () => referralsApi.getMine({ limit: 20 }),
     { ttl: TTL.medium },
   );
@@ -76,8 +78,10 @@ export default function Referral() {
     );
   }
 
+  // "Joined" is the headline number — referrals are recorded as joined the
+  // moment the friend signs up (no email-verification gate anymore).
   const statCards = [
-    { label: 'Invited', value: stats.invited, icon: Clock },
+    { label: 'Total Invites', value: stats.total ?? (stats.invited + stats.joined + stats.rewarded), icon: Clock },
     { label: 'Joined', value: stats.joined, icon: Check },
     { label: 'Rewarded', value: stats.rewarded, icon: Star },
   ];
@@ -180,7 +184,7 @@ export default function Referral() {
           {[
             { step: '1', title: 'Share your link', desc: 'Send your unique invite link to friends' },
             { step: '2', title: 'They sign up', desc: 'When they create an account, the referral is recorded' },
-            { step: '3', title: 'Their status moves', desc: 'Invited → Joined once they verify their email' },
+            { step: '3', title: 'They appear here', desc: 'Everyone who joins through your link shows in your list — rewards are coming soon' },
           ].map((item) => (
             <div key={item.step} className="flex items-start gap-3">
               <div className="w-7 h-7 rounded-full bg-gold-100 text-gold-700 flex items-center justify-center text-xs font-bold flex-shrink-0">
