@@ -157,8 +157,11 @@ export default function App() {
         <Route path="/news" element={<News />} />
         <Route path="/order/new" element={<PlaceOrder />} />
         <Route path="/referral" element={<Referral />} />
-        {/* Owner dashboard/editor view — /t/:handle is reachable only when authenticated */}
+        {/* Owner dashboard/editor view — /t/:handle is reachable only when authenticated.
+            /my-storefront is the slug-less alias: it resolves the owner's storefront by
+            account (GET /storefronts/me), so a broken or missing slug can't dead-end it. */}
         <Route path="/t/:handle" element={<TailorStorefront userRole={userRole} editable />} />
+        <Route path="/my-storefront" element={<TailorStorefront userRole={userRole} editable />} />
 
         {/* Admin module — gated by role. Nested <Outlet /> so each admin
             sub-page is lazy-loaded and isolated from siblings. */}
@@ -173,7 +176,30 @@ export default function App() {
 
       {/* Public storefront — guest-viewable. Ranks below the static routes above. */}
       <Route path="/:handle" element={<Suspense fallback={<PageLoader />}><TailorStorefront userRole={null} /></Suspense>} />
+
+      {/* Catch-all — multi-segment unknown URLs previously rendered a BLANK page. */}
+      <Route path="*" element={<NotFoundPage user={user} />} />
       </Routes>
     </>
+  );
+}
+
+function NotFoundPage({ user }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-6 bg-cloud">
+      <div className="text-center max-w-sm">
+        <p className="text-5xl font-heading font-bold text-gold-500 mb-3">404</p>
+        <h1 className="text-lg font-heading font-bold text-gray-900 mb-1.5">Page not found</h1>
+        <p className="text-sm text-gray-500 mb-6">
+          The page you're looking for doesn't exist or may have moved.
+        </p>
+        <a
+          href={user ? '/dashboard' : '/'}
+          className="inline-block px-5 py-3 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition"
+        >
+          {user ? 'Go to Dashboard' : 'Go Home'}
+        </a>
+      </div>
+    </div>
   );
 }

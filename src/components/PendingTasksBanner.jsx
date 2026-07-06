@@ -28,7 +28,8 @@ export default function PendingTasksBanner() {
     if (user.role === 'tailor') {
       const setupDone = user.tailor_profile?.storefront_setup_completed;
       const slug = user.storefront_slug || user.tailor_profile?.storefront_slug;
-      if (!setupDone && slug) list.push({ key: 'storefront', label: 'Set up your storefront', to: `/t/${slug}` });
+      // /my-storefront resolves by account, so the task works even with no/broken slug.
+      if (!setupDone) list.push({ key: 'storefront', label: 'Set up your storefront', to: slug ? `/t/${slug}` : '/my-storefront' });
     }
     return list;
   }, [user]);

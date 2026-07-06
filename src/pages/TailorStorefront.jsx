@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, MapPin, MessageCircle, Heart, ChevronLeft, Share2, Image, ShoppingBag, Edit3, Plus, Trash2, Settings, Eye, Loader2, Camera, Move, Check, X, UserPlus, Sparkles, Shield, Clock, Users } from 'lucide-react';
+import { Star, MapPin, MessageCircle, Heart, ChevronLeft, Share2, Image, ShoppingBag, Edit3, Plus, Trash2, Settings, Eye, Loader2, Camera, Move, Check, X, UserPlus, Sparkles, Shield, Clock, Users, Store, RefreshCw, Compass } from 'lucide-react';
 import { VerifiedBadge, LevelBadge } from '../components/TailorBadges';
 import { useAuth } from '../contexts/AuthContext';
-import { storefronts as storefrontsApi, uploads as uploadsApi, users as usersApi } from '../lib/api';
+import { storefronts as storefrontsApi, uploads as uploadsApi, users as usersApi, conversations as convoApi } from '../lib/api';
+import { invalidateCache } from '../hooks/useApi';
 import StorefrontSetupWizard from '../components/StorefrontSetupWizard';
 
 export default function TailorStorefront({ userRole, editable = false }) {
@@ -18,10 +19,19 @@ export default function TailorStorefront({ userRole, editable = false }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // 'not_found' (definitive 400/404) vs 'transient' (network/5xx) — they get
+  // different recovery UIs: wizard-or-explore vs a Retry button.
+  const [errorKind, setErrorKind] = useState(null);
 
   const userSlug = user?.storefront_slug || user?.tailor_profile?.storefront_slug;
   const isOwnSlug = user?.role === 'tailor' && slug === userSlug;
-  const isOwner = isOwnSlug && !!tailor;
+  // Owner view (/t/… nav) resolves via GET /storefronts/me — by user id, never
+  // by slug — so a broken/renamed/missing slug can never lock the owner out.
+  // A tailor deliberately visiting ANOTHER tailor's /t/<slug> keeps slug lookup.
+  const ownerLookup = editable && user?.role === 'tailor' && (!slug || !userSlug || slug === userSlug);
+  // Ownership is decided by the loaded data, not slug string equality, so it
+  // survives slug renames and username-vs-slug URLs.
+  const isOwner = !!tailor && user?.role === 'tailor' && tailor.tailor_id === user.id;
   // /t/:handle renders with editable=true → owner gets edit controls.
   // /:handle renders with editable=false → owner viewing own page sees preview banner.
   const isEditing = isOwner && editable;
@@ -69,16 +79,41 @@ export default function TailorStorefront({ userRole, editable = false }) {
   const loadStorefront = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await storefrontsApi.getBySlug(slug);
+      setError('');
+      setErrorKind(null);
+      let res;
+      if (ownerLookup) {
+        try {
+          res = await storefrontsApi.getMine();
+        } catch (err) {
+          // Older backend without GET /storefronts/me → fall back to slug lookup.
+          if (slug && (err.status === 404 || err.status === 400)) {
+            res = await storefrontsApi.getBySlug(slug);
+          } else {
+            throw err;
+          }
+        }
+      } else {
+        res = await storefrontsApi.getBySlug(slug);
+      }
       setTailor(res.data);
       setBio(res.data.storefront_bio || res.data.bio || '');
       setPortfolio(res.data.portfolio_preview || []);
+      // Owner landed here via a stale/broken slug (or slug-less /my-storefront):
+      // normalize the URL to the real slug so share/copy and sub-loads work.
+      if (ownerLookup && res.data.storefront_slug && res.data.storefront_slug !== slug) {
+        navigate(`/t/${res.data.storefront_slug}`, { replace: true });
+        refreshProfile?.().catch(() => {});
+      }
     } catch (err) {
       setError(err.message || 'Storefront not found');
+      setErrorKind(
+        err.status === 404 || err.status === 400 ? 'not_found' : 'transient'
+      );
     } finally {
       setLoading(false);
     }
-  }, [slug]);
+  }, [slug, ownerLookup]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPortfolio = useCallback(async () => {
     try {
@@ -295,13 +330,27 @@ export default function TailorStorefront({ userRole, editable = false }) {
     navigate(target);
   };
 
-  const handleChat = () => {
-    const target = `/messages/${tailor.tailor_id}`;
+  const [startingChat, setStartingChat] = useState(false);
+  const handleChat = async () => {
     if (isGuest) {
-      navigate(authRedirectPath('login', target));
+      // After login the app lands back on this storefront; chat is one tap away.
+      navigate(authRedirectPath('login', `/${slug}`));
       return;
     }
-    navigate(target);
+    if (startingChat) return;
+    setStartingChat(true);
+    try {
+      // /messages/:id expects a CONVERSATION id — navigating with the tailor's
+      // user id used to land on a phantom empty chat that could never send.
+      const res = await convoApi.start({ participant_id: tailor.tailor_id });
+      const conversationId = res.data?.conversation?.id || res.data?.id;
+      invalidateCache('conversations');
+      navigate(conversationId ? `/messages/${conversationId}` : '/messages');
+    } catch {
+      navigate('/messages');
+    } finally {
+      setStartingChat(false);
+    }
   };
 
   // Wizard completion handler — keep the user on whichever view they opened it from.
@@ -319,6 +368,11 @@ export default function TailorStorefront({ userRole, editable = false }) {
     }
   };
 
+  // Slug-less /my-storefront is a tailor-only surface; everyone else goes home.
+  if (!slug && user?.role !== 'tailor') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -328,13 +382,13 @@ export default function TailorStorefront({ userRole, editable = false }) {
   }
 
   // Owner needs setup ONLY when we've positively loaded their storefront and it
-  // isn't set up yet. A failed/empty load (null tailor — e.g. a transient error
-  // or a stale 404 slug) must NOT force the wizard, or it restarts setup that
-  // was already saved. The signup flow always creates the tailor_profile row, so
-  // a genuine first-time owner's slug resolves; only the not-set-up flag gates.
-  const needsSetup = isOwnSlug && !!tailor && !tailor.storefront_setup_completed;
+  // isn't set up yet. A transient failed load (null tailor) must NOT force the
+  // wizard, or it restarts setup that was already saved. Pre-fill the wizard
+  // with the slug the server actually holds (may have been auto-healed), not
+  // whatever was in the URL.
+  const needsSetup = isOwner && !tailor.storefront_setup_completed;
   if (needsSetup) {
-    return <StorefrontSetupWizard user={user} slug={slug} onComplete={handleSetupComplete} />;
+    return <StorefrontSetupWizard user={user} slug={tailor.storefront_slug || ''} onComplete={handleSetupComplete} />;
   }
 
   // Owner editor (/t/:handle) landed on a slug that 404s while the profile knows
@@ -345,11 +399,55 @@ export default function TailorStorefront({ userRole, editable = false }) {
     return <Navigate to={`/t/${userSlug}`} replace />;
   }
 
+  // Owner view failed DEFINITIVELY (own storefront unresolvable — e.g. profile
+  // row missing on an older backend). The wizard is the way out: saving it
+  // recreates/repairs the storefront. Transient errors never reach here.
+  if (ownerLookup && !tailor && errorKind === 'not_found') {
+    return <StorefrontSetupWizard user={user} slug="" onComplete={handleSetupComplete} />;
+  }
+
   if (error || !tailor) {
+    const transient = errorKind === 'transient';
     return (
-      <div className="p-8 text-center">
-        <p className="text-gray-500">{error || 'Storefront not found.'}</p>
-        <button onClick={() => navigate(-1)} className="mt-3 text-gold-600 font-medium text-sm">Go back</button>
+      <div className="min-h-[60vh] flex items-center justify-center px-6">
+        <div className="text-center max-w-sm">
+          <div className="w-14 h-14 rounded-2xl bg-gold-50 border border-gold-200 flex items-center justify-center mx-auto mb-4">
+            <Store size={24} className="text-gold-500" />
+          </div>
+          <h2 className="text-lg font-heading font-bold text-gray-900 mb-1.5">
+            {transient ? "We couldn't load this storefront" : 'Storefront not available'}
+          </h2>
+          <p className="text-sm text-gray-500 mb-6">
+            {transient
+              ? 'Please check your internet connection and try again.'
+              : "This storefront doesn't exist or may have moved. Discover more tailors on Dinki Africa."}
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            {transient ? (
+              <button
+                onClick={loadStorefront}
+                className="px-5 py-3 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition flex items-center gap-2"
+              >
+                <RefreshCw size={15} />
+                Try Again
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/explore')}
+                className="px-5 py-3 bg-gold-500 text-white rounded-xl text-sm font-semibold hover:bg-gold-600 transition flex items-center gap-2"
+              >
+                <Compass size={15} />
+                Explore Styles
+              </button>
+            )}
+            <button
+              onClick={() => navigate(user ? '/dashboard' : '/')}
+              className="px-5 py-3 bg-white text-gray-600 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 transition"
+            >
+              {user ? 'Go to Dashboard' : 'Go Home'}
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
