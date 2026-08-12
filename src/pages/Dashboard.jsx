@@ -9,18 +9,19 @@ import PendingTasksBanner from '../components/PendingTasksBanner';
 import OnboardingTour from '../components/OnboardingTour';
 import { jobs as jobsApi, customers as customersApi, referrals as referralsApi } from '../lib/api';
 import { useApi, TTL } from '../hooks/useApi';
+import { useJobs, useCustomers } from '../hooks/useLocal';
+import SyncStatusPill from '../components/SyncStatusPill';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { data: jobsRes, loading: jobsLoading } = useApi(
-    'jobs-list', () => jobsApi.list({ limit: 50 }), { ttl: TTL.medium }
-  );
-  const { data: custRes, loading: custLoading } = useApi(
-    'customers-list', () => customersApi.list({ limit: 50 }), { ttl: TTL.medium }
-  );
+  // Jobs and customers come from the device, so the dashboard is fully useful
+  // offline. Referral stats stay online-only — they're a server-side rollup with
+  // nothing to record locally, and they simply stay blank without a connection.
+  const { data: localJobs, loading: jobsLoading } = useJobs();
+  const { data: localCustomers, loading: custLoading } = useCustomers();
   const { data: refRes } = useApi(
     // Key includes the limit — /referral fetches limit=20 under its own key.
     'referrals-me-3', () => referralsApi.getMine({ limit: 3 }), { ttl: TTL.long }
@@ -28,9 +29,8 @@ export default function Dashboard() {
   const referralStats = refRes?.data?.stats;
   const referralRecent = refRes?.data?.referees || [];
 
-  const jobs = jobsRes?.data && Array.isArray(jobsRes.data) ? jobsRes.data : [];
-  const rawCust = custRes?.data;
-  const customers = Array.isArray(rawCust) ? rawCust : Array.isArray(rawCust?.customers) ? rawCust.customers : [];
+  const jobs = localJobs || [];
+  const customers = localCustomers || [];
   const loading = jobsLoading || custLoading;
 
   const getGreeting = () => {
@@ -63,6 +63,7 @@ export default function Dashboard() {
           <p className="text-sm text-gray-400 mt-1">
             Here's what's happening with your tailoring business today.
           </p>
+          <SyncStatusPill className="mt-2" />
         </div>
         <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-gold-50 to-amber-50 border border-gold-200/50">
           <Sparkles size={16} className="text-gold-500" />

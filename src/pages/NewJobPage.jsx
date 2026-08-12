@@ -2,21 +2,19 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Scissors } from 'lucide-react';
 import AddJobForm from '../components/jobs/AddJobForm';
-import { jobs as jobsApi, customers as customersApi } from '../lib/api';
-import { useApi, invalidateCache, TTL } from '../hooks/useApi';
+import { invalidateCache } from '../hooks/useApi';
+import { useCustomers } from '../hooks/useLocal';
+import { jobsRepo } from '../lib/local/repo';
 
 export default function NewJobPage() {
   const navigate = useNavigate();
 
-  const { data: custRes, loading } = useApi(
-    'customers-list', () => customersApi.list({ limit: 100 }), { ttl: TTL.medium }
-  );
+  const { data: customers, loading } = useCustomers();
 
-  const raw = custRes?.data;
-  const customers = Array.isArray(raw) ? raw : Array.isArray(raw?.customers) ? raw.customers : [];
-
+  // Writes to the device and returns immediately. Whether the phone has signal
+  // changes nothing the tailor can perceive here.
   const handleSaveJob = async (formData) => {
-    await jobsApi.create(formData);
+    await jobsRepo.create(formData);
     invalidateCache('jobs', 'jobs-list');
     navigate('/jobs');
   };
@@ -50,7 +48,7 @@ export default function NewJobPage() {
           ) : (
             <AddJobForm
               onSave={handleSaveJob}
-              customers={customers}
+              customers={customers || []}
               onCancel={() => navigate('/jobs')}
             />
           )}

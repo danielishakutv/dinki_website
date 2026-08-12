@@ -39,7 +39,7 @@ export default function Layout({ children, userRole }) {
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const { user, logout } = useAuth();
+  const { user, confirmAndLogout } = useAuth();
 
   // Unread count feeds the bell badge. Cache key `notifications-unread` is
   // the same one AuthContext invalidates on every `notification:new` socket
@@ -53,8 +53,7 @@ export default function Layout({ children, userRole }) {
 
   const handleLogout = async () => {
     setDrawerOpen(false);
-    await logout();
-    navigate('/');
+    if (await confirmAndLogout()) navigate('/');
   };
 
   const isTailor = userRole === 'tailor';

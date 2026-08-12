@@ -18,20 +18,19 @@ function maskEmail(email) {
 import MeasurementVault from '../components/customers/MeasurementVault';
 import { customers as customersApi, jobs as jobsApi, conversations as convoApi } from '../lib/api';
 import { useApi, invalidateCache, TTL } from '../hooks/useApi';
+import { useCustomer, useJobs } from '../hooks/useLocal';
+import { customersRepo } from '../lib/local/repo';
+import SyncDot from '../components/SyncDot';
 
 export default function CustomerDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data: custRes, loading: custLoading, refresh: refreshCust } = useApi(
-    `customer-${id}`, () => customersApi.get(id), { ttl: TTL.long }
-  );
-  const { data: jobsRes, loading: jobsLoading } = useApi(
-    `customer-${id}-jobs`, () => jobsApi.list({ customer_id: id, limit: 50 }), { ttl: TTL.medium }
-  );
-
-  const customer = custRes?.data || null;
-  const customerJobs = jobsRes?.data && Array.isArray(jobsRes.data) ? jobsRes.data : [];
+  // Both reads come from the device, so a customer's full record and job history
+  // are available with no signal — which is the whole point of the measurement
+  // book being in a tailor's pocket.
+  const { data: customer, loading: custLoading } = useCustomer(id);
+  const { data: customerJobs, loading: jobsLoading } = useJobs({ customerId: id });
   const loading = custLoading || jobsLoading;
   const [startingChat, setStartingChat] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -60,11 +59,12 @@ export default function CustomerDetail() {
     }
   };
 
+  // Saves locally and returns at once; the outbox uploads it when there's signal.
+  // A tailor with a tape measure in one hand never waits on a network call.
   const handleSaveMeasurements = async (newMeasurements) => {
     try {
-      await customersApi.updateMeasurements(id, newMeasurements);
+      await customersRepo.saveMeasurements(id, newMeasurements);
       invalidateCache(`customer-${id}`, 'customers');
-      refreshCust();
     } catch (err) {
       console.error('Failed to save measurements:', err);
     }
@@ -189,12 +189,12 @@ export default function CustomerDetail() {
         <div className="flex items-center gap-2 mb-4">
           <Scissors size={18} className="text-gold-500" />
           <h3 className="font-heading font-semibold text-gray-800">Orders</h3>
-          <span className="ml-auto text-xs text-gray-400">{customerJobs.length} total</span>
+          <span className="ml-auto text-xs text-gray-400">{(customerJobs || []).length} total</span>
         </div>
 
-        {customerJobs.length > 0 ? (
+        {(customerJobs || []).length > 0 ? (
           <div className="space-y-2">
-            {customerJobs.map((job) => (
+            {(customerJobs || []).map((job) => (
               <Link
                 key={job.id}
                 to={`/jobs/${job.id}`}

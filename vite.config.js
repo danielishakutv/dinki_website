@@ -10,7 +10,7 @@ export default defineConfig({
   build: {
     target: 'es2020',
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 10000, // country-state-city is ~8.7MB, lazy-loaded only on onboarding
+    chunkSizeWarningLimit: 900,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -20,7 +20,9 @@ export default defineConfig({
           'vendor-motion': ['framer-motion'],
           // Icons — tree-shaken per-page but shared chunk avoids duplication
           'vendor-icons': ['lucide-react'],
-          // country-state-city is lazy-loaded via dynamic import in Onboarding.jsx
+          // Local database + sync engine. Split out so it caches independently of
+          // app code, which changes far more often.
+          'vendor-db': ['dexie', 'dexie-react-hooks'],
         },
       },
     },

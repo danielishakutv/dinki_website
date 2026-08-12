@@ -2,7 +2,25 @@
   "permissions": {
     "allow": [
       "Bash(node -e ' *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(node --check migrations/021_add_superadmin_role.js)",
+      "Bash(node --check src/modules/admin/admin.routes.js)",
+      "Bash(node --check src/modules/admin/admin.controller.js)",
+      "Bash(node --check scripts/promote-admin.js)",
+      "Bash(node --check src/app.js)",
+      "Bash(npx vite *)",
+      "Bash(git commit -m ' *)",
+      "Bash(Write /dev/null)",
+      "Bash(node -c src/modules/admin/admin.service.js)",
+      "Bash(node -c src/modules/admin/admin.controller.js)",
+      "Bash(node -c src/modules/admin/admin.routes.js)",
+      "Bash(git -C \"c:/Users/USER/Desktop/Dinki Africa/dinki.africa\" status)",
+      "Bash(git -C \"c:/Users/USER/Desktop/Dinki Africa/dinki.africa\" log --oneline -5)",
+      "Bash(git -C \"c:/Users/USER/Desktop/Dinki Africa/dinki.africa\" diff --stat notes .claude/settings.local.json)",
+      "Bash(git -C \"c:/Users/USER/Desktop/Dinki Africa/dinki.africa\" add src/lib/api.js src/pages/admin/AdminHome.jsx)",
+      "Bash(git -C 'c:/Users/USER/Desktop/Dinki Africa/dinki.africa' commit -m ' *)",
+      "Bash(git -C \"c:/Users/USER/Desktop/Dinki Africa/dinki.africa\" push origin main)",
+      "Bash(git -C \"c:/Users/USER/Desktop/Dinki Africa/dinki.africa\" add src/App.jsx src/lib/api.js src/pages/admin/AdminHome.jsx src/pages/admin/AdminNotifications.jsx)"
     ],
     "additionalDirectories": [
       "c:\\Users\\USER\\Desktop\\Dinki Africa\\dinki_africa_be\\src"

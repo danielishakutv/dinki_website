@@ -4,6 +4,8 @@ import { Scissors, Inbox, Loader2, Check, X, RefreshCw, Calendar, ChevronDown, C
 import JobList from '../components/jobs/JobList';
 import { jobs as jobsApi, orders as ordersApi } from '../lib/api';
 import { useApi, TTL, invalidateCache } from '../hooks/useApi';
+import { useJobs, syncNow } from '../hooks/useLocal';
+import SyncStatusPill from '../components/SyncStatusPill';
 import { useAuth } from '../contexts/AuthContext';
 
 const formatNaira = (n) => (n ? `₦${Number(n).toLocaleString('en-NG')}` : null);
@@ -182,38 +184,29 @@ function IncomingOrders({ onOrderAccepted }) {
 export default function Jobs() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: jobsRes, loading, error, refresh } = useApi(
-    'jobs-list', () => jobsApi.list({ limit: 100 }), { ttl: TTL.medium }
-  );
-
-  const jobs = jobsRes?.data && Array.isArray(jobsRes.data) ? jobsRes.data : [];
+  // Local-first: the job list is on the device, so it renders offline and there
+  // is no failed-load state to handle. Incoming marketplace orders stay online-
+  // only — accepting an order needs the server to arbitrate who got there first.
+  const { data: jobs, loading } = useJobs();
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-6">
-        <Scissors size={22} className="text-gold-500" />
-        <h1 className="text-xl md:text-2xl font-heading font-bold text-gray-900">Jobs & Orders</h1>
+      <div className="flex items-center justify-between gap-2 mb-6">
+        <div className="flex items-center gap-2">
+          <Scissors size={22} className="text-gold-500" />
+          <h1 className="text-xl md:text-2xl font-heading font-bold text-gray-900">Jobs & Orders</h1>
+        </div>
+        <SyncStatusPill />
       </div>
 
-      {/* Incoming marketplace orders are a tailor capability */}
-      {user?.role === 'tailor' && <IncomingOrders onOrderAccepted={refresh} />}
+      {user?.role === 'tailor' && <IncomingOrders onOrderAccepted={() => syncNow('order-accepted')} />}
 
-      {/* A failed jobs load must not masquerade as "no jobs yet". */}
-      {error && !loading && jobs.length === 0 ? (
-        <div className="bg-white rounded-xl p-8 border border-gray-100 text-center">
-          <p className="text-sm text-gray-500 mb-3">We couldn't load your jobs. Please check your connection.</p>
-          <button onClick={refresh} className="inline-flex items-center gap-1.5 text-sm text-gold-600 font-medium hover:underline">
-            <RefreshCw size={13} /> Try again
-          </button>
-        </div>
-      ) : (
-        <JobList
-          jobs={jobs}
-          onAddJob={() => navigate('/jobs/new')}
-          loading={loading}
-        />
-      )}
+      <JobList
+        jobs={jobs || []}
+        onAddJob={() => navigate('/jobs/new')}
+        loading={loading}
+      />
     </div>
   );
 }

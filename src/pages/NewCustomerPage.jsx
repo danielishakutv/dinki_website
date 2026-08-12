@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, UserPlus, UserCheck, Loader2, AlertCircle } from 'lucide-react';
 import { customers as customersApi } from '../lib/api';
 import { invalidateCache } from '../hooks/useApi';
+import { customersRepo } from '../lib/local/repo';
 
 export default function NewCustomerPage() {
   const navigate = useNavigate();
@@ -25,12 +26,33 @@ export default function NewCustomerPage() {
     location: form.location.trim() || undefined,
   });
 
+  const unreachable = (err) => err?.code === 'NETWORK_ERROR' || navigator.onLine === false;
+
+  // Saving offline is not a degraded path — it is instant and complete. The
+  // customer gets its permanent id here on the device and uploads later.
+  const saveLocally = async () => {
+    await customersRepo.create(buildPayload());
+    finish();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim() || !form.phone.trim()) return;
 
     setSaving(true);
     setError(null);
+
+    // Identity matching ("this phone number already belongs to someone on
+    // Dinki") searches every platform user, so it can only run on the server.
+    // With a connection we still use it, because catching a duplicate at the
+    // point of entry is worth a round trip. Without one, we save immediately
+    // and accept that a rare duplicate may need merging later — far better
+    // than refusing to record a customer standing in the shop.
+    if (navigator.onLine === false) {
+      await saveLocally();
+      return;
+    }
+
     try {
       const result = await customersApi.create(buildPayload());
       if (result?.data?.requires_confirmation) {
@@ -39,8 +61,13 @@ export default function NewCustomerPage() {
         setSaving(false);
         return;
       }
+      await customersRepo.adoptServerRecord(result?.data);
       finish();
     } catch (err) {
+      if (unreachable(err)) {
+        await saveLocally();
+        return;
+      }
       console.error('Failed to save customer:', err);
       setError(err.message || 'Failed to add customer');
       setSaving(false);
@@ -52,7 +79,8 @@ export default function NewCustomerPage() {
     setSaving(true);
     setError(null);
     try {
-      await customersApi.link({ user_id: matchedUser.id });
+      const result = await customersApi.link({ user_id: matchedUser.id });
+      await customersRepo.adoptServerRecord(result?.data);
       finish();
     } catch (err) {
       console.error('Failed to link customer:', err);
@@ -65,9 +93,14 @@ export default function NewCustomerPage() {
     setSaving(true);
     setError(null);
     try {
-      await customersApi.forceCreate(buildPayload());
+      const result = await customersApi.forceCreate(buildPayload());
+      await customersRepo.adoptServerRecord(result?.data);
       finish();
     } catch (err) {
+      if (unreachable(err)) {
+        await saveLocally();
+        return;
+      }
       console.error('Failed to create customer:', err);
       setError(err.message || 'Failed to create customer');
       setSaving(false);

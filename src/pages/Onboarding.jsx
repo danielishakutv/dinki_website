@@ -4,18 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Scissors, User, MapPin, ChevronRight, Check, Sparkles, Loader2, Search, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { users as usersApi } from '../lib/api';
+import { NIGERIA_STATES, getLgasOfState } from '../data/nigeria';
 
-// Lazy-load geodata (~8MB) — only fetched when user reaches onboarding
-let _geoCache = null;
-const loadGeoData = () => {
-  if (_geoCache) return _geoCache;
-  _geoCache = import('country-state-city').then(m => ({
-    Country: m.Country,
-    State: m.State,
-    City: m.City,
-  }));
-  return _geoCache;
-};
+// Nigeria's states and LGAs ship with the bundle (~10KB) instead of lazy-loading
+// the 8.7MB `country-state-city` package. That download never completed on a 2G
+// connection, which meant onboarding — the very first thing a new tailor does —
+// could simply hang forever on the location step.
 
 const tailorSpecialties = ['Agbada', 'Kaftan', 'Ankara', 'Aso Ebi', 'Lace', 'Embroidery', 'Bridal', 'Corporate Wear', 'Senator', 'Wrapper & Blouse'];
 const customerPreferences = ['Ankara Dresses', 'Agbada', 'Kaftan', 'Aso-Oke', 'Lace Styles', 'Corporate Wear', 'Casual Wear', 'Bridal', 'Event Wear', 'Evening Gowns'];
@@ -103,13 +97,11 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const totalSteps = 3;
 
-  // Lazy-loaded geo modules
-  const [geo, setGeo] = useState(null);
-  useEffect(() => { loadGeoData().then(setGeo); }, []);
+
 
   const [form, setForm] = useState({
     displayName: user?.name || '',
-    countryCode: '',
+    countryCode: 'NG',
     stateCode: '',
     cityName: '',
     bio: '',
@@ -130,48 +122,21 @@ export default function Onboarding() {
     }));
   };
 
-  // Build dropdown items
-  const countryItems = useMemo(() =>
-    geo ? geo.Country.getAllCountries().map(c => ({ value: c.isoCode, label: c.name })) : [],
-  [geo]);
+  // Both lists are plain array lookups now — no loading state, no network.
+  const stateItems = useMemo(
+    () => NIGERIA_STATES.map((name) => ({ value: name, label: name })),
+    []
+  );
 
-  const stateItems = useMemo(() =>
-    geo && form.countryCode
-      ? geo.State.getStatesOfCountry(form.countryCode).map(s => ({ value: s.isoCode, label: s.name }))
-      : [],
-  [geo, form.countryCode]);
+  const lgaItems = useMemo(
+    () => getLgasOfState(form.stateCode).map((name) => ({ value: name, label: name })),
+    [form.stateCode]
+  );
 
-  const cityItems = useMemo(() =>
-    geo && form.countryCode && form.stateCode
-      ? geo.City.getCitiesOfState(form.countryCode, form.stateCode).map(c => ({ value: c.name, label: c.name }))
-      : [],
-  [geo, form.countryCode, form.stateCode]);
-
-  // Auto-detect country on mount using timezone
-  useEffect(() => {
-    if (form.countryCode) return;
-    try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-      // Map common timezone prefixes to country codes
-      const tzCountryMap = {
-        'Africa/Lagos': 'NG', 'Africa/Accra': 'GH', 'Africa/Nairobi': 'KE',
-        'Africa/Johannesburg': 'ZA', 'Africa/Cairo': 'EG', 'Africa/Casablanca': 'MA',
-        'Africa/Dar_es_Salaam': 'TZ', 'Africa/Kampala': 'UG', 'Africa/Addis_Ababa': 'ET',
-        'Africa/Kigali': 'RW', 'Africa/Lusaka': 'ZM', 'Africa/Harare': 'ZW',
-        'Africa/Douala': 'CM', 'Africa/Abidjan': 'CI', 'Africa/Dakar': 'SN',
-        'Africa/Kinshasa': 'CD', 'Africa/Luanda': 'AO', 'Africa/Maputo': 'MZ',
-        'Africa/Algiers': 'DZ', 'Africa/Tunis': 'TN', 'Africa/Tripoli': 'LY',
-      };
-      const code = tzCountryMap[tz];
-      if (code) {
-        set('countryCode', code);
-      }
-    } catch { /* ignore */ }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const canProceed = () => {
     if (step === 1) return form.displayName.trim().length >= 2;
-    if (step === 2) return form.countryCode && form.stateCode && form.cityName;
+    if (step === 2) return form.stateCode && form.cityName;
     return true;
   };
 
@@ -179,12 +144,10 @@ export default function Onboarding() {
     setSaving(true);
     setError('');
     try {
-      const country = geo?.Country.getCountryByCode(form.countryCode);
-      const state = geo?.State.getStateByCodeAndCountry(form.stateCode, form.countryCode);
       const body = {
         name: form.displayName.trim(),
         location_city: form.cityName,
-        location_state: state?.name || form.stateCode,
+        location_state: form.stateCode,
       };
       if (form.specialties.length > 0) body.specialties = form.specialties;
 
@@ -315,44 +278,31 @@ export default function Onboarding() {
               </div>
 
               <div className="space-y-4">
-                <SearchSelect
-                  label="Country"
-                  placeholder="Select your country"
-                  items={countryItems}
-                  value={form.countryCode}
-                  onChange={(val) => setForm(prev => ({ ...prev, countryCode: val, stateCode: '', cityName: '' }))}
-                />
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Country</label>
+                  <div className="w-full px-3.5 py-2.5 border border-gray-100 rounded-xl text-sm bg-gray-50 text-gray-500">
+                    Nigeria
+                  </div>
+                </div>
 
                 <SearchSelect
-                  label="State / Region"
-                  placeholder={form.countryCode ? 'Select state' : 'Select country first'}
+                  label="State"
+                  placeholder="Select your state"
                   items={stateItems}
                   value={form.stateCode}
                   onChange={(val) => setForm(prev => ({ ...prev, stateCode: val, cityName: '' }))}
-                  disabled={!form.countryCode}
                 />
 
+                {/* LGA rather than city: it's how Nigerians actually state where
+                    they are, and it matches every official form they've filled. */}
                 <SearchSelect
-                  label="City"
-                  placeholder={form.stateCode ? 'Select city' : 'Select state first'}
-                  items={cityItems}
+                  label="Local Government Area"
+                  placeholder={form.stateCode ? 'Select your LGA' : 'Select state first'}
+                  items={lgaItems}
                   value={form.cityName}
                   onChange={(val) => set('cityName', val)}
                   disabled={!form.stateCode}
                 />
-
-                {cityItems.length === 0 && form.stateCode && (
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">City (type manually)</label>
-                    <input
-                      type="text"
-                      value={form.cityName}
-                      onChange={(e) => set('cityName', e.target.value)}
-                      placeholder="Enter your city"
-                      className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20"
-                    />
-                  </div>
-                )}
 
                 <div className="bg-gray-50 rounded-xl p-3.5">
                   <p className="text-xs text-gray-500 leading-relaxed">
@@ -448,11 +398,10 @@ export default function Onboarding() {
           onClick={async () => {
             setSaving(true);
             try {
-              const state = form.stateCode && geo ? geo.State.getStateByCodeAndCountry(form.stateCode, form.countryCode) : null;
               await usersApi.completeOnboarding({
                 name: form.displayName.trim() || user?.name || 'User',
                 location_city: form.cityName || 'Not set',
-                location_state: state?.name || 'Not set',
+                location_state: form.stateCode || 'Not set',
               });
               await refreshProfile();
               navigate('/dashboard', { replace: true });

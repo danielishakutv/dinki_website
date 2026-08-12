@@ -74,7 +74,7 @@ function SideLink({ to, icon: Icon, label, end }) {
 
 export default function Sidebar({ userRole }) {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, confirmAndLogout } = useAuth();
   const slug = user?.storefront_slug || user?.tailor_profile?.storefront_slug;
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
   const mainNav = isAdmin ? adminNav : userRole === 'customer' ? customerNav : getTailorNav(slug);
@@ -85,8 +85,7 @@ export default function Sidebar({ userRole }) {
   const profileRole = isAdmin ? 'Administrator' : userRole === 'customer' ? 'Customer' : 'Master Tailor';
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/');
+    if (await confirmAndLogout()) navigate('/');
   };
 
   return (

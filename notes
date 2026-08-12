@@ -39,10 +39,30 @@ cd /home/dinki/frontend-src && git pull origin main && npm run build && cp -r di
 BACKEND CLI UPDATE COMMAND
 cd /var/www/dinki/backend && git pull origin main && cd /var/www/dinki && docker compose up -d --build --force-recreate
 
+
 EMAIL POOL COMMAND
 postsuper -d ALL
 postqueue -p
 
 
-
+-------------------------------
+TEST EMAIL
 echo "Test from Dinki Africa mail server" | mail -s "Dinki Mail Test" -a "From: noreply@dinki.africa" tokotechnologies@gmail.com
+
+----------------------------
+
+PROMTE TO ADMIN
+Run the migration, then retry the promote:
+
+
+cd /var/www/dinki && docker compose exec dinki-api npx knex migrate:latest
+You should see:
+
+
+Batch N run: 1 migrations
+021_add_superadmin_role.js
+Then:
+
+
+cd /var/www/dinki && docker compose exec dinki-api npm run promote-admin -- \
+  --email tokotechnologies@gmail.com --role superadmin

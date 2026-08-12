@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, CalendarDays, ChevronRight, DollarSign, Scissors, Loader2 } from 'lucide-react';
+import SyncDot from '../SyncDot';
 import { statusConfig } from '../../data/mockData';
 
 const statusFilters = ['all', 'cutting', 'stitching', 'ready', 'delivered'];
@@ -112,7 +113,10 @@ export default function JobList({ jobs, onAddJob, loading }) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{job.title}</p>
+                          <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate flex items-center gap-1.5">
+                            <span className="truncate">{job.title}</span>
+                            <SyncDot record={job} />
+                          </p>
                           <p className="text-xs text-gray-400 mt-0.5">{job.customer_name || job.customerName}</p>
                         </div>
                         <ChevronRight size={16} className="text-gray-300 flex-shrink-0 mt-1 sm:w-[18px] sm:h-[18px]" />

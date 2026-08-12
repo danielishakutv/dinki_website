@@ -165,6 +165,19 @@ export const users = {
   setUsername: (username) => request('/users/me/username', { method: 'PUT', body: { username } }),
 };
 
+// Offline sync — the transport for the background engine in lib/local/sync.js.
+// Nothing in the UI calls these directly.
+export const sync = {
+  pull: ({ cursor, limit } = {}) => {
+    const qs = new URLSearchParams();
+    if (cursor) qs.set('cursor', cursor);
+    if (limit) qs.set('limit', limit);
+    const q = qs.toString();
+    return request(`/sync/pull${q ? `?${q}` : ''}`);
+  },
+  push: (ops) => request('/sync/push', { method: 'POST', body: { ops } }),
+};
+
 // Customers
 export const customers = {
   list: (params = {}) => {
@@ -426,4 +439,4 @@ export const referrals = {
 };
 
 export { getToken, setToken, clearToken };
-export default { auth, users, customers, jobs, storefronts, styles, measurementShares, orders, reviews, favourites, conversations, notifications, uploads, admin, support, referrals };
+export default { auth, users, sync, customers, jobs, storefronts, styles, measurementShares, orders, reviews, favourites, conversations, notifications, uploads, admin, support, referrals };

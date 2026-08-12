@@ -9,6 +9,9 @@ import {
 import { statusConfig, measurementFields } from '../data/mockData';
 import { jobs as jobsApi, customers as customersApi, conversations as convoApi } from '../lib/api';
 import { useApi, useApiMulti, invalidateCache, TTL } from '../hooks/useApi';
+import { useJob, useCustomer, useCustomers } from '../hooks/useLocal';
+import { jobsRepo } from '../lib/local/repo';
+import SyncDot from '../components/SyncDot';
 import AddJobModal from '../components/jobs/AddJobModal';
 
 const statusFlow = ['cutting', 'stitching', 'ready', 'delivered'];
@@ -21,56 +24,49 @@ export default function JobDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
 
-  const { data: jobRes, loading: jobLoading, refresh: refreshJob } = useApi(
-    `job-${id}`, () => jobsApi.get(id), { ttl: TTL.long }
-  );
-  const { data: custListRes } = useApi(
-    'customers-list', () => customersApi.list({ limit: 100 }), { ttl: TTL.medium }
-  );
-
-  const job = jobRes?.data || null;
-  const rawCust = custListRes?.data;
-  const customers = Array.isArray(rawCust) ? rawCust : Array.isArray(rawCust?.customers) ? rawCust.customers : [];
-
-  const { data: custRes } = useApi(
-    job?.customer_id ? `customer-${job.customer_id}` : null,
-    () => customersApi.get(job.customer_id),
-    { ttl: TTL.long }
-  );
-  const customer = custRes?.data || null;
+  // Everything on this screen reads from the device. useLiveQuery re-runs on any
+  // local write, so advancing a status updates the page with no refetch and no
+  // manual cache invalidation.
+  const { data: job, loading: jobLoading } = useJob(id);
+  const { data: customersList } = useCustomers();
+  const { data: customer } = useCustomer(job?.customer_id);
+  const customers = customersList || [];
   const loading = jobLoading;
 
+  const [actionError, setActionError] = useState(null);
+
   const updateStatus = async (newStatus) => {
+    setActionError(null);
     try {
-      await jobsApi.updateStatus(id, newStatus);
+      await jobsRepo.advanceStatus(id, newStatus);
       invalidateCache(`job-${id}`, 'jobs');
-      refreshJob();
     } catch (err) {
-      console.error('Failed to update status:', err);
+      // The local repo mirrors the server's forward-only rule, so an invalid
+      // stage jump is caught here and told to the tailor immediately rather
+      // than being rejected days later when the phone finally syncs.
+      setActionError(err.message || 'Failed to update status');
     }
   };
 
   const toggleInvoiced = async () => {
-    const newVal = !job.invoiced;
+    setActionError(null);
     try {
-      await jobsApi.toggleInvoice(id, newVal);
+      await jobsRepo.setInvoiced(id, !job.invoiced);
       invalidateCache(`job-${id}`, 'jobs');
-      refreshJob();
     } catch (err) {
-      console.error('Failed to toggle invoiced:', err);
+      setActionError(err.message || 'Failed to update invoice');
     }
   };
 
   const handleEditSave = async (payload) => {
-    await jobsApi.update(id, payload);
+    await jobsRepo.update(id, payload);
     invalidateCache(`job-${id}`, 'jobs', 'customers');
-    refreshJob();
   };
 
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await jobsApi.delete(id);
+      await jobsRepo.remove(id);
       invalidateCache('jobs');
       navigate('/jobs', { replace: true });
     } catch (err) {
@@ -168,8 +164,9 @@ export default function JobDetailPage() {
         <div className="p-5 md:p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl md:text-2xl font-heading font-bold text-gray-900 break-words">
-                {job.title}
+              <h1 className="text-xl md:text-2xl font-heading font-bold text-gray-900 break-words flex items-center gap-2">
+                <span>{job.title}</span>
+                <SyncDot record={job} />
               </h1>
               <p className="text-sm text-gray-400 mt-1 break-words">{job.description}</p>
             </div>
@@ -216,6 +213,12 @@ export default function JobDetailPage() {
         className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6"
       >
         <h3 className="font-heading font-semibold text-gray-800 mb-4">Progress</h3>
+
+        {actionError && (
+          <p className="mb-3 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+            {actionError}
+          </p>
+        )}
 
         {/* Desktop: horizontal stepper */}
         <div className="hidden md:flex items-center gap-4">

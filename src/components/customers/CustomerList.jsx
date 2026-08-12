@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, MapPin, ChevronRight, Loader2, AtSign } from 'lucide-react';
+import SyncDot from '../SyncDot';
 
 function maskPhone(phone) {
   if (!phone || phone.length < 6) return phone;
@@ -76,7 +77,10 @@ export default function CustomerList({ customers, onAddCustomer, loading }) {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-800 text-sm truncate">{customer.name}</p>
+                  <p className="font-semibold text-gray-800 text-sm truncate flex items-center gap-1.5">
+                    <span className="truncate">{customer.name}</span>
+                    <SyncDot record={customer} />
+                  </p>
                   {customer.username && (
                     <p className="text-xs text-gold-500 font-medium truncate">@{customer.username}</p>
                   )}

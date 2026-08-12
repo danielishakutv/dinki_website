@@ -16,7 +16,7 @@ export function mustVerify(user) {
 }
 
 export default function VerifyGate() {
-  const { user, resendVerification, logout } = useAuth();
+  const { user, resendVerification, confirmAndLogout } = useAuth();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
@@ -70,7 +70,7 @@ export default function VerifyGate() {
         </button>
 
         <button
-          onClick={logout}
+          onClick={confirmAndLogout}
           className="mt-4 inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition"
         >
           <LogOut size={13} /> Log out

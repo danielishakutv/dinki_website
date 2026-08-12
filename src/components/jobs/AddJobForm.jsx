@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Loader2, Search, User, UserPlus, AlertCircle, UserCheck, Ruler } from 'lucide-react';
 import { users as usersApi, customers as customersApi } from '../../lib/api';
+import { customersRepo } from '../../lib/local/repo';
 
 const statusOptions = [
   { value: 'cutting', label: 'Cutting' },
@@ -53,16 +54,34 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
     setMatchField(null);
   };
 
+  const quickAddPayload = () => ({
+    name: quickAddForm.name.trim(),
+    phone: quickAddForm.phone.trim(),
+    email: quickAddForm.email.trim() || undefined,
+  });
+
+  const unreachable = (err) => err?.code === 'NETWORK_ERROR' || navigator.onLine === false;
+
+  // Creates the customer on the device and selects it straight away, so the job
+  // can be attached to someone who was added seconds ago with no signal.
+  const quickAddOffline = async () => {
+    const created = await customersRepo.create(quickAddPayload());
+    selectLocalCustomer(created);
+    resetQuickAdd();
+  };
+
   const handleQuickAddSubmit = async () => {
     if (!quickAddForm.name.trim() || !quickAddForm.phone.trim()) return;
     setQuickAddSaving(true);
     setQuickAddError(null);
+
+    if (navigator.onLine === false) {
+      await quickAddOffline();
+      return;
+    }
+
     try {
-      const result = await customersApi.create({
-        name: quickAddForm.name.trim(),
-        phone: quickAddForm.phone.trim(),
-        email: quickAddForm.email.trim() || undefined,
-      });
+      const result = await customersApi.create(quickAddPayload());
       if (result?.data?.requires_confirmation) {
         setMatchedUser(result.data.existing_user);
         setMatchField(result.data.match_field);
@@ -71,10 +90,15 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
       }
       const newCustomer = result?.data?.customer || result?.data;
       if (newCustomer?.id) {
+        await customersRepo.adoptServerRecord(newCustomer);
         selectLocalCustomer(newCustomer);
       }
       resetQuickAdd();
     } catch (err) {
+      if (unreachable(err)) {
+        await quickAddOffline();
+        return;
+      }
       setQuickAddError(err.message || 'Failed to add customer');
       setQuickAddSaving(false);
     }
@@ -87,6 +111,7 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
       const result = await customersApi.link({ user_id: matchedUser.id });
       const newCustomer = result?.data?.customer || result?.data;
       if (newCustomer?.id) {
+        await customersRepo.adoptServerRecord(newCustomer);
         selectLocalCustomer(newCustomer);
       }
       resetQuickAdd();
@@ -99,17 +124,18 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
   const handleQuickAddForce = async () => {
     setQuickAddSaving(true);
     try {
-      const result = await customersApi.forceCreate({
-        name: quickAddForm.name.trim(),
-        phone: quickAddForm.phone.trim(),
-        email: quickAddForm.email.trim() || undefined,
-      });
+      const result = await customersApi.forceCreate(quickAddPayload());
       const newCustomer = result?.data?.customer || result?.data;
       if (newCustomer?.id) {
+        await customersRepo.adoptServerRecord(newCustomer);
         selectLocalCustomer(newCustomer);
       }
       resetQuickAdd();
     } catch (err) {
+      if (unreachable(err)) {
+        await quickAddOffline();
+        return;
+      }
       setQuickAddError(err.message || 'Failed to create customer');
       setQuickAddSaving(false);
     }
@@ -227,7 +253,7 @@ export default function AddJobForm({ onSave, customers = [], editJob, onCancel, 
         );
         if (Object.keys(vals).length > 0 || measurementNotes.trim()) {
           try {
-            await customersApi.updateMeasurements(form.customerId, { ...vals, notes: measurementNotes.trim() || undefined });
+            await customersRepo.saveMeasurements(form.customerId, { ...vals, notes: measurementNotes.trim() || undefined });
           } catch (err) {
             console.error('Failed to save measurements:', err);
           }

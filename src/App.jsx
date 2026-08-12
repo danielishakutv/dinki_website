@@ -57,6 +57,13 @@ function PageLoader() {
 
 const isAdminRole = (user) => user?.role === 'admin' || user?.role === 'superadmin';
 
+// Customers and admins get sent to their own home rather than a tailor workspace
+// they have no data for.
+function TailorOnly({ userRole, children }) {
+  if (userRole && userRole !== 'tailor') return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
 // Where a logged-in user belongs by default. Admins are NOT tailors/customers —
 // they go straight to the admin dashboard and never see the onboarding wizard.
 const homePath = (user) => {
@@ -137,12 +144,16 @@ export default function App() {
         <Route path="/near-me" element={<CustomerDashboard tab="near-me" />} />
         <Route path="/measurements" element={<MyMeasurements />} />
         <Route path="/styles/new" element={<AddStyle />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/customers/new" element={<NewCustomerPage />} />
-        <Route path="/customers/:id" element={<CustomerDetail />} />
-        <Route path="/jobs" element={<Jobs />} />
-        <Route path="/jobs/new" element={<NewJobPage />} />
-        <Route path="/jobs/:id" element={<JobDetailPage />} />
+        {/* Tailor-only. These pages read from the on-device database, which is
+            only opened for tailors — the sync endpoints behind it are
+            tailor-scoped server-side. Without this gate a customer landing on
+            /customers would wait on a database that is never going to open. */}
+        <Route path="/customers" element={<TailorOnly userRole={userRole}><Customers /></TailorOnly>} />
+        <Route path="/customers/new" element={<TailorOnly userRole={userRole}><NewCustomerPage /></TailorOnly>} />
+        <Route path="/customers/:id" element={<TailorOnly userRole={userRole}><CustomerDetail /></TailorOnly>} />
+        <Route path="/jobs" element={<TailorOnly userRole={userRole}><Jobs /></TailorOnly>} />
+        <Route path="/jobs/new" element={<TailorOnly userRole={userRole}><NewJobPage /></TailorOnly>} />
+        <Route path="/jobs/:id" element={<TailorOnly userRole={userRole}><JobDetailPage /></TailorOnly>} />
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/marketplace/style/:id" element={<StyleDetail />} />
         <Route path="/profile" element={<Profile userRole={userRole} />} />
