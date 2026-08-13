@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sparkles, Lightbulb, Plus, MessageCircle, UserPlus, Share2, Loader2, Gift, ChevronRight } from 'lucide-react';
+import { Sparkles, Lightbulb, Plus, MessageCircle, UserPlus, Share2, Loader2, Gift, ChevronRight, BarChart3 } from 'lucide-react';
 import SummaryCards from '../components/dashboard/SummaryCards';
 import RecentActivity from '../components/dashboard/RecentActivity';
 import ExploreBanner from '../components/styles/ExploreBanner';
@@ -88,7 +88,7 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="grid grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3"
+        className="grid grid-cols-4 md:grid-cols-5 gap-2.5 sm:gap-3"
       >
         <button
           onClick={() => navigate('/jobs/new')}
@@ -138,6 +138,18 @@ export default function Dashboard() {
             <Share2 size={20} className="text-green-600" />
           </div>
           <span className="text-[11px] sm:text-xs font-medium text-gray-700 text-center leading-tight">Share Link</span>
+        </button>
+        {/* The dashboard is where tailors land, so this is the discoverable route
+            into their analytics. The mobile drawer has it too, but a tile they
+            can see beats a menu they have to open. */}
+        <button
+          onClick={() => navigate('/analytics')}
+          className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm hover:border-gold-200 hover:shadow-md transition-all flex flex-col items-center gap-2.5 group"
+        >
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gold-50 flex items-center justify-center group-hover:bg-gold-100 transition">
+            <BarChart3 size={20} className="text-gold-600" />
+          </div>
+          <span className="text-[11px] sm:text-xs font-medium text-gray-700 text-center leading-tight">My Business</span>
         </button>
       </motion.div>
 

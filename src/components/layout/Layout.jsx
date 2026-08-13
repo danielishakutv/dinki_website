@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import Logo from './Logo';
-import { Menu, X, Bell, User, Users, Settings, HelpCircle, LogOut, MessageSquare, Heart, Store, Trophy, Newspaper, ShieldCheck, Compass, Ruler } from 'lucide-react';
+import { Menu, X, Bell, User, Users, Settings, HelpCircle, LogOut, MessageSquare, Heart, Store, Trophy, Newspaper, ShieldCheck, Compass, Ruler, BarChart3, Gift, UserPlus } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { notifications as notifApi } from '../../lib/api';
 import { useApi, TTL } from '../../hooks/useApi';
@@ -21,18 +21,45 @@ const pageTransition = {
   duration: 0.25,
 };
 
-const drawerItems = [
-  { to: '/profile', icon: User, label: 'Profile' },
-  { to: '/explore', icon: Compass, label: 'Explore Styles' },
-  { to: '/measurements', icon: Ruler, label: 'My Measurements' },
-  { to: '/messages', icon: MessageSquare, label: 'Messages' },
-  { to: '/favourites', icon: Heart, label: 'Favourites' },
-  { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
-  { to: '/news', icon: Newspaper, label: 'News & Articles' },
-  { to: '/notifications', icon: Bell, label: 'Notifications' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
-  { to: '/help', icon: HelpCircle, label: 'Help & Support' },
-];
+/**
+ * The mobile drawer menu.
+ *
+ * This is the only place a phone user can reach anything outside the four
+ * bottom-nav slots, so a feature missing from here is a feature that does not
+ * exist for the vast majority of users — the desktop sidebar is `hidden md:flex`
+ * and almost nobody on this platform is on a desktop.
+ *
+ * Role-aware for the same reason the nav is: an agent has no measurements and no
+ * storefront, and showing them those entries wastes the little room there is.
+ */
+const drawerItemsFor = (role) => {
+  const isTailor = role === 'tailor';
+  const isAgent = role === 'agent';
+
+  return [
+    { to: '/profile', icon: User, label: 'Profile' },
+    // A tailor's own numbers rank directly under their profile — it's a primary
+    // feature, not an extra.
+    ...(isTailor ? [{ to: '/analytics', icon: BarChart3, label: 'My Business' }] : []),
+    ...(isAgent
+      ? [
+          { to: '/agent/register', icon: UserPlus, label: 'Register someone' },
+          { to: '/agent/recruits', icon: Users, label: 'My people' },
+        ]
+      : []),
+    { to: '/explore', icon: Compass, label: 'Explore Styles' },
+    ...(isAgent ? [] : [{ to: '/measurements', icon: Ruler, label: 'My Measurements' }]),
+    // Every role gets a referral link, so every role needs to be able to find it.
+    { to: '/referral', icon: Gift, label: 'Invite & Earn' },
+    { to: '/messages', icon: MessageSquare, label: 'Messages' },
+    ...(isAgent ? [] : [{ to: '/favourites', icon: Heart, label: 'Favourites' }]),
+    ...(isAgent ? [] : [{ to: '/leaderboard', icon: Trophy, label: 'Leaderboard' }]),
+    { to: '/news', icon: Newspaper, label: 'News & Articles' },
+    { to: '/notifications', icon: Bell, label: 'Notifications' },
+    { to: '/settings', icon: Settings, label: 'Settings' },
+    { to: '/help', icon: HelpCircle, label: 'Help & Support' },
+  ];
+};
 
 export default function Layout({ children, userRole }) {
   const location = useLocation();
@@ -57,6 +84,7 @@ export default function Layout({ children, userRole }) {
   };
 
   const isTailor = userRole === 'tailor';
+  const drawerItems = drawerItemsFor(userRole);
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
   const profileName = user?.name || (isAdmin ? 'Admin' : isTailor ? 'Tailor' : 'Customer');
   const profileRole = isAdmin ? 'Administrator' : isTailor ? 'Master Tailor' : 'Customer';
