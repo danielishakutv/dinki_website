@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle, LogOut, MapPin, ClipboardList, User, MessageSquare, Heart, Bell, Store, Trophy, Newspaper, ShieldCheck, Compass, Ruler } from 'lucide-react';
+import { Home, Scissors, Users, ShoppingBag, Settings, HelpCircle, LogOut, MapPin, ClipboardList, User, MessageSquare, Heart, Bell, Store, Trophy, Newspaper, ShieldCheck, Compass, Ruler, BarChart3, UserPlus, Gift } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Logo from './Logo';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,6 +10,7 @@ const getTailorNav = (storefrontSlug) => [
   { to: '/explore', icon: Compass, label: 'Explore Styles' },
   { to: storefrontSlug ? `/t/${storefrontSlug}` : '/my-storefront', icon: Store, label: 'My Storefront' },
   { to: '/jobs', icon: Scissors, label: 'Jobs & Orders' },
+  { to: '/analytics', icon: BarChart3, label: 'My Business' },
   { to: '/customers', icon: Users, label: 'Customers' },
   { to: '/marketplace', icon: ShoppingBag, label: 'Marketplace' },
   { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
@@ -27,6 +28,15 @@ const customerNav = [
   { to: '/news', icon: Newspaper, label: 'News & Articles' },
 ];
 
+// Agents don't run a shop or buy from one — their whole job is bringing people on,
+// so their nav is their own funnel plus Explore for context on what they're selling.
+const agentNav = [
+  { to: '/agent', icon: Home, label: 'Dashboard', end: true },
+  { to: '/agent/register', icon: UserPlus, label: 'Register someone' },
+  { to: '/agent/recruits', icon: Users, label: 'My people' },
+  { to: '/explore', icon: Compass, label: 'Explore Styles' },
+];
+
 // Admins are not tailors/customers — their main nav is the admin console + Explore.
 const adminNav = [
   { to: '/admin', icon: ShieldCheck, label: 'Admin Dashboard', end: true },
@@ -37,6 +47,7 @@ const adminNav = [
 ];
 
 const bottomNav = [
+  { to: '/referral', icon: Gift, label: 'Invite & Earn' },
   { to: '/messages', icon: MessageSquare, label: 'Messages' },
   { to: '/favourites', icon: Heart, label: 'Favourites' },
   { to: '/notifications', icon: Bell, label: 'Notifications' },
@@ -77,7 +88,13 @@ export default function Sidebar({ userRole }) {
   const { user, confirmAndLogout } = useAuth();
   const slug = user?.storefront_slug || user?.tailor_profile?.storefront_slug;
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
-  const mainNav = isAdmin ? adminNav : userRole === 'customer' ? customerNav : getTailorNav(slug);
+  const mainNav = isAdmin
+    ? adminNav
+    : userRole === 'agent'
+      ? agentNav
+      : userRole === 'customer'
+        ? customerNav
+        : getTailorNav(slug);
   const homeRoute = isAdmin ? '/admin' : '/dashboard';
 
   const profileName = user?.name || (isAdmin ? 'Admin' : userRole === 'tailor' ? 'Tailor' : 'Customer');

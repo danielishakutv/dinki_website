@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Scissors, ShoppingBag, MapPin, ClipboardList, Plus, Ruler, Store, Compass, ShieldCheck, Bell, Settings } from 'lucide-react';
+import { Home, Scissors, ShoppingBag, MapPin, ClipboardList, Plus, Ruler, Store, Compass, ShieldCheck, Bell, Settings, UserPlus, Users, Gift } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -19,6 +19,13 @@ const customerItems = [
   { to: '/explore', icon: Compass, label: 'Explore' },
   { to: '/orders', icon: ClipboardList, label: 'Orders' },
   { to: '/near-me', icon: MapPin, label: 'Near Me' },
+];
+
+const agentItems = [
+  { to: '/agent', icon: Home, label: 'Home' },
+  { to: '/agent/register', icon: UserPlus, label: 'Register' },
+  { to: '/agent/recruits', icon: Users, label: 'People' },
+  { to: '/referral', icon: Gift, label: 'Invite' },
 ];
 
 const adminItems = [
@@ -83,6 +90,7 @@ export default function BottomNav({ userRole, onRecordMeasurement, onNavClick })
   const [menuOpen, setMenuOpen] = useState(false);
   const isTailor = userRole === 'tailor';
   const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+  const isAgent = userRole === 'agent';
   const homeRoute = '/dashboard';
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -95,12 +103,14 @@ export default function BottomNav({ userRole, onRecordMeasurement, onNavClick })
     if (key === 'recordMeasurement') onRecordMeasurement?.();
   };
 
-  if (isAdmin) {
+  if (isAdmin || isAgent) {
+    const items = isAgent ? agentItems : adminItems;
+    const rootPath = isAgent ? '/agent' : '/admin';
     return (
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-gray-200/60 safe-bottom md:hidden">
         <div className="flex items-center justify-around h-20 px-2 max-w-lg mx-auto">
-          {adminItems.map(({ to, icon, label }) => (
-            <NavItem key={to} to={to} icon={icon} label={label} end={to === '/admin'} onNavClick={onNavClick} />
+          {items.map(({ to, icon, label }) => (
+            <NavItem key={to} to={to} icon={icon} label={label} end={to === rootPath} onNavClick={onNavClick} />
           ))}
         </div>
       </nav>

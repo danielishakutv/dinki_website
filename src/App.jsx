@@ -35,6 +35,11 @@ const PublicMeasurement = lazy(() => import('./pages/PublicMeasurement'));
 const PlaceOrder = lazy(() => import('./pages/PlaceOrder'));
 const NewJobPage = lazy(() => import('./pages/NewJobPage'));
 const Referral = lazy(() => import('./pages/Referral'));
+const TailorAnalytics = lazy(() => import('./pages/TailorAnalytics'));
+const ClaimAccount = lazy(() => import('./pages/ClaimAccount'));
+const AgentDashboard = lazy(() => import('./pages/agent/AgentDashboard'));
+const AgentRegister = lazy(() => import('./pages/agent/AgentRegister'));
+const AgentRecruits = lazy(() => import('./pages/agent/AgentRecruits'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const News = lazy(() => import('./pages/News'));
@@ -64,10 +69,18 @@ function TailorOnly({ userRole, children }) {
   return children;
 }
 
+// The agent console is role-gated client-side too. Every /agents endpoint is
+// enforced server-side; this only stops a non-agent seeing UI that would fail.
+function AgentOnly({ userRole, children }) {
+  if (userRole && userRole !== 'agent') return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
 // Where a logged-in user belongs by default. Admins are NOT tailors/customers —
 // they go straight to the admin dashboard and never see the onboarding wizard.
 const homePath = (user) => {
   if (isAdminRole(user)) return '/admin';
+  if (user?.role === 'agent') return '/agent';
   return user?.onboarding_completed === false ? '/onboarding' : '/dashboard';
 };
 
@@ -75,8 +88,11 @@ function ProtectedRoute({ children }) {
   const { user, isAuthenticated, loading } = useAuth();
   if (loading) return <div className="flex h-screen items-center justify-center"><div className="w-8 h-8 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /></div>;
   if (!isAuthenticated) return <Navigate to="/" replace />;
-  // Admins skip onboarding entirely; everyone else must finish it first.
-  if (user && !isAdminRole(user) && !user.onboarding_completed && window.location.pathname !== '/onboarding') {
+  // Admins and agents skip onboarding entirely — it asks for a shop location and
+  // tailoring specialities, which mean nothing for either role and would trap
+  // them in a form they can't meaningfully complete.
+  const skipsOnboarding = isAdminRole(user) || user?.role === 'agent';
+  if (user && !skipsOnboarding && !user.onboarding_completed && window.location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
   return children;
@@ -124,6 +140,9 @@ export default function App() {
       <Route path="/" element={user ? <Navigate to={homePath(user)} replace /> : <Landing />} />
       <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
       <Route path="/invite/:code" element={<Suspense fallback={<PageLoader />}><Invite /></Suspense>} />
+      {/* Public: an agent-registered person claiming their account. They have no
+          session yet, so this cannot sit behind ProtectedRoute. */}
+      <Route path="/claim/:token" element={<Suspense fallback={<PageLoader />}><ClaimAccount /></Suspense>} />
       <Route path="/onboarding" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Onboarding /></Suspense></ProtectedRoute>} />
 
       {/* Public discovery — browsable by guests and members alike. FeedShell inside
@@ -138,7 +157,7 @@ export default function App() {
       {/* Protected app shell. Static paths here out-rank /:handle below in React Router's ranking,
           so e.g. /dashboard matches Dashboard, not the public storefront. */}
       <Route element={<ProtectedAppLayout userRole={userRole} />}>
-        <Route path="/dashboard" element={isAdminRole(user) ? <Navigate to="/admin" replace /> : userRole === 'customer' ? <CustomerDashboard tab="home" /> : <Dashboard />} />
+        <Route path="/dashboard" element={isAdminRole(user) ? <Navigate to="/admin" replace /> : userRole === 'agent' ? <Navigate to="/agent" replace /> : userRole === 'customer' ? <CustomerDashboard tab="home" /> : <Dashboard />} />
         <Route path="/home" element={<CustomerDashboard tab="home" />} />
         <Route path="/orders" element={<CustomerDashboard tab="orders" />} />
         <Route path="/near-me" element={<CustomerDashboard tab="near-me" />} />
@@ -151,6 +170,10 @@ export default function App() {
         <Route path="/customers" element={<TailorOnly userRole={userRole}><Customers /></TailorOnly>} />
         <Route path="/customers/new" element={<TailorOnly userRole={userRole}><NewCustomerPage /></TailorOnly>} />
         <Route path="/customers/:id" element={<TailorOnly userRole={userRole}><CustomerDetail /></TailorOnly>} />
+        <Route path="/analytics" element={<TailorOnly userRole={userRole}><TailorAnalytics /></TailorOnly>} />
+        <Route path="/agent" element={<AgentOnly userRole={userRole}><AgentDashboard /></AgentOnly>} />
+        <Route path="/agent/register" element={<AgentOnly userRole={userRole}><AgentRegister /></AgentOnly>} />
+        <Route path="/agent/recruits" element={<AgentOnly userRole={userRole}><AgentRecruits /></AgentOnly>} />
         <Route path="/jobs" element={<TailorOnly userRole={userRole}><Jobs /></TailorOnly>} />
         <Route path="/jobs/new" element={<TailorOnly userRole={userRole}><NewJobPage /></TailorOnly>} />
         <Route path="/jobs/:id" element={<TailorOnly userRole={userRole}><JobDetailPage /></TailorOnly>} />

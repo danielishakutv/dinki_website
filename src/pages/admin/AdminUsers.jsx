@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, AlertCircle, Search, ShieldCheck, Scissors, User as UserIcon, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Search, ShieldCheck, Scissors, User as UserIcon, CheckCircle2, XCircle, UserPlus } from 'lucide-react';
 import { admin as adminApi } from '../../lib/api';
 
 /**
@@ -76,6 +76,7 @@ export default function AdminUsers() {
             <option value="all">All roles</option>
             <option value="customer">Customer</option>
             <option value="tailor">Tailor</option>
+            <option value="agent">Agent</option>
             <option value="admin">Admin</option>
             <option value="superadmin">Superadmin</option>
           </select>
@@ -206,6 +207,7 @@ function RoleBadge({ role }) {
   const map = {
     customer:   { icon: UserIcon,    color: 'bg-blue-50 text-blue-600' },
     tailor:     { icon: Scissors,    color: 'bg-gold-50 text-gold-600' },
+    agent:      { icon: UserPlus,    color: 'bg-teal-50 text-teal-600' },
     admin:      { icon: ShieldCheck, color: 'bg-gray-100 text-gray-700' },
     superadmin: { icon: ShieldCheck, color: 'bg-red-50 text-red-600' },
   };

@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { customersRepo, jobsRepo } from '../lib/local/repo';
+import { computeLocalAnalytics } from '../lib/local/analytics';
 import { isDbOpen, getDbGeneration, subscribeDbGeneration } from '../lib/local/db';
 import { subscribe, getStatus, syncNow } from '../lib/local/sync';
 
@@ -56,6 +57,14 @@ export function useJob(id) {
 
 export function useJobStats() {
   return useRepoQuery(() => jobsRepo.stats(), []);
+}
+
+/**
+ * Business analytics derived from the device's own data, so the page works with
+ * no signal. Only storefront visits, orders, reviews and referrals need the API.
+ */
+export function useLocalAnalytics({ days = 30 } = {}) {
+  return useRepoQuery(() => computeLocalAnalytics({ days }), [days]);
 }
 
 /** Live sync status for the header pill and the per-row dots. */

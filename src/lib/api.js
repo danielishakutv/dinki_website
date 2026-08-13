@@ -133,6 +133,10 @@ async function request(endpoint, options = {}) {
 export const auth = {
   signup: (body) => request('/auth/signup', { method: 'POST', body }),
   activate: (body) => request('/auth/activate', { method: 'POST', body }),
+  // Agent-registered accounts are claimed with a single-use token rather than a
+  // raw user id, so a forwarded link expires and only ever works once.
+  inspectClaim: (token) => request(`/auth/claim/${encodeURIComponent(token)}`),
+  claim: (body) => request('/auth/claim', { method: 'POST', body }),
   verifyEmail: (token) => request('/auth/verify-email', { method: 'POST', body: { token } }),
   resendVerification: () => request('/auth/resend-verification', { method: 'POST' }),
   sendPhoneCode: () => request('/auth/phone/send-code', { method: 'POST' }),
@@ -426,6 +430,28 @@ export const support = {
   submitTicket: (body) => request('/support/ticket', { method: 'POST', body }),
 };
 
+// Agents — field staff who sign people up. Every endpoint is role-gated
+// server-side; the client also route-guards so a non-agent never sees the UI.
+export const agents = {
+  stats: (weeks) => request(`/agents/me/stats${weeks ? `?weeks=${weeks}` : ''}`),
+  recruits: (params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set('page', params.page);
+    if (params.limit) qs.set('limit', params.limit);
+    if (params.status) qs.set('status', params.status);
+    const q = qs.toString();
+    return request(`/agents/me/recruits${q ? `?${q}` : ''}`);
+  },
+  register: (body) => request('/agents/recruits', { method: 'POST', body }),
+  resendClaim: (id) => request(`/agents/recruits/${id}/resend`, { method: 'POST' }),
+};
+
+// Tailor analytics — only the metrics the device can't compute for itself.
+// Jobs, revenue and customer insights come from the local database instead.
+export const analytics = {
+  tailor: (days = 30) => request(`/analytics/tailor?days=${days}`),
+};
+
 // Referrals
 export const referrals = {
   getMine: (params = {}) => {
@@ -439,4 +465,4 @@ export const referrals = {
 };
 
 export { getToken, setToken, clearToken };
-export default { auth, users, sync, customers, jobs, storefronts, styles, measurementShares, orders, reviews, favourites, conversations, notifications, uploads, admin, support, referrals };
+export default { auth, users, sync, agents, analytics, customers, jobs, storefronts, styles, measurementShares, orders, reviews, favourites, conversations, notifications, uploads, admin, support, referrals };

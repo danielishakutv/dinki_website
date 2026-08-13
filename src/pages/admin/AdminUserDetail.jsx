@@ -364,6 +364,7 @@ function RoleStatusCard({ user, me, isSelf, disabled, onUpdated }) {
             className={`${inputCls} bg-white`}>
             <option value="customer">Customer</option>
             <option value="tailor">Tailor</option>
+            <option value="agent">Agent</option>
             <option value="admin">Admin</option>
             <option value="superadmin">Superadmin</option>
           </select>
@@ -665,6 +666,7 @@ function RoleBadge({ role }) {
   const map = {
     customer:   'bg-blue-50 text-blue-600',
     tailor:     'bg-gold-50 text-gold-600',
+    agent:      'bg-teal-50 text-teal-600',
     admin:      'bg-gray-100 text-gray-700',
     superadmin: 'bg-red-50 text-red-600',
   };
