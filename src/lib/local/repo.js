@@ -298,46 +298,44 @@ export const jobsRepo = {
   },
 
   /**
-   * Advance a job one step. Mirrors the server's forward-only rule locally so an
-   * offline tailor gets the same "can't skip a stage" feedback immediately,
-   * rather than a rejection days later when the phone finally syncs.
+   * Move a job to any stage, in either direction — the tailor owns the workshop,
+   * so a mistap or a garment that comes back for adjustment is just another
+   * status change. Mirrors the server rule locally so the device and the server
+   * agree once the phone syncs.
    */
-  async advanceStatus(id, nextStatus) {
+  async setStatus(id, nextStatus) {
     const db = getDb();
     const job = await db.jobs.get(id);
     if (!job) return null;
 
-    const from = STATUS_ORDER.indexOf(job.status);
-    const to = STATUS_ORDER.indexOf(nextStatus);
-    if (to !== from + 1) {
-      const err = new Error(
-        to <= from
-          ? 'Job status can only move forward'
-          : `Move to "${STATUS_ORDER[from + 1]}" first`
-      );
-      err.code = 'INVALID_STATUS_TRANSITION';
+    if (!STATUS_ORDER.includes(nextStatus)) {
+      const err = new Error(`Unknown status "${nextStatus}"`);
+      err.code = 'INVALID_STATUS';
       throw err;
     }
+    // Already there — no local write, and no op the server would have to
+    // no-op its way through later.
+    if (job.status === nextStatus) return job;
 
-    const updates = { status: nextStatus, updated_at: nowIso(), _syncState: SYNC_STATE.PENDING };
-    if (nextStatus === 'delivered') updates.delivered_at = nowIso();
-
-    await db.jobs.update(id, updates);
+    await db.jobs.update(id, {
+      status: nextStatus,
+      // Cleared when the job leaves delivered, so the local revenue figures
+      // stop counting a job that is back on the bench — same rule as the server.
+      delivered_at: nextStatus === 'delivered' ? nowIso() : null,
+      updated_at: nowIso(),
+      _syncState: SYNC_STATE.PENDING,
+    });
     // Deliberately never coalesced — see outbox.NON_COALESCING.
     await enqueue({ entity: 'job', op: 'status', entityId: id, patch: { status: nextStatus } });
     scheduleSync('job.status');
     return this.get(id);
   },
 
+  /** Payment lands whenever it lands — deposit at cutting, balance on delivery. */
   async setInvoiced(id, invoiced) {
     const db = getDb();
     const job = await db.jobs.get(id);
     if (!job) return null;
-    if (job.status !== 'ready') {
-      const err = new Error('You can only invoice a job that is ready');
-      err.code = 'INVALID_INVOICE_STATE';
-      throw err;
-    }
 
     await db.jobs.update(id, {
       invoiced,

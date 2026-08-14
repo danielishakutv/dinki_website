@@ -1498,7 +1498,12 @@ curl -X PATCH https://be.dinki.africa/v1/jobs/d4e5f6a7-... \
 
 ### PATCH `/jobs/:id/status`
 
-Updates job status. Status must follow the workflow: `cutting` → `stitching` → `ready` → `delivered`.
+Updates job status. The workflow is `cutting` → `stitching` → `ready` → `delivered`, but any
+stage can be set from any other, in either direction — a tailor can walk a job back when a
+garment returns for adjustment or a stage was tapped by mistake. Setting the status a job
+already has is a no-op. Moving out of `delivered` clears `delivered_at`, decrements the
+tailor's `completed_jobs` counter and reopens the linked marketplace order (`completed` →
+`in_progress`); cancelled orders are never touched.
 
 **Auth Required:** Yes (tailor only)
 
@@ -1526,7 +1531,8 @@ const res = await jobs.updateStatus(jobId, 'stitching');
 
 ### PATCH `/jobs/:id/invoice`
 
-Toggles the invoiced flag on a job.
+Toggles the invoiced ("paid") flag on a job. Allowed at any status — deposits arrive at
+cutting, balances on delivery — so this is not gated on the job being `ready`.
 
 **Auth Required:** Yes (tailor only)
 

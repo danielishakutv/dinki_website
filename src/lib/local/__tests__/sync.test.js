@@ -112,20 +112,50 @@ describe('outbox coalescing', () => {
   it('never merges job status transitions', async () => {
     const customer = await customersRepo.create({ name: 'Tunde' });
     const job = await jobsRepo.create({ customer_id: customer.id, title: 'Kaftan' });
-    await jobsRepo.advanceStatus(job.id, 'stitching');
-    await jobsRepo.advanceStatus(job.id, 'ready');
+    await jobsRepo.setStatus(job.id, 'stitching');
+    await jobsRepo.setStatus(job.id, 'ready');
 
     const statusOps = (await outbox.nextBatch()).filter((e) => e.op === 'status');
-    // Merged, these would become a single cutting → ready jump, which the server
-    // rejects and which would skip a customer notification.
+    // Merged, these would become a single cutting → ready jump, skipping a
+    // notification the customer is expecting.
     expect(statusOps.map((e) => e.patch.status)).toEqual(['stitching', 'ready']);
   });
 
-  it('refuses to skip a status stage locally, the same way the server does', async () => {
+  it('replays a correction as its own op rather than folding it away', async () => {
     const customer = await customersRepo.create({ name: 'Bisi' });
     const job = await jobsRepo.create({ customer_id: customer.id, title: 'Gown' });
 
-    await expect(jobsRepo.advanceStatus(job.id, 'delivered')).rejects.toThrow(/stitching/);
+    // Marked delivered by mistake, then walked back to ready.
+    await jobsRepo.setStatus(job.id, 'delivered');
+    await jobsRepo.setStatus(job.id, 'ready');
+
+    const statusOps = (await outbox.nextBatch()).filter((e) => e.op === 'status');
+    // Both must reach the server: the first increments completed_jobs, the
+    // second gives it back. Folded into one, the counter stays wrong forever.
+    expect(statusOps.map((e) => e.patch.status)).toEqual(['delivered', 'ready']);
+    expect((await jobsRepo.get(job.id)).delivered_at).toBeNull();
+  });
+
+  it('queues nothing when a job is set to the status it already has', async () => {
+    const customer = await customersRepo.create({ name: 'Halima' });
+    const job = await jobsRepo.create({ customer_id: customer.id, title: 'Buba' });
+    await jobsRepo.setStatus(job.id, 'stitching');
+    await jobsRepo.setStatus(job.id, 'stitching');
+
+    const statusOps = (await outbox.nextBatch()).filter((e) => e.op === 'status');
+    expect(statusOps).toHaveLength(1);
+  });
+
+  it('lets a job be marked paid at any stage, not only when ready', async () => {
+    const customer = await customersRepo.create({ name: 'Emeka' });
+    const job = await jobsRepo.create({ customer_id: customer.id, title: 'Senator' });
+
+    // A deposit at the cutting stage is the normal case, not an error.
+    await jobsRepo.setInvoiced(job.id, true);
+
+    expect((await jobsRepo.get(job.id)).invoiced).toBe(true);
+    const invoiceOps = (await outbox.nextBatch()).filter((e) => e.op === 'invoice');
+    expect(invoiceOps.map((e) => e.patch.invoiced)).toEqual([true]);
   });
 });
 
@@ -323,7 +353,7 @@ describe('a full offline day', () => {
     const chidi = await customersRepo.create({ name: 'Chidi', phone: '+2348010000002' });
     await customersRepo.saveMeasurements(amina.id, { chest: 38, waist: 32, notes: 'Prefers loose fit' });
     const job = await jobsRepo.create({ customer_id: amina.id, title: 'Wedding Agbada', price: 120000 });
-    await jobsRepo.advanceStatus(job.id, 'stitching');
+    await jobsRepo.setStatus(job.id, 'stitching');
     await customersRepo.update(chidi.id, { location: 'Wuse' });
 
     await sync.syncNow('morning');

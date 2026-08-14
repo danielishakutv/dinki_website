@@ -34,27 +34,34 @@ export default function JobDetailPage() {
   const loading = jobLoading;
 
   const [actionError, setActionError] = useState(null);
+  const [payError, setPayError] = useState(null);
+  const [savingPayment, setSavingPayment] = useState(false);
 
   const updateStatus = async (newStatus) => {
     setActionError(null);
     try {
-      await jobsRepo.advanceStatus(id, newStatus);
+      // Any stage, either direction — the tailor decides where the job really is.
+      await jobsRepo.setStatus(id, newStatus);
       invalidateCache(`job-${id}`, 'jobs');
     } catch (err) {
-      // The local repo mirrors the server's forward-only rule, so an invalid
-      // stage jump is caught here and told to the tailor immediately rather
-      // than being rejected days later when the phone finally syncs.
       setActionError(err.message || 'Failed to update status');
     }
   };
 
   const toggleInvoiced = async () => {
-    setActionError(null);
+    if (savingPayment) return;
+    setPayError(null);
+    setSavingPayment(true);
     try {
       await jobsRepo.setInvoiced(id, !job.invoiced);
       invalidateCache(`job-${id}`, 'jobs');
     } catch (err) {
-      setActionError(err.message || 'Failed to update invoice');
+      // Shown beside the switch rather than up in Progress — a failure the
+      // tailor can't see next to the control they just tapped reads as the
+      // toggle being broken, which is exactly how this one used to feel.
+      setPayError(err.message || 'Failed to update payment');
+    } finally {
+      setSavingPayment(false);
     }
   };
 
@@ -212,7 +219,12 @@ export default function JobDetailPage() {
         transition={{ delay: 0.1 }}
         className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6"
       >
-        <h3 className="font-heading font-semibold text-gray-800 mb-4">Progress</h3>
+        <div className="mb-4">
+          <h3 className="font-heading font-semibold text-gray-800">Progress</h3>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Tap any stage to move this job there — forward or back.
+          </p>
+        </div>
 
         {actionError && (
           <p className="mb-3 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
@@ -232,7 +244,9 @@ export default function JobDetailPage() {
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => updateStatus(s)}
-                  className={`flex flex-col items-center gap-1 p-3 rounded-xl flex-1 min-w-0 transition-all ${
+                  aria-current={isCurrent ? 'step' : undefined}
+                  title={isCurrent ? `${sc.label} — current stage` : `Move this job to ${sc.label}`}
+                  className={`flex flex-col items-center gap-1 p-3 rounded-xl flex-1 min-w-0 transition-all hover:border-gold-300 ${
                     isCurrent
                       ? 'bg-gold-50 border-2 border-gold-300'
                       : isCompleted
@@ -304,7 +318,7 @@ export default function JobDetailPage() {
                       {sc.label}
                     </p>
                     <p className={`text-[11px] mt-0.5 ${isCurrent ? 'text-gold-500' : isCompleted ? 'text-emerald-500' : 'text-gray-400'}`}>
-                      {isCurrent ? 'Current stage' : isCompleted ? 'Completed' : 'Pending'}
+                      {isCurrent ? 'Current stage' : isCompleted ? 'Done — tap to move back' : 'Tap to move here'}
                     </p>
                   </div>
                   {isCompleted ? (
@@ -328,17 +342,23 @@ export default function JobDetailPage() {
           transition={{ delay: 0.2 }}
           className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5"
         >
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
               <h3 className="font-heading font-semibold text-gray-800">Payment Status</h3>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {job.invoiced ? 'Paid' : 'Unpaid — mark as paid when payment is received'}
+              <p className={`text-xs mt-0.5 ${job.invoiced ? 'text-emerald-600 font-medium' : 'text-gray-400'}`}>
+                {job.invoiced
+                  ? `Paid${job.invoiced_at ? ` · ${formatDate(job.invoiced_at)}` : ''}`
+                  : 'Unpaid — tap to mark as paid'}
               </p>
             </div>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={toggleInvoiced}
-              className={`relative w-14 h-7 rounded-full transition-colors ${
+              disabled={savingPayment}
+              role="switch"
+              aria-checked={Boolean(job.invoiced)}
+              aria-label={job.invoiced ? 'Mark job as unpaid' : 'Mark job as paid'}
+              className={`btn-touch relative w-14 h-7 rounded-full flex-shrink-0 transition-colors disabled:opacity-60 ${
                 job.invoiced ? 'bg-emerald-500' : 'bg-gray-300'
               }`}
             >
@@ -349,6 +369,12 @@ export default function JobDetailPage() {
               />
             </motion.button>
           </div>
+
+          {payError && (
+            <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+              {payError}
+            </p>
+          )}
         </motion.div>
 
         {/* Linked Measurements */}
